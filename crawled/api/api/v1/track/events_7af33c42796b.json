@@ -1,0 +1,11 @@
+{
+  "code": 0,
+  "data": {
+    "Accepted": 1,
+    "Rejected": 0,
+    "Errors": null
+  },
+  "message": "Success",
+  "request_id": "8b3536d7-2fad-4963-aab1-2867f205ab3e",
+  "trace_id": "zq-track-d1628bc8-225e-4b26-823e-0a579b7cb5d9"
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="OIO禁漫提供漫画、韩漫、3D漫画等内容的移动端与桌面端访问入口，支持快速下载、安装指引与常用功能导航，方便手机与电脑便捷访问。"
+    />
+    <meta
+      name="keywords"
+      content="OIO禁漫,OIO,禁漫,漫画,韩漫,3D漫画,漫画阅读,韩漫阅读,安装指引,下载入口,移动端,桌面端"
+    />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="OIO禁漫" />
+    <meta
+      property="og:description"
+      content="OIO禁漫提供漫画、韩漫、3D漫画等内容的移动端与桌面端访问入口，支持快速下载与安装指引。"
+    />
+    <meta property="og:image" content="/logo.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>OIO禁漫</title>
+    <script type="module" crossorigin src="/assets/index-C-S0Svll.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Xmh33ZC3.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  <script>
+    // snippet：加载 landing-sdk-v1.1.1.js，并用 window.tracker 作为占位队列（支持 Promise）
+    (function (i, s, o, g, r) {
+      i[r] =
+        i[r] ||
+        function () {
+          var args = Array.prototype.slice.call(arguments);
+          return new Promise(function (resolve, reject) {
+            (i[r].q = i[r].q || []).push({ args: args, resolve: resolve, reject: reject });
+          });
+        };
+      i[r].l = 1 * new Date();
+      var a = s.createElement(o);
+      var m = s.getElementsByTagName(o)[0];
+      a.async = 1;
+      a.src = g;
+      m.parentNode.insertBefore(a, m);
+    })(window, document, "script", "/landing-sdk-v1.1.1.js", "tracker");
+
+  </script>
+  </body>
+</html>

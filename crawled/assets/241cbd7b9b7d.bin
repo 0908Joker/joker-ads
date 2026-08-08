@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache,no-store,must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>正在进入...</title>
+  </head>
+  <body>
+    <script src="./domains.js?v=2026072110"></script>
+    <script>
+      (function () {
+        var C = window.JUMP_CONFIG || {},
+          D = C.domains && C.domains.length ? C.domains : null,
+          P = C.probeFile || "/favicon.png",
+          F = C.fallback || (D ? D[0] : ""),
+          T = C.timeout || 1000,
+          j = false;
+        function J(u) {
+          if (j) return;
+          j = true;
+          if (location.search) {
+            u += (u.indexOf("?") === -1 ? "?" : "&") + location.search.slice(1);
+          }
+          location.replace(u);
+        }
+        function R(l) {
+          return l[Math.floor(Math.random() * l.length)];
+        }
+        if (!D) {
+          if (F) J(F);
+          return;
+        }
+        setTimeout(function () {
+          J(R(D));
+        }, T);
+        for (var i = 0; i < D.length; i++) {
+          (function (d) {
+            var m = new Image();
+            m.onload = function () {
+              J(d);
+            };
+            m.onerror = function () {};
+            m.src = d + P + "?t=" + Date.now();
+          })(D[i]);
+        }
+      })();
+    </script>
+  </body>
+</html>

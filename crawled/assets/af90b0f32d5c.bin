@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>安全跳转</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            color: #25313d;
+            text-align: center;
+            background: linear-gradient(135deg, #f6f8fb 0%, #e8edf4 100%);
+        }
+
+        .container {
+            width: min(90vw, 420px);
+            padding: 32px 26px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #dce5ef;
+            border-radius: 8px;
+            box-shadow: 0 16px 36px rgba(37, 49, 61, 0.12);
+        }
+
+        .spinner {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 20px;
+            border: 4px solid #d8e1ec;
+            border-top-color: #2f80ed;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .message {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .sub-message {
+            margin: 10px 0 0;
+            color: #607285;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .status {
+            margin-top: 18px;
+            color: #34495e;
+            font-size: 13px;
+        }
+
+        .manual-link {
+            display: none;
+            width: 100%;
+            margin-top: 22px;
+            padding: 13px 16px;
+            border-radius: 6px;
+            color: #fff;
+            background: #2f80ed;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .manual-link.is-visible {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="spinner" aria-hidden="true"></div>
+        <h1 class="message" id="message">正在为您选择最佳线路...</h1>
+        <p class="sub-message" id="subMessage">智能测速中，请稍候。</p>
+        <div class="status" id="statusMsg">正在准备检测</div>
+        <a class="manual-link" id="manualLink" href="#" rel="noopener">立即进入</a>
+    </main>
+
+    
+
+    <script src="app.js?v=20260529"></script>
+</body>
+</html>

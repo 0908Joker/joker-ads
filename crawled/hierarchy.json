@@ -1,0 +1,115 @@
+{
+  "name": "root",
+  "children": [
+    {
+      "name": "api",
+      "children": [
+        {
+          "name": "v1",
+          "children": [
+            {
+              "name": "speedtest",
+              "children": [],
+              "url": "https://18.167.121.250:8880/api/v1/speedtest",
+              "file": "crawled\\api\\api\\v1\\speedtest_5b7f5a0f0997.json",
+              "nestedUrls": []
+            },
+            {
+              "name": "track",
+              "children": [
+                {
+                  "name": "events",
+                  "children": [],
+                  "url": "https://track.v1h5g.cc/api/v1/track/events",
+                  "file": "crawled\\api\\api\\v1\\track\\events_7af33c42796b.json",
+                  "nestedUrls": []
+                }
+              ]
+            },
+            {
+              "name": "users",
+              "children": [
+                {
+                  "name": "signin",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/users/signin",
+                  "file": "crawled\\api\\api\\v1\\users\\signin_e90c2869ac64.json",
+                  "nestedUrls": []
+                },
+                {
+                  "name": "info",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/users/info",
+                  "file": "crawled\\api\\api\\v1\\users\\info_6dedbad4eaad.json",
+                  "nestedUrls": []
+                },
+                {
+                  "name": "recordLogin",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/users/recordLogin",
+                  "file": "crawled\\api\\api\\v1\\users\\recordLogin_6ff352ce5718.json",
+                  "nestedUrls": []
+                }
+              ]
+            },
+            {
+              "name": "mail",
+              "children": [
+                {
+                  "name": "getAllCnt",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/mail/getAllCnt",
+                  "file": "crawled\\api\\api\\v1\\mail\\getAllCnt_3dcb71be913b.json",
+                  "nestedUrls": []
+                }
+              ]
+            },
+            {
+              "name": "activity",
+              "children": [
+                {
+                  "name": "getNewUserRewardsCfg",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/activity/getNewUserRewardsCfg",
+                  "file": "crawled\\api\\api\\v1\\activity\\getNewUserRewardsCfg_371ea1ed44a8.json",
+                  "nestedUrls": []
+                },
+                {
+                  "name": "activityList",
+                  "children": [],
+                  "url": "https://deuwy.jcd9nw.com/api/v1/activity/activityList",
+                  "file": "crawled\\api\\api\\v1\\activity\\activityList_b3b750d7996f.json",
+                  "nestedUrls": []
+                }
+              ]
+            },
+            {
+              "name": "videos",
+              "children": [
+                {
+                  "name": "shortAndImg",
+                  "children": [],
+                  "url": "https://18.167.121.250:8880/api/v1/videos/shortAndImg",
+                  "file": "crawled\\api\\api\\v1\\videos\\shortAndImg_d04d7991fcd6.json",
+                  "nestedUrls": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "eventTracking",
+          "children": [
+            {
+              "name": "batchReport.json",
+              "children": [],
+              "url": "https://api-dc2-prod-08.cyou/api/eventTracking/batchReport.json",
+              "file": "crawled\\api\\api\\eventTracking\\batchReport.json_1def632ef62c.json",
+              "nestedUrls": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

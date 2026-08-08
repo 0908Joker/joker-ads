@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="./js/device-redirect.js"></script>
+  <script>window.domainurl=".";</script>
+  <!-- domainurl: "." 本地相对路径 ./c12066/...；填远程 CDN 根地址则资源走远程 -->
+  <script>
+    window.assetUrl=function(path){
+      if(!path)return path;
+      var p=String(path).replace(/^\/+/,'');
+      var base=(window.domainurl==null?'.':String(window.domainurl)).replace(/\/+$/,'');
+      if(!base||base==='.')return'./'+p;
+      return base+'/'+p;
+    };
+    window.applyCdnAssets=function(root){
+      var scope=root||document;
+      scope.querySelectorAll('[data-asset]').forEach(function(el){
+        var attr=el.tagName==='IMG'?'src':(el.tagName==='SCRIPT'?'src':'href');
+        el.setAttribute(attr,assetUrl(el.getAttribute('data-asset')));
+      });
+    };
+  </script>
+  <title>51社区</title>
+  <meta name="author" content="7d3211702592f7d6cc472bbc7e927303">
+  <meta name="author" content="4d3c5bdea71128cbcd7af88da4de4d16">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width,initial-scale=0.45,minimum-scale=0,maximum-scale=0.45,user-scalable=no,viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="shortcut icon" data-asset="c12066/020539/common/favicon.ico">
+  <link rel="stylesheet" data-asset="c12066/020539/kuai-A/css/mobile.css?v=3">
+  <script>applyCdnAssets(document.head);</script>
+  <script src="/pubchann51sq.js"></script>
+  <script src="./appinstall0303.js"></script>
+</head>
+
+<body class='btnText'>
+  <script>window.TRACKER_APP_ID = 'HX-035';</script>
+  <script src="./simJQ.js"></script>
+
+  
+    <div class="mobile tjs-kuai-a" id="tjsKuaiA" data-page="remen">
+    <img class="fixed-bg" data-asset="c12066/020539/kuai-A/images/mobile/bg.js?v=3" alt="">
+
+    <!-- 顶栏：仅 logo，随 tab 切换三张图 -->
+    <header class="m-top m-top--page">
+        <img id="mTopLogo" class="m-top__mark btn statsDownload" data-asset="c12066/020539/kuai-A/images/mobile/logo1.js?v=3"
+            alt="">
+    </header>
+
+    <!-- 备用线路卡片：card 作为底图，文字 + 按钮叠在卡片内部；无可用备用 URL 或 iOS 时整块不渲染 -->
+    
+    
+
+    <!-- 三 tab 整条：一张图整体切换 + 三个透明点击区 -->
+    <nav class="m-tabs" role="tablist" aria-label="内容分类">
+        <img id="mTabsImg" class="m-tabs__img" data-asset="c12066/020539/kuai-A/images/mobile/remen.js?v=3" alt="">
+        <button type="button" class="m-tab-hit" role="tab" aria-selected="true" data-idx="0" id="m-tab-0"
+            aria-controls="m-panel-0" data-key="remen" aria-label="热门"></button>
+        <button type="button" class="m-tab-hit" role="tab" aria-selected="false" data-idx="1" id="m-tab-1"
+            aria-controls="m-panel-1" data-key="luanlun" aria-label="乱伦"></button>
+        <button type="button" class="m-tab-hit" role="tab" aria-selected="false" data-idx="2" id="m-tab-2"
+            aria-controls="m-panel-2" data-key="manhua" aria-label="漫画"></button>
+    </nav>
+
+    <!-- 三屏内容：分页面类名，版式各自可调 -->
+    <main class="m-main">
+        <section class="m-page m-page--remen m-panel is-active" role="tabpanel" id="m-panel-0" aria-labelledby="m-tab-0"
+            data-idx="0" data-key="remen">
+            <div class="m-page__scroller m-page__scroller--2col">
+                <div class="m-panel__figure m-panel__figure--hot">
+                    <img class="m-panel__img" data-asset="c12066/020539/kuai-A/images/mobile/main1.js?v=3" alt="">
+                </div>
+            </div>
+        </section>
+        <section class="m-page m-page--luanlun m-panel" role="tabpanel" id="m-panel-1" aria-labelledby="m-tab-1"
+            data-idx="1" data-key="luanlun" hidden>
+            <div class="m-page__scroller m-page__scroller--2col">
+                <div class="m-panel__figure m-panel__figure--luan">
+                    <img class="m-panel__img" data-asset="c12066/020539/kuai-A/images/mobile/main2.js?v=3" alt="">
+                </div>
+            </div>
+        </section>
+        <section class="m-page m-page--manhua m-panel" role="tabpanel" id="m-panel-2" aria-labelledby="m-tab-2"
+            data-idx="2" data-key="manhua" hidden>
+            <div class="m-page__scroller m-page__scroller--3col">
+                <div class="m-panel__figure m-panel__figure--comic m-panel__figure--no-play">
+                    <img class="m-panel__img" data-asset="c12066/020539/kuai-A/images/mobile/main3.js?v=3" alt="">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 右侧浮条：四枚切图 + 现有点击类（可替换为独立 icon 图） -->
+    <aside class="m-dock" aria-hidden="true">
+        <img class="m-dock__btn customerBtn" data-asset="c12066/020539/kuai-A/images/mobile/zxkf.js?v=3" alt="">
+        <img class="m-dock__btn cooperationBtn btn" data-asset="c12066/020539/kuai-A/images/mobile/swhz.js?v=3" alt="">
+        <!--<img class="m-dock__btn officialGroupBtn" data-asset="c12066/020539/kuai-A/images/mobile/tg.js?v=3" alt="">-->
+
+    </aside>
+
+    <!-- 右下角悬浮：decline.js?v=1 整图作为下滑按钮 -->
+    <button type="button" class="m-scroll-fab" id="mScrollFab" aria-label="向下滑动">
+        <img class="m-scroll-fab__img" data-asset="c12066/020539/kuai-A/images/mobile/decline.js?v=3" alt="">
+    </button>
+
+    <!-- 底栏：固定底部 download 整图，随 tab 切换三张 -->
+    <footer class="m-bottom m-bottom--page">
+        <img id="mBottomCta" class="m-bottom__cta btn statsDownload"
+            data-asset="c12066/020539/kuai-A/images/mobile/download1.js?v=3" alt="">
+    </footer>
+</div>
+<script>applyCdnAssets(document.getElementById('tjsKuaiA'));</script>
+
+<script>
+    (function () {
+        var root = document.getElementById('tjsKuaiA') || document.querySelector('.tjs-kuai-a');
+        if (!root) return;
+        var au = window.assetUrl || function (p) { return p; };
+        var pageKeys = ['remen', 'luanlun', 'manhua'];
+        var tabs = root.querySelectorAll('.m-tab-hit');
+        var panels = root.querySelectorAll('.m-panel');
+        var main = root.querySelector('.m-main');
+        var fab = document.getElementById('mScrollFab');
+        var logo = document.getElementById('mTopLogo');
+        var tabsImg = document.getElementById('mTabsImg');
+        var bottomCta = document.getElementById('mBottomCta');
+        var logos = [
+            au('c12066/020539/kuai-A/images/mobile/logo1.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/logo2.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/logo3.js?v=3')
+        ];
+        var tabImgs = [
+            au('c12066/020539/kuai-A/images/mobile/remen.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/luanlun.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/manhua.js?v=3')
+        ];
+        var downloadImgs = [
+            au('c12066/020539/kuai-A/images/mobile/download1.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/download2.js?v=3'),
+            au('c12066/020539/kuai-A/images/mobile/download3.js?v=3')
+        ];
+        function go(i) {
+            for (var t = 0; t < tabs.length; t++) {
+                if (t === i) {
+                    tabs[t].setAttribute('aria-selected', 'true');
+                    panels[t].classList.add('is-active');
+                    panels[t].removeAttribute('hidden');
+                } else {
+                    tabs[t].setAttribute('aria-selected', 'false');
+                    panels[t].classList.remove('is-active');
+                    panels[t].setAttribute('hidden', '');
+                }
+            }
+            if (main) main.scrollTop = 0;
+            if (logo && logos[i]) logo.src = logos[i];
+            if (tabsImg && tabImgs[i]) tabsImg.src = tabImgs[i];
+            if (bottomCta && downloadImgs[i]) bottomCta.src = downloadImgs[i];
+            if (pageKeys[i]) root.setAttribute('data-page', pageKeys[i]);
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                go(parseInt(tab.getAttribute('data-idx'), 10));
+            });
+        });
+
+        if (fab && main) {
+            fab.addEventListener('click', function () {
+                main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
+            });
+        }
+    })();
+</script>
+      
+
+<script src="./layer/layer.js"></script>
+<link href="./layer/layer.css" type="text/css" rel="stylesheet" id="layermcss">
+<!-- <script src="./crypto.js"></script> -->
+
+<script>
+  (function () {
+ 
+
+    // ================== REM 自适应 ==================
+    const docEl = document.documentElement;
+    const isIOS = 'false' === 'true';
+    const isAdr = 'true' === 'true';
+
+    function resetRem() {
+      const width = docEl.clientWidth;
+      const baseWidth = (isIOS || isAdr) ? 750 : 1920;
+      let rem = width * 100 / baseWidth;
+      if (rem > 100) rem = 100;
+      docEl.style.fontSize = rem + 'px';
+    }
+
+    window.addEventListener('resize', resetRem);
+    resetRem();
+
+    // ================== 工具函数 ==================
+    function bindClick(selector, handler) {
+      const nodes = document.querySelectorAll(selector);
+      if (!nodes.length) return;
+      nodes.forEach(node => {
+        node.onclick = handler;
+      });
+    }
+
+    function safeOpen(url) {
+      if (!url) return;
+      window.open(url);
+    }
+
+    function aClick(url) {
+      if (!url) return;
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.href = url;
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function getUuid() {
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+    }
+
+    // ================== 复制按钮 ==================
+    (function initClipboard() {
+      if (!window.ClipboardJS) return;
+      const clipboard = new ClipboardJS('.btn_copy', {
+        text: trigger => trigger.getAttribute('copy-label') || ''
+      });
+
+      clipboard.on('success', e => {
+        layer.open({ content: '复制成功' + e.text, skin: 'msg', time: 5 });
+        console.log('复制成功:', e.text);
+      });
+
+      clipboard.on('error', e => {
+        layer.open({ content: '复制失败', skin: 'msg', time: 5 });
+        console.log('复制失败:', e);
+      });
+    })();
+
+    // ================== 在线客服 ==================
+    (function initCustomer() {
+      const pid = 'TJS';
+      const channel = 'channel=mhmi99De';
+      bindClick('.customerBtn', () => {
+        window.location.href = `https://wyockijoq.gqlhonkeoelkmzag.top/index?key=bb91790d8cffd5587623771c6342aae9`;
+      });
+    })();
+
+    // ================== 合作方式 ==================
+    (function initCooperation() {
+      const cooperationUrl = 'https://t.me/MDSP8888888';
+      const btns = document.querySelectorAll('.cooperationBtn');
+      if (!btns.length) return;
+
+      if (cooperationUrl) {
+        btns.forEach(btn => {
+          btn.onclick = () => safeOpen(cooperationUrl);
+        });
+      } else {
+        btns.forEach(btn => (btn.style.display = 'none'));
+      }
+    })();
+
+    // ================== 官方群组 ==================
+    (function initOfficialGroup() {
+      const officialGroup = 'https://t.me/MDSP8888888';
+      const btns = document.querySelectorAll('.officialGroupBtn');
+      if (!btns.length) return;
+
+      if (officialGroup) {
+        btns.forEach(btn => {
+          btn.onclick = () => safeOpen(officialGroup);
+        });
+      } else {
+        btns.forEach(btn => (btn.style.display = 'none'));
+      }
+    })();
+
+
+    // ================== 导航栏按钮 ==================
+    (function initNavUrl() {
+      const btn = document.querySelector('.navUrlBtn');
+      const navUrl = '';
+      if (!btn) return;
+
+      if (navUrl) {
+        btn.onclick = () => safeOpen(navUrl);
+      } else {
+        btn.style.display = 'none';
+      }
+    })();
+
+   
+
+    // ================== PWA 配置 & 下载（服务端生成 mobileconfig）==================
+    const pid = 'TJS';
+    const siteName = window.DEFAULT_SITE_NAME || '51社区';
+    const webOnlineDomainBase = '';
+    const iconString = (window.DEFAULT_ICON_STRING ? window.assetUrl(window.DEFAULT_ICON_STRING) : null) || window.assetUrl("c12066/020539/common/logo.js?v=11");
+
+    const handleDownloadPwa = () => {
+      const params = new URLSearchParams({
+        pid: pid,
+        siteName: siteName,
+        iconUrl: iconString,
+        webOnlineDomain: webOnlineDomainBase
+      });
+
+      window.location.href = assetUrl('dl/mobileconfig') + '?' + params.toString();
+
+      setTimeout(() => {
+        const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+        const popupWidth = screenWidth <= 750 ? '94%' : '420px';
+
+        layer.open({
+          type: 1,
+          title: '安装引导',
+          shadeClose: true,
+          shade: 0.6,
+          area: [popupWidth, 'auto'],
+          content: `
+            <div style="padding: 0.4rem; text-align: center; font-size: 0.32rem; line-height: 1.8;">
+              <div style="font-size: 0.38rem; font-weight: bold; color: #333; margin-bottom: 0.3rem;">
+                📱 描述文件已下载
+              </div>
+              <div style="color: #666; margin-bottom: 0.4rem; font-size: 0.3rem;">
+                请按以下步骤完成安装：
+              </div>
+              <div style="text-align: left; background: #f5f5f5; padding: 0.3rem; border-radius: 0.16rem; margin-bottom: 0.3rem;">
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">1.</span> 打开手机【设置】
+                </div>
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">2.</span> 点击顶部【已下载的描述文件】
+                </div>
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">3.</span> 点击右上角【安装】
+                </div>
+                <div style="font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">4.</span> 输入锁屏密码完成安装
+                </div>
+              </div>
+              <div style="color: #999; font-size: 0.26rem;">
+                安装完成后，桌面将出现【${siteName}】图标
+              </div>
+            </div>
+          `
+        });
+      }, 500);
+    };
+  })();
+</script>
+<script src="./do.js"></script>
+</body>
+
+
+<style>
+  * {
+    padding: 0;
+    margin: 0;
+  }
+
+  html {
+    width: 100%;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    background-color: #1f2631;
+    font-size: 0.24rem;
+    margin: 0 auto !important;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    outline: none;
+  }
+</style>

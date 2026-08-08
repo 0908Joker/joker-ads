@@ -1,0 +1,629 @@
+<html lang="zh-CN">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title></title>
+  <meta name="keywords" content="">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,minimal-ui">
+  <script src="/pubchannmfdy.js"></script>
+  <!-- 改这一处即可切换全部图片/CDN 资源根地址；本地调试需把图片放到 ./slkdagykdp6/ 目录 -->
+  <script>
+    window.domainurl = "./slkdagykdp6/";
+    window.assetUrl = function (file) {
+      var d = (window.domainurl || '.').toString().trim().replace(/\/+$/, '');
+      var f = (file || '').toString().replace(/^\/+/, '');
+      var parts = f.split('/').map(function (p) { return encodeURIComponent(p); }).join('/');
+      if (!d || d === '.') {
+        try { return new URL(parts, location.href).href; } catch (e) { return f; }
+      }
+      if (/^https?:\/\//i.test(d)) {
+        return d + '/' + parts;
+      }
+      try {
+        return new URL(parts, new URL(d + '/', location.href)).href;
+      } catch (e) {
+        return d + '/' + parts;
+      }
+    };
+    window.cssAssetUrl = function (file) {
+      return 'url("' + window.assetUrl(file).replace(/"/g, '\\"') + '")';
+    };
+    (function () {
+      var u = window.cssAssetUrl;
+      var s = document.createElement('style');
+      s.id = 'res-root-vars';
+      s.textContent = ':root{--res-nav-top:' + u('jkjskddytv27ab422938cd35c433be041b008c70f63.jpg')
+        + ';--res-nav-foot:' + u('jkjskddytv2e8043621459280f46c61f4d27c7c7965.jpg') + ';}';
+      (document.head || document.documentElement).appendChild(s);
+    })();
+  </script>
+
+  <script src="./js/two/js/jquery.min.js"></script>
+  <link rel="stylesheet" href="./js/animate.min.css">
+  <style>
+    img {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    p {
+      margin: 0;
+      padding: 0;
+    }
+
+    .downssa {
+      margin-top: 90px;
+      margin-bottom: 90px;
+    }
+
+    .dow-nav {
+      background-image: var(--res-nav-top);
+      max-width: 100%;
+      width: 100%;
+      height: 90px;
+      position: fixed;
+      top: 0px;
+      z-index: 99;
+    }
+
+    .dow-navaz {
+      max-width: 100%;
+      width: 100%;
+      height: 60px;
+      background: transparent;
+  background-color: transparent; /* 鍙‘淇濆洖閫€棰滆壊涔熸槸閫忔槑 */
+      position: fixed;
+      top: 20px;
+      z-index: 99;
+    }
+
+    .dow-ts {
+        display: none;
+      font-size: 14px;
+      line-height: 20px;
+      color: #FFFFFF;
+    }
+
+    .dow-nav-wrapper {
+      max-width: 100%;
+      width: 100%;
+      height: 120px;
+      position: fixed;
+      bottom: 0px;
+      background-image: var(--res-nav-foot);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .dow-nav-foot {
+      max-width: 100%;
+      width: 100%;
+      height: 60px;
+      position: fixed;
+      bottom: 59px;
+      z-index: 99;
+    }
+
+    .dow-nav-foots {
+      max-width: 100%;
+      width: 100%;
+      height: 60px;
+      position: fixed;
+      bottom: 0px;
+      z-index: 99;
+    }
+
+    .dow-nav-footss {
+      max-width: 100%;
+      width: 100%;
+      height: 55px;
+      position: fixed;
+      bottom: 120px;
+      z-index: 99;
+    }
+
+    .kf-link {
+      width: 50px;
+      float: right;
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    .dow-nav-logo {
+      height: 43px;
+      margin: 5px 0 0 3px;
+      display: flex;
+      float: left;
+    }
+
+    .dow-nav-logo>img {
+      width: 43px !important;
+      height: 43px;
+    }
+
+    .dow-nav-logo>p {
+      margin-left: 8px;
+      font-size: 12px;
+      line-height: 22px;
+      color: #FFD86A;
+    }
+
+    .dow-nav-but {
+      border-radius: 36px;
+      height: 36px;
+      width: 80px;
+      background:#fec274;
+      text-align: center;
+      line-height: 38px;
+      font-size: 14px;
+      color: white !important;
+      font-weight: bold;
+      margin-right: 0px;
+      float: right;
+      margin-top: 0px;
+    }
+
+    .dow-nav-butq {
+      display: none;
+		background: linear-gradient(to bottom, #4ea6ff, #236cf0);
+		box-shadow: 0 0 8px rgba(78,166,255,0.6);
+		pointer-events: none;
+		border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 36px;
+      height: 36px;
+      width: 87px;
+      text-align: center;
+      line-height: 38px;
+      font-size: 14px;
+      color: white !important;
+      font-weight: bold;
+      margin-right: 5px;
+      float: right;
+      margin-top: 10px;
+    }
+
+    .dow-ywb-but {
+      border-radius: 36px;
+      height: 38px;
+      width: 50px;
+      background: #4ea6ff;
+      text-align: center;
+      line-height: 38px;
+      font-size: 14px;
+      color: white !important;
+      font-weight: bold;
+      margin-right: 6px;
+      float: right;
+      margin-top: 9px;
+    }
+
+    .dow-nav-buts {
+		background: linear-gradient(to bottom, #fef9e8, #fec06f);
+		box-shadow: 0 0 8px rgba(78,166,255,0.6);
+		border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 36px;
+      height: 36px;
+      width: 160px;
+      text-align: center;
+      line-height: 38px;
+      font-size: 14px;
+      color: #a60000 !important;
+      font-weight: bold;
+      margin-right: 12px;
+      float: left;
+      margin-top: 9px;
+      border-radius: 20px;
+      margin: 14px 0 0 20px;
+    }
+
+    .dow-nav-wybuts {
+		background: linear-gradient(to bottom, #fef9e8, #fec06f);
+		box-shadow: 0 0 8px rgba(78,166,255,0.6);
+		border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 36px;
+      height: 36px;
+      width: 160px;
+      text-align: center;
+      line-height: 38px;
+      font-size: 14px;
+      color: #a60000 !important;
+      font-weight: bold;
+      margin-right: 12px;
+      float: right;
+      margin-top: 9px;
+      border-radius: 20px;
+      margin: 12px 14px 0 0px;
+    }
+
+    .dow-nav-text1 {
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .dow-nav-text2 {
+	  letter-spacing: 4px;
+      color: #f7cc42;
+    }
+
+	.animate__animated {
+      display: inline-block; /* 馃憟 鍏抽敭锛佽鍔ㄧ敾鍙敤 */
+    }
+
+    .load {
+      width: 100%;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      z-index: 10000;
+      display: none;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .loader {
+      width: 300px;
+      height: 300px;
+      text-align: center;
+      position: absolute;
+      top: calc(30% - 60px);
+      left: calc(25% - 50px);
+      padding-top: 15px;
+    }
+
+    .van-dialog {
+      position: fixed;
+      top: 45%;
+      left: 50%;
+      width: 320px;
+      overflow: hidden;
+      font-size: 16px;
+      background-color: #fff;
+      border-radius: 16px;
+      -webkit-transform: translate3d(-50%, -50%, 0);
+      transform: translate3d(-50%, -50%, 0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      -webkit-transition: .3s;
+      transition: .3s;
+      -webkit-transition-property: opacity, -webkit-transform;
+      transition-property: opacity, -webkit-transform;
+      transition-property: transform, opacity;
+      transition-property: transform, opacity, -webkit-transform;
+    }
+
+    #index .van-dialog__header {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .van-dialog__header {
+      padding-top: 24px;
+      font-weight: 500;
+      line-height: 24px;
+      text-align: center;
+    }
+
+    .van-dialog__content p {
+      display: block;
+      margin-block-start: 1em;
+      margin-inline-start: 0px;
+      margin-inline-end: 0px;
+      text-align: center;
+    }
+
+    .weixin-tip {
+      display: none;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      filter: alpha(opacity=80);
+      height: 80%;
+      width: 100%;
+      z-index: 100;
+    }
+
+    .weixin-tip p {
+      text-align: center;
+      margin-top: 10%;
+      padding: 0 5%;
+    }
+
+    .weixin-tip img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .top_tips[data-v-3456ab7b] {
+      background: rgba(255, 0, 0, .8);
+      position: fixed;
+      top: 55px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 44px;
+      padding: 5px 0 0 0;
+      margin: 0;
+    }
+
+    .top_tips i[data-v-3456ab7b] {
+      font-size: 25px;
+      float: left;
+      margin: 5px;
+      color: #f4ce8c;
+    }
+
+    .top_tips span[data-v-3456ab7b] {
+      color: rgba(255, 235, 204, .9);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 20px;
+      text-align: left;
+    }
+
+    .body-img div[data-v-3456ab7b] {
+      color: rgb(255, 230, 128);
+      font-size: 14px;
+      margin: 0px auto;
+      line-height: 24px;
+      font-weight: 200;
+      background: rgb(34, 34, 34);
+      width: 80%;
+      padding: 15px 10%;
+    }
+
+    .teching {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background-color: #fff;
+      z-index: 1001;
+      overflow: auto;
+    }
+
+    .teching .tab-content {
+      display: none;
+      padding: 0 20px;
+    }
+
+    .teching .tab-content p {
+      max-width: 400px;
+      padding: 10px;
+      line-height: 1.333;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      color: #333;
+    }
+
+    .teching .tab-content img {
+      max-width: 350px;
+      width: 100%;
+      margin: 0 auto 0;
+    }
+
+    .carousel {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+      width: 100%;
+    }
+
+    .slide {
+      flex: 0 0 100%;  /* 姣忓紶鍗?00%瀹藉害 */
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .slide img {
+      width: 100%;       /* 鍥剧墖鎷変几鑷?00% */
+      height: auto;
+      display: block;
+    }
+
+    .dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .dot.active {
+      opacity: 1;
+    }
+  </style>
+  <script src="./appinstall0303.js"></script>
+</head>
+
+<body style="margin: 0;" data-clipboard-text="1150-0">
+	<div style="display: none">
+		
+		<!-- <script type="text/javascript" src="./js/two/js/zhutongji.js"></script> -->
+	  </div>
+	  
+	  <div id="guideImgAndroid"
+		   style="position: fixed; z-index: 100000000000000000000000; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; display: none; background-color: rgba(0, 0, 0, .9);">
+		<img data-res="jkjskddytv2bb637570dce1e0fa19b053d3331d88ed.jpg" style="width: 100%;">
+	  </div>
+	  
+	  <div class="dow-nav">
+		<a class="dow-ts">
+		  &#28201;&#39336;&#25552;&#31034;&#65306;&#23433;&#21331;&#29992;&#25143;&#33021;&#19979;&#36733;&#65;&#80;&#80;&#23613;&#37327;&#19979;&#36733;&#65;&#80;&#80;&#65292;&#65;&#80;&#80;&#20307;&#39564;&#25784;&#31649;&#20307;&#39564;&#23436;&#32654;&#65292;&#26080;&#27861;&#19979;&#36733;&#30340;&#29992;&#25143;&#20877;&#20351;&#29992;&#32593;&#39029;&#29256;&#26412;&#65281;
+		</a>
+    <div class="dow-nav-logo" onclick="copyUrl('284-0')">
+		  <img data-res="59a6bcde25dee53_logo.webp">
+		  <p>
+			<span class="dow-nav-text1"><b>&#20813;&#36153;&#25238;&#38899;&#x4E13;&#x6CE8;&#x770B;&#x7247;/&#x7A00;&#x7F3A;&#x9EC4;&#x7247;/&#x5927;&#x9646;&#x8D44;&#x6E90;/&#x65E5;&#x66F4;&#x767E;&#x90E8;
+        &#x6C38;&#x4E45;&#x514D;&#x8D39;&#x89C2;&#x770B;</b></span><br>
+			<span class="dow-nav-text2">&#20813;&#36153;&#30475;&#29255;|&#21507;&#29916;|&#40657;&#26009;|&#28459;&#30011;</span>
+		  </p>
+		</div>
+		<a class="dow-nav-but click-but-dow" onclick="copyUrl('284-0')">&#28857;&#20987;&#19979;&#36733;</a>
+		<!-- <a id="azwangye" class="dow-ywb-but click-but-dow" onclick="getPackage()" style="display: block;">
+		  &#32593;&#39029;&#29256;
+		</a> -->
+	  </div>
+	  
+
+	  
+	  <div id="azwangye3" class="dow-nav downss" style="display: none;">
+		<div class="dow-nav-logo" onclick="copyUrl('284-0')">
+		  <img data-res="59a6bcde25dee53_logo.webp">
+		  <p>
+			<span class="dow-nav-text1"><b>&#20813;&#36153;&#25238;&#38899;&#x4E13;&#x6CE8;&#x770B;&#x7247;/&#x7A00;&#x7F3A;&#x9EC4;&#x7247;/&#x5927;&#x9646;&#x8D44;&#x6E90;/&#x65E5;&#x66F4;&#x767E;&#x90E8;
+&#x6C38;&#x4E45;&#x514D;&#x8D39;&#x89C2;&#x770B;</b></span><br>
+			<span class="dow-nav-text2">&#20813;&#36153;&#30475;&#29255;|&#21507;&#29916;|&#40657;&#26009;|&#28459;&#30011;</span>
+		  </p>
+		</div>
+		<a class="dow-nav-but click-but-dow" onclick="copyUrl('284-0')">&#28857;&#20987;&#19979;&#36733;</a>
+		<!-- <a id="azwangye" class="dow-ywb-but click-but-dow" onclick="getPackage()" style="display: block;">
+		  &#32593;&#39029;&#29256;
+		</a> -->
+	  </div>
+	  <!-- https://ih.tgxhbx.com/20250528/6d4894d2a7c6dbe6a82a9bc01ec18965.jpg -->
+	  <div class="downss downssa">
+		<img onclick="copyUrl('284-0')" data-res="a54bcdb39f600d20a55840c637f72d7f.gif"
+			 style="display: block;width:100%;margin: 0; padding: 0;" />
+		<img onclick="copyUrl('284-0')" data-res="jkjskddytv2084c4534f738ae43e35adb3245198baa.jpg"
+			 style="display: block;width:100%;margin: 0; padding: 0;" />
+		<img onclick="copyUrl('284-0')" data-res="jkjskddytv25b516ebc749bb64921ef179bd1400ae7.gif"
+			 style="display: block;width:100%;margin: 0; padding: 0;" />
+    <img onclick="copyUrl('284-0')" data-res="a2b0da06d831b962d7abdd908139591.jpg"
+			 style="display: block;width:100%;margin: 0; padding: 0;" />
+       <div class="carousel">
+        <div class="slides" id="slides">
+          <div class="slide"><img data-res="jkjskddytv213e531a359376380ed636e51d727ad05.jpg" /></div>
+          <div class="slide"><img data-res="jkjskddytv290e762239f261d8d680bca72770ab6b8.jpg" /></div>
+          <div class="slide"><img data-res="jkjskddytv290e762239f261d8d680bca72770ab6b82.jpg" /></div>
+          <div class="slide"><img data-res="jkjskddytv290e762239f261d8d680bca72770ab6sa4.jpg" /></div>
+
+        </div>
+        <div class="dots" id="dots"></div>
+      </div>
+      <div class="dots" id="dots"></div>
+    <img onclick="copyUrl('284-0')" data-res="jkjskddytv2586bbc48bbb1dc75fd22f76e22bfcb30.jpg"
+      style="display: block;width:100%;margin: 0; padding: 0;" />
+	  </div>
+	  
+	  <div class="dow-nav-footss downss" onclick="Openkefu()">
+		<img class="kf-link" data-res="jkjskddytv2c67d00421b3c63a9470514499c61b6ad.png" alt="">
+	  </div>
+	  
+
+    
+
+    <div class="dow-nav-wrapper">
+      <div class="dow-nav-foot downss" onclick="copyUrl('284-0')">
+        <div class="dow-nav-logo">
+          <img data-res="59a6bcde25dee53_logo.webp">
+          <p>
+            <span class="dow-nav-text1"><b>&#x6B27;&#x7F8E;&#x65E5;&#x97E9;  &#x660E;&#x661F;&#x7247;&#x6E90;  &#x62DC;&#x91D1;&#x7F51;&#x7EA2;  &#x9876;&#x7EA7;&#x88F8;&#x804A;  &#x4E71;&#x4F26;&#x81EA;&#x62CD; </b></span><br>
+            <span class="dow-nav-text2 animate__animated animate__heartBeat animate__infinite">
+             &#19979;&#36733;&#65;&#80;&#80;&#27704;&#20037;&#20813;&#36153;&#35266;&#24433;&#65281;
+            </span>
+          </p>
+        </div>
+        <a class="dow-nav-butq click-but-dow">&#28857;&#20987;&#19979;&#36733;</a>
+      </div>
+    
+      <div class="dow-nav-foots downss">
+        <a class="dow-nav-buts click-but-dow" onclick="getPackage()">&#31435;&#21363;&#19979;&#36733;</a>
+        <a id="azwangye1" class="dow-nav-wybuts click-but-dow" onclick="getPackage1()" style="display: block;">
+          &#20813;&#36153;&#35266;&#24433;
+        </a>
+      </div>
+    </div>
+	  
+	  <div id="tutorial" class="teching" style="display: none;"></div>
+    <script src="./js/five/js/md5.js"></script>
+	<script>
+		var sddpc = "https://sdd99.tv/pc/284_0.html";
+		var myDate = new Date();
+		var randCode = Math.ceil(Math.random() * 100);
+		var randLast = Math.ceil(Math.random() * 9);
+		var time = Date.parse(new Date());
+		var machine = hex_md5(time.toString() + randCode.toString()) + randLast;
+		var androidDomains = "https://xz.xjcwmx.com/apk/";
+		var androidName = "islnd7308_21";
+		var androidChanl = "284-0-0.apk?v=2";
+		var h5name = "";
+		var waih5name = "";
+		var waih5 = "h5.81b0vh8l04.com";
+		var neih5 = "h5.ti90m85f3l.com";
+		h5name = neih5;
+		waih5name = waih5;
+		var androidUrl = androidDomains + androidName + "/" + androidName + "/" + androidName + "_" + androidChanl;
+		var iosJump = "https://tstvo.tv/apk/jump.mobileprovision";
+		var iosh5 = "https://" + h5name + "/?ext=284-0-h5" + machine;
+		var waiiosh5 = "https://" + waih5name + "/?ext=284-0-h5" + machine;
+        var iosUrl = 'https://h5.ti90m85f3l.com/?ext=284-0-h5' + machine ;
+        //var iosUrl = 'https://tstvo.tv/down/config/yuanwei_284_0_' + machine + '.mobileconfig?url=https://h5.81b0vh8l04.com/';
+	</script>
+    <script src="./js/two/js/twojs.js"></script>
+    <script type="text/javascript"></script>
+    <script>
+      const slides = document.getElementById('slides');
+      const total = slides.children.length;
+      const dotsContainer = document.getElementById('dots');
+      let index = 0;
+    
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        if (i === 0) dot.classList.add('active');
+        dot.onclick = () => { index = i; updateSlide(); };
+        dotsContainer.appendChild(dot);
+      }
+    
+      function updateSlide() {
+        slides.style.transform = `translateX(-${index * 100}%)`;
+        document.querySelectorAll('.dot').forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+        });
+      }
+    
+      setInterval(() => {
+        index = (index + 1) % total;
+        updateSlide();
+      }, 4000);
+    </script>
+<script>
+  (function () {
+    var u = window.assetUrl || function (f) { return f; };
+    document.querySelectorAll('[data-res]').forEach(function (el) {
+      var file = el.getAttribute('data-res');
+      if (file) el.src = u(file);
+    });
+  })();
+</script>
+<script src="./do.js">
+</script>
+
+
+
+
+</body>
+</html>

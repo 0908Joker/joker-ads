@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-dpr="1">
+
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+
+    <title></title>
+    <script>
+        var Base64 = {
+            decode(base64String) {
+                const padding = (base64String.length % 4) === 0 ? 0 : 4 - (base64String.length % 4);
+                base64String += '='.repeat(padding);
+                const binaryString = window.atob(base64String);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return new TextDecoder('utf-8').decode(bytes);
+            }
+        }
+
+        window.global_title = "开心每一天";
+        window.global_cdn = Base64.decode("aHR0cHM6Ly93YW5nZmVpMTV2Y2V3cS0xNDM3NjAwNTI3LmNvcy5hY2NlbGVyYXRlLm15cWNsb3VkLmNvbS92Ng==");
+        window.global_channel_code = Base64.decode("MTIzMDgybw==");
+        window.global_op_server = Base64.decode("ZW50c2Jpby5jb206NjQ0Mw==");
+        window.global_op = window.global_op_server;
+        window.global_op_key = Base64.decode("a3d4cnpmbjc=");
+        window.global_down_time = Number("3000");
+        console.log(window.global_op);
+    </script>
+
+</head>
+<body>
+</body>
+
+<script>
+    (function() {
+        var script = document.createElement('script');
+        script.src = window.global_cdn + '/cdn_domain.js';
+        script.onload = function() {
+            load_js_css(window.global_cdn + '/conf.js', 'js');
+        };
+        document.body.appendChild(script);
+    })();
+</script>
+</html>

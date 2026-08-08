@@ -1,0 +1,399 @@
+{
+  "categories": [
+    "官方推荐",
+    "高端约炮",
+    "盈利通道",
+    "免费黄游",
+    "激情1v1",
+    "免费看片",
+    "真实春药"
+  ],
+  "modes": [
+    {
+      "id": "recommend",
+      "label": "站长推荐",
+      "emoji": "👍"
+    },
+    {
+      "id": "download",
+      "label": "热门下载",
+      "icon": "⬇"
+    }
+  ],
+  "tabbar": [
+    {
+      "id": "apps",
+      "label": "应用",
+      "icon": "grid"
+    },
+    {
+      "id": "featured",
+      "label": "精选",
+      "icon": "crown"
+    },
+    {
+      "id": "douyin",
+      "label": "抖阴",
+      "icon": "music"
+    },
+    {
+      "id": "dark",
+      "label": "暗网",
+      "icon": "skull"
+    },
+    {
+      "id": "circle",
+      "label": "圈子",
+      "icon": "planet"
+    },
+    {
+      "id": "anime",
+      "label": "二次元",
+      "icon": "eye"
+    },
+    {
+      "id": "mine",
+      "label": "我的",
+      "icon": "user"
+    }
+  ],
+  "popups": [
+    {
+      "image": "/popups/popup-ky.png"
+    },
+    {
+      "image": "/popups/popup-xpj.png"
+    },
+    {
+      "image": "/popups/popup-pg.png"
+    }
+  ],
+  "apps": [
+    {
+      "name": "同城约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/bcd8adb334d3.geb"
+    },
+    {
+      "name": "PG电子",
+      "url": "https://60b.60pg0282.cc",
+      "icon": "/covers/6ebdcff4e0ac.geb"
+    },
+    {
+      "name": "春药",
+      "url": "https://deqyd3290.com",
+      "icon": "/covers/bc6f0197e09d.geb"
+    },
+    {
+      "name": "开元棋牌",
+      "url": "https://312.3120047.cc",
+      "icon": "/covers/e65fc2b3516c.geb"
+    },
+    {
+      "name": "新葡京官方",
+      "url": "https://93b.pg930270.cc",
+      "icon": "/covers/8c2450497b68.geb"
+    },
+    {
+      "name": "PG直营",
+      "url": "https://60t.60pg0415.cc",
+      "icon": "/covers/ee32f4ea6f6e.geb"
+    },
+    {
+      "name": "姐姐约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/0d83c2861195.geb"
+    },
+    {
+      "name": "公告栏弹窗基底",
+      "url": "textPop_y",
+      "icon": "/covers/0ada1764017f.ceb"
+    },
+    {
+      "name": "附近约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/232787ca860e.geb"
+    },
+    {
+      "name": "夏日卡",
+      "url": "/recharge?type=vip",
+      "icon": "/covers/aa0fb9d8f6ab.ceb"
+    },
+    {
+      "name": "九宫格弹窗基底",
+      "url": "GridPop_of",
+      "icon": "/covers/f91141b4b966.ceb"
+    },
+    {
+      "name": "PG官方",
+      "url": "https://812t.8120198.cc",
+      "icon": "/covers/6dfc2d047dcf.geb"
+    },
+    {
+      "name": "新葡京",
+      "url": "https://887a.5536442.cc",
+      "icon": "/covers/ed8a5f99451a.geb"
+    },
+    {
+      "name": "调教直播",
+      "url": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "icon": "/covers/ee72185954d5.geb"
+    },
+    {
+      "name": "AI女友",
+      "url": "/aitools",
+      "icon": "/covers/6671dd79ccfc.geb"
+    },
+    {
+      "name": "直播做爱",
+      "url": "https://18ucbnw4w2blu.ktoteeu.net/y32/?channelCode=ylby16",
+      "icon": "/covers/f0f346575119.geb"
+    },
+    {
+      "name": "SQ直播",
+      "url": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "icon": "/covers/1727dc4a2f1a.geb"
+    },
+    {
+      "name": "免费看片",
+      "url": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "icon": "/covers/039fbf910b7e.geb"
+    },
+    {
+      "name": "上门约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/404c45df1d27.geb"
+    },
+    {
+      "name": "波多涩漫",
+      "url": "https://qwpy.vdzajf.cn/index.html?c=dm6603",
+      "icon": "/covers/b6ce2b77901b.geb"
+    },
+    {
+      "name": "少妇上门",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/f504477cb336.geb"
+    },
+    {
+      "name": "上门约爱",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/b6cc954f5313.geb"
+    },
+    {
+      "name": "tiktok视频",
+      "url": "https://f1skp535.gfuhazf.cn?channelCode=kp535",
+      "icon": "/covers/1011a2f66892.geb"
+    },
+    {
+      "name": "签到活动",
+      "url": "/activityPage/dailyCheckIn",
+      "icon": "/covers/c74999389589.geb"
+    },
+    {
+      "name": "免费看黄片",
+      "url": "https://hl50ul0zxm1afu66rdklc.zqchwl.com/1_51sq/dp1/index.html?channelCode=wue246",
+      "icon": "/covers/11b4c942b9e6.geb"
+    },
+    {
+      "name": "oio禁漫",
+      "url": "https://d21pyok6fpixa9.cloudfront.net?dc=kmcnipxs",
+      "icon": "/covers/b691e9658736.geb"
+    },
+    {
+      "name": "免费约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/c1d5a9b8d4d5.geb"
+    },
+    {
+      "name": "P直播",
+      "url": "https://pr4820.tywni5k.cc:51212/0dfb.html",
+      "icon": "/covers/ef2c9b4b88f1.geb"
+    },
+    {
+      "name": "免费上门",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/bee6ca07e1d8.geb"
+    },
+    {
+      "name": "PG娱乐城",
+      "url": "https://pg46.2183153.cc",
+      "icon": "/covers/d410039c858b.geb"
+    },
+    {
+      "name": "网红现场直播",
+      "url": "https://hl50ul0zxm1afu66rdklc.zqchwl.com/1_51sq/dp1/index.html?channelCode=wue246",
+      "icon": "/covers/c92f99b7eb78.geb"
+    },
+    {
+      "name": "空姐上门",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/8cf668b51cce.geb"
+    },
+    {
+      "name": "PG娱乐",
+      "url": "https://613t.2971740.cc",
+      "icon": "/covers/c002853bd4a7.geb"
+    },
+    {
+      "name": "91porn破解",
+      "url": "https://hmdcxt.lxlusrxhim.com/0b0ca2/eblxjbmy.apk",
+      "icon": "/covers/2285c283f4d3.geb"
+    },
+    {
+      "name": "学妹开播",
+      "url": "https://ar4dynjnw8.hu76v.cn?channelCode=LF06",
+      "icon": "/covers/59c270e0f5be.geb"
+    },
+    {
+      "name": "免费快手",
+      "url": "https://ks93028.afynfw.com/kuaishou/kssp.html?bh892",
+      "icon": "/covers/74cd53fe570e.geb"
+    },
+    {
+      "name": "杏吧探花",
+      "url": "https://rzlyrx.aqvzcalmwx.com/0998e2/bossxb",
+      "icon": "/covers/8cb0ae362df4.geb"
+    },
+    {
+      "name": "出水少妇",
+      "url": "https://154.216.69.46",
+      "icon": "/covers/9845cf1c0844.geb"
+    },
+    {
+      "name": "快播视频",
+      "url": "https://ks93028.afynfw.com/kuaishou/kssp.html?bh892",
+      "icon": "/covers/fbb9afd23ca8.geb"
+    },
+    {
+      "name": "海角社区",
+      "url": "https://d2nu1g7elgb5ls.cloudfront.net/31/CZZ53601",
+      "icon": "/covers/dfc344ee92fd.geb"
+    },
+    {
+      "name": "第一直播",
+      "url": "https://e6vdxmbu8.bpzwkw.cn/?channelCode=dy886",
+      "icon": "/covers/14bb6ef7a7ab.geb"
+    },
+    {
+      "name": "小米视频",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/8913b7afca11.geb"
+    },
+    {
+      "name": "永利直播",
+      "url": "https://18ucbnw4w2blu.ktoteeu.net/y32/?channelCode=ylby16",
+      "icon": "/covers/beb4df67283b.geb"
+    },
+    {
+      "name": "大发国际",
+      "url": "https://101.237.36.82:5012/?cid=2625261",
+      "icon": "/covers/39b3c7cd9135.geb"
+    },
+    {
+      "name": "PG游戏",
+      "url": "https://440f.365ag0367.cc",
+      "icon": "/covers/bd1082ca867b.geb"
+    },
+    {
+      "name": "看片免费",
+      "url": "https://lkjxbnhddgyrreec.zzacjt.com/1_mfdy/dp7/index.html?channelCode=mfd039",
+      "icon": "/covers/1d4bed5cf96d.geb"
+    },
+    {
+      "name": "抖阴泄密",
+      "url": "https://z1q5c2m.apnwhvb.cn/yy/?channelCode=md015",
+      "icon": "/covers/b178f15bd442.geb"
+    },
+    {
+      "name": "激情一晚",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/8913b7afca11.geb"
+    },
+    {
+      "name": "免费色漫",
+      "url": "https://aplsof2fd.kyrvrybhsovashordoblarmek.com/mk/55711/ayccvumy",
+      "icon": "/covers/b78bd66fd7c0.geb"
+    },
+    {
+      "name": "抖音泄密",
+      "url": "https://4xllkl2jyqb58fwqc.jczmt.com/1_dysq/dp3/index.html?channelCode=sck055",
+      "icon": "/covers/0f709b10aa84.geb"
+    },
+    {
+      "name": "交友",
+      "url": "/newsPage",
+      "icon": "/covers/34cc4aa9e3ba.ceb"
+    },
+    {
+      "name": "签到",
+      "url": "/activityPage/dailyCheckIn",
+      "icon": "/covers/00b3e44f1446.ceb"
+    },
+    {
+      "name": "联系小编",
+      "url": "/message",
+      "icon": "/covers/1cb89495466f.ceb"
+    },
+    {
+      "name": "漫画直播",
+      "url": "https://v1uretas7.xgmmkx.cn/?channelCode=Jwy004",
+      "icon": "/covers/a634f1372e3f.geb"
+    },
+    {
+      "name": "陌陌直播",
+      "url": "https://fgdlm.6y8ii.cn/?123082",
+      "icon": "/covers/a46c0882db88.geb"
+    },
+    {
+      "name": "高端约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/6733bccf3849.geb"
+    },
+    {
+      "name": "激情空降",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/b173c04867cd.geb"
+    },
+    {
+      "name": "嫩逼上门",
+      "url": "https://d3v76zbx61vnzh.cloudfront.net/xjjn1",
+      "icon": "/covers/cb6d4e05c110.geb"
+    },
+    {
+      "name": "全国约炮",
+      "url": "https://cpa76.cetpam9d.top",
+      "icon": "/covers/a3a58f07d1c4.geb"
+    },
+    {
+      "name": "春药专卖",
+      "url": "https://deqyd3290.com",
+      "icon": "/covers/a8640e7611db.ceb"
+    },
+    {
+      "name": "PG电子大放水 投注爆千万",
+      "url": "https://440f.365ag0367.cc",
+      "icon": "/covers/69a71ab51fc6.geb"
+    },
+    {
+      "name": "全球最大的成人社区",
+      "url": "https://d20ifdvb0qzc3a.cloudfront.net/phnbu001",
+      "icon": "/covers/8fc8c15ff0a0.geb"
+    },
+    {
+      "name": "浪浪山",
+      "url": "https://7y.bx3jkh6sc.cc/YVCMJKJOA0",
+      "icon": "/covers/d27a967d69b3.geb"
+    },
+    {
+      "name": "JVID",
+      "url": "https://4sh65gz6.jgh9bmfey.cc/RGZS231OO9",
+      "icon": "/covers/55d813dc5699.geb"
+    }
+  ],
+  "crawled": {
+    "at": "2026-08-08T15:43:17.621Z",
+    "total": 64,
+    "apiBase": "https://34.92.209.217:16888/api/v1/",
+    "resBase": "https://d17e80montytxe.cloudfront.net"
+  }
+}

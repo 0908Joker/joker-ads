@@ -1,0 +1,12 @@
+<!doctype html><html lang="zh"><head><meta charset="UTF-8" site="N4" version="P08.08.10.00" env="prod" gv="509ff893c6672797c47c8e3aa07d3afa0e08e0cc" br="HEAD"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#ffffff"><title></title><link rel="icon" type="image/png" href=""/><link rel="preload" href="./js/xxtea.min.js" as="script"><script src="./js/xxtea.min.js"></script><script type="module" crossorigin src="./assets/BGn7jN5a_index.js"></script><link rel="stylesheet" crossorigin href="./assets/rNXltbYB_index.css"><script>window.__PRELOADED_DOWNLOAD_INFO__ = 'MKcWQcnPnHLZGq3yt7U0a7jVd8kINVqGG5wq/kQLocNrywZ6xk9+JUg8USIocOqvmemoh2ayvB1tpIdLS7X08FIJIaHgeYQyajhlBeONyZ5aLb7vTSatt754QZbSI1dIU//q1fPsj886Ir861o6dWqydvPuX2SRuVy9Fmr9rc/vPumXxyRMHaJlL43kBUkTaW/YC/w8Iwg90b/cI';</script></head><body><div id="app"></div><script>// 检查URL参数中是否包含 c=test
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('c') === 'test') {
+        // 动态加载 vConsole JS 文件
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/vconsole@latest/dist/vconsole.min.js';
+        script.onload = function() {
+          // JS 加载完成后初始化 vConsole
+          var vConsole = new window.VConsole();
+        };
+        document.head.appendChild(script);
+      }</script></body></html>

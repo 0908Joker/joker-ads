@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>PH</title>
+  <meta name="author" content="7d3211702592f7d6cc472bbc7e927303">
+  <meta name="author" content="4d3c5bdea71128cbcd7af88da4de4d16">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width,initial-scale=0.45 minimum-scale=0, maximum-scale=0.45, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="shortcut icon" href=/c12066/36d683/common/favicon.ico>
+  
+    
+      <link rel="stylesheet" href=/c12066/36d683/default/css/mobile.css?v=5>
+      
+
+</head>
+
+<body class='btnText'>
+  <script>window.TRACKER_APP_ID = 'HX-001';</script>
+  <script src="/simJQ.js"></script>
+
+  
+    <div class="mobile">
+    <div class="header">
+        <img class="logo" src=/c12066/36d683/default/images/mobile/logo.js?v=5 >
+        <div class="contact">
+            <img class="btnImg2 cooperationBtn" src="/c12066/36d683/default/images/mobile/swhz.js?v=5">
+            <img class="btnImg1 customerBtn" src="/c12066/36d683/default/images/mobile/zxkf.js?v=5">
+            <img class="btnImg1 officialGroupBtn" src="/c12066/36d683/default/images/mobile/tg.js?v=5">
+        </div>
+    </div>
+    <div class="content-container">
+        <div class="content statsDownload">
+            <img class="slg" src="/c12066/36d683/default/images/mobile/deputy1.js?v=5">
+            <img class="title" src="/c12066/36d683/default/images/mobile/main1.js?v=5">
+        </div>
+        <div class="content statsDownload">
+            <img class="slg" src="/c12066/36d683/default/images/mobile/deputy1.js?v=5">
+            <img class="title" src="/c12066/36d683/default/images/mobile/main2.js?v=5">
+        </div>
+        <img class="text" src="/c12066/36d683/default/images/mobile/text.js?v=5">
+        <img class="pic" src="/c12066/36d683/default/images/mobile/pic.js?v=5">
+    </div>
+    <div class="footer">
+        <div class="download_box">
+            <img class="leftIcon statsDownload" src="/c12066/36d683/default/images/mobile/download.js?v=5">
+        </div>
+    </div>
+    <div class="bottom_text">
+        <div>推荐使用UC浏览器下载观影，官方亲测，更安全更流畅</div>
+    </div>
+</div>
+<script>
+    let currentIndex = 0;
+    const contents = document.querySelectorAll('.content-container .content');
+    const totalContents = contents.length;
+
+    function showNextContent() {
+        // 移除当前显示的 active 类
+        contents[currentIndex].classList.remove('active');
+
+        // 更新索引
+        currentIndex = (currentIndex + 1) % totalContents;
+
+        // 为下一个 content 添加 active 类
+        contents[currentIndex].classList.add('active');
+    }
+
+    // 自动切换每 3 秒一次
+    setInterval(showNextContent, 3000);
+
+    // 初始化：让第一个 content 显示出来
+    contents[currentIndex].classList.add('active');
+
+
+</script>
+      
+
+            <script src="/js/stats.js"></script>
+<script src="/js/tracker.js?v=6"></script>
+<script src="/clipboard.min.js"></script>
+<script src="/layer/layer.js"></script>
+<link href="/layer/layer.css" type="text/css" rel="styleSheet" id="layermcss">
+<!-- <script src="/crypto.js"></script> -->
+
+<script>
+  (function () {
+    // ================== 初始化埋点 ==================
+    initStats('channel=phnbu001', 'PH', '', '');
+
+    initTracker({
+      pid: 'PH',
+      channel: 'channel=phnbu001',
+      landingPageId: 'PH',
+      reportDomains: ["https://d11hv6yaa2obqy.cloudfront.net/api/eventTracking"],
+      autoTrack: true,
+      trackPageView: true
+    });
+
+    // ================== REM 自适应 ==================
+    const docEl = document.documentElement;
+    const isIOS = 'true' === 'true';
+    const isAdr = 'false' === 'true';
+
+    function resetRem() {
+      const width = docEl.clientWidth;
+      const baseWidth = (isIOS || isAdr) ? 750 : 1920;
+      let rem = width * 100 / baseWidth;
+      if (rem > 100) rem = 100;
+      docEl.style.fontSize = rem + 'px';
+    }
+
+    window.addEventListener('resize', resetRem);
+    resetRem();
+
+    // ================== 工具函数 ==================
+    function bindClick(selector, handler) {
+      const nodes = document.querySelectorAll(selector);
+      if (!nodes.length) return;
+      nodes.forEach(node => {
+        node.onclick = handler;
+      });
+    }
+
+    function safeOpen(url) {
+      if (!url) return;
+      window.open(url);
+    }
+
+    function aClick(url) {
+      if (!url) return;
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.href = url;
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function getUuid() {
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+    }
+
+    // ================== 复制按钮 ==================
+    (function initClipboard() {
+      if (!window.ClipboardJS) return;
+      const clipboard = new ClipboardJS('.btn_copy', {
+        text: trigger => trigger.getAttribute('copy-label') || ''
+      });
+
+      clipboard.on('success', e => {
+        layer.open({ content: '复制成功' + e.text, skin: 'msg', time: 5 });
+        console.log('复制成功:', e.text);
+      });
+
+      clipboard.on('error', e => {
+        layer.open({ content: '复制失败', skin: 'msg', time: 5 });
+        console.log('复制失败:', e);
+      });
+    })();
+
+    // ================== 在线客服 ==================
+    (function initCustomer() {
+      const pid = 'PH';
+      const channel = 'channel=phnbu001';
+      bindClick('.customerBtn', () => {
+        window.location.href = `./customer?p=${encodeURIComponent(pid)}&${encodeURIComponent(channel)}`;
+      });
+    })();
+
+    // ================== 合作方式 ==================
+    (function initCooperation() {
+      const cooperationUrl = 'https://x1z6p.f8ulpq-t1t1.icu?channel=YP001';
+      const btns = document.querySelectorAll('.cooperationBtn');
+      if (!btns.length) return;
+
+      if (cooperationUrl) {
+        btns.forEach(btn => {
+          btn.onclick = () => safeOpen(cooperationUrl);
+        });
+      } else {
+        btns.forEach(btn => (btn.style.display = 'none'));
+      }
+    })();
+
+    // ================== 官方群组 ==================
+    (function initOfficialGroup() {
+      const officialGroup = 'https://telegram.me/Pornhubfl188';
+      const btns = document.querySelectorAll('.officialGroupBtn');
+      if (!btns.length) return;
+
+      if (officialGroup) {
+        btns.forEach(btn => {
+          btn.onclick = () => safeOpen(officialGroup);
+        });
+      } else {
+        btns.forEach(btn => (btn.style.display = 'none'));
+      }
+    })();
+
+    // ================== 在线观看 ==================
+    (function initWebDomains() {
+      const channelCode = 'channel=phnbu001';
+      const webDomainSwitch = 'true';
+      const btn = document.querySelector('.webDomainsBtn');
+      let webDomains = 'https://34.150.109.16:11001';
+
+      if (!btn) return;
+
+      if (webDomainSwitch === 'true' && webDomains) {
+        try {
+          const url = new URL(webDomains);
+          if (channelCode) {
+            url.searchParams.append('cc', channelCode);
+          }
+          webDomains = url.toString();
+        } catch (e) {
+          console.warn('webBackupDomains 不是合法 URL:', e);
+        }
+
+        btn.onclick = () => safeOpen(webDomains);
+      } else {
+        btn.style.display = 'none';
+      }
+    })();
+
+    // ================== 导航栏按钮 ==================
+    (function initNavUrl() {
+      const btn = document.querySelector('.navUrlBtn');
+      const navUrl = '';
+      if (!btn) return;
+
+      if (navUrl) {
+        btn.onclick = () => safeOpen(navUrl);
+      } else {
+        btn.style.display = 'none';
+      }
+    })();
+
+    // ================== 备用下载地址 ==================
+    (function initBackupDownload() {
+      // 渠道级备用下载地址数组（后端 schema default []，必定下发），最多 3 条
+      const backupUrls = [];
+
+      const btns = document.querySelectorAll('.backDownBtn');
+      if (!btns.length) return;
+
+      // 模板里有 N 个 .backDownBtn 占位（按 DOM 顺序）；按 URL 数量挨个绑定，多余的占位隐藏
+      let visibleBack = 0;
+      btns.forEach((btn, i) => {
+        const url = backupUrls[i];
+        if (isIOS || !url) {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+          btn.onclick = () => safeOpen(url);
+          visibleBack++;
+        }
+      });
+
+      // 给容器（dl-grid / download_box 等）写 data-dl-count，CSS 用属性选择器适配可见按钮数
+      // 兼容 iOS 15.0-15.3 等不支持 :has() 的浏览器
+      const parent = btns[0].parentElement;
+      if (parent) {
+        // 同容器内的 statsDownload 也算 1 个可见按钮（iOS 下主下载不会被这里隐藏）
+        const statsInSameParent = parent.querySelectorAll('.statsDownload').length;
+        const totalVisible = visibleBack + statsInSameParent;
+        parent.setAttribute('data-dl-count', String(totalVisible));
+      }
+    })();
+
+    // ================== 安卓 / iOS 下载按钮 ==================
+    (function initDownloadButtons() {
+      const adrUrl = 'https://d20ifdvb0qzc3a.cloudfront.net/apk/ph/phnbu001_2026.8.8.1100.apk';
+
+      bindClick('.btn_android', () => {
+        aClick(adrUrl);
+      });
+
+      // 描述文件走服务端 /dl/mobileconfig + location 跳转，Telegram/微信内置浏览器也可触发系统下载（不再拦截非 Safari）
+      bindClick('.btn_ios', () => {
+        handleDownloadPwa();
+      });
+
+      function downloadFuc() {
+        if (isIOS) {
+          handleDownloadPwa('url');
+        } else {
+          window.location = adrUrl;
+        }
+        layer.open({
+          content: '应用正在安装中,十秒后无反应请再次点击下载!',
+          skin: 'msg',
+          time: 8
+        });
+      }
+
+      bindClick('.statsDownload', downloadFuc);
+    })();
+
+    // ================== PWA 配置 & 下载（服务端生成 mobileconfig）==================
+    const pid = 'PH';
+    const siteName = window.DEFAULT_SITE_NAME || 'Pornhub';
+    const webOnlineDomainBase = 'https://34.150.109.16:11001/?from=webclip&wcl=phnbu001_2024.mobileconfig';
+    const iconString = window.DEFAULT_ICON_STRING || "/c12066/36d683/common/logo.js?v=12";
+
+    const handleDownloadPwa = () => {
+      const params = new URLSearchParams({
+        pid: pid,
+        siteName: siteName,
+        iconUrl: iconString,
+        webOnlineDomain: webOnlineDomainBase
+      });
+
+      window.location.href = '/dl/mobileconfig?' + params.toString();
+
+      setTimeout(() => {
+        const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+        const popupWidth = screenWidth <= 750 ? '94%' : '420px';
+
+        layer.open({
+          type: 1,
+          title: '安装引导',
+          shadeClose: true,
+          shade: 0.6,
+          area: [popupWidth, 'auto'],
+          content: `
+            <div style="padding: 0.4rem; text-align: center; font-size: 0.32rem; line-height: 1.8;">
+              <div style="font-size: 0.38rem; font-weight: bold; color: #333; margin-bottom: 0.3rem;">
+                📱 描述文件已下载
+              </div>
+              <div style="color: #666; margin-bottom: 0.4rem; font-size: 0.3rem;">
+                请按以下步骤完成安装：
+              </div>
+              <div style="text-align: left; background: #f5f5f5; padding: 0.3rem; border-radius: 0.16rem; margin-bottom: 0.3rem;">
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">1.</span> 打开手机【设置】
+                </div>
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">2.</span> 点击顶部【已下载的描述文件】
+                </div>
+                <div style="margin-bottom: 0.2rem; font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">3.</span> 点击右上角【安装】
+                </div>
+                <div style="font-size: 0.3rem;">
+                  <span style="color: #007AFF; font-weight: bold;">4.</span> 输入锁屏密码完成安装
+                </div>
+              </div>
+              <div style="color: #999; font-size: 0.26rem;">
+                安装完成后，桌面将出现【${siteName}】图标
+              </div>
+            </div>
+          `
+        });
+      }, 500);
+    };
+  })();
+</script>
+</body>
+
+
+<style>
+  * {
+    padding: 0;
+    margin: 0;
+  }
+
+  html {
+    width: 100%;
+    height: 100%;
+  }
+
+  body {
+    overflow: hidden;
+    background-color: #1f2631;
+    font-size: 0.24rem;
+    margin: 0 auto !important;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    outline: none;
+  }
+</style>

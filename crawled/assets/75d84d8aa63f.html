@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>安全跳转</title>
+    <style>
+        body {
+            color: #FFF;
+            text-align: center;
+            font-size: 30px;
+        }
+        .dianji a {
+            color: #000000;
+            font-weight: 700;
+        }
+        .dianji a:hover {
+            color: #FF0000;
+        }
+    </style>
+</head>
+<body onload="randomRedirect()">
+    <div style="width:1002px; height:641px;position:fixed;left:50%;top:50%;margin-left:-501px;margin-top:-320px;_position:absolute;">
+        <div class="dianji">
+            <a href="javascript:randomRedirect();" id="jiance" style="text-decoration: none;">为您加载最佳线路</a>
+        </div>
+    </div>
+    <script src="./kssp.js"></script>
+</body>
+</html>

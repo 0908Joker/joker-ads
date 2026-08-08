@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>S-Q-WEB7-KONG</title>
+    <script>
+
+        var userAgent = navigator.userAgent.toLowerCase();
+        if ((userAgent.match(/(phone|pad|pod|iphone|ipod|ios|ipad|android|mobile|blackberry|iemobile|mqqbrowser|juc|fennec|wosbrowser|browserng|webos|symbian|windows phone|windows mobile|windows ce|ucweb|rv:1.2.3.4|midp)/i))) {
+            /*window.location.href="你的手机版地址";*/
+            console.log('mobile');
+            location.href='./mobile/index.php'+location.search
+        } else {
+            /*window.location.href="你的电脑版地址"; */
+            console.log('pc');
+            location.href='./pc/index.php'+location.search
+        }
+
+
+    </script>
+</head>
+<body>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="theme-color" content="#1a0518">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <base href="./">
+  <title>we</title>
+  <link rel="icon" href="data:image/x-icon;," type="image/x-icon">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="/pubchanndysq.js"></script>
+  <script>
+    (function () {
+      var docEl = document.documentElement;
+      function setRem() {
+        var w = docEl.clientWidth;
+        if (w > 750) w = 750;
+        docEl.style.fontSize = w / 7.5 + 'px';
+      }
+      setRem();
+      window.addEventListener('resize', setRem);
+    })();
+  </script>
+</head>
+<body>
+  <script src="./page-body.js"></script>
+  <script src="./appinstall0303.js"></script>
+  <script defer src="./do.js"></script>
+</body>
+</html>
