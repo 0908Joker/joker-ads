@@ -1,0 +1,41 @@
+name: Deploy to VPS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass rsync
+
+      - name: Upload site files
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+        run: |
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p /var/www/51-pc.com /tmp"
+          sshpass -p "$DEPLOY_PASSWORD" scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            deploy/nginx-51-pc.conf deploy/setup-server.sh \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/"
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" "bash /tmp/setup-server.sh"
+          sshpass -p "$DEPLOY_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+            dist/ "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/51-pc.com/"
+          sshpass -p "$DEPLOY_PASSWORD" ssh -o StrictHostKeyChecking=no \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" "chown -R www-data:www-data /var/www/51-pc.com && nginx -t && systemctl reload nginx"
