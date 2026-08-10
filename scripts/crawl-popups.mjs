@@ -12,85 +12,61 @@ const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/6
 
 const hashStr = (s) => crypto.createHash('md5').update(s).digest('hex').slice(0, 10)
 
-async function capturePopup(page, index) {
-  await page.waitForTimeout(1500)
+function isGifBuf(buf) {
+  return buf.length > 6 && buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46
+}
 
-  const selectors = [
-    '.van-popup img',
-    '.van-popup--center img',
-    '[class*="popup"] img',
-    '.popup-wrap img',
-    '.ad-popup img',
-  ]
+function isPngBuf(buf) {
+  return buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50
+}
 
-  for (const sel of selectors) {
-    const img = page.locator(sel).first()
-    if (!(await img.count())) continue
-    if (!(await img.isVisible().catch(() => false))) continue
+async function blobUrlToBuffer(page, url) {
+  return page.evaluate(async (u) => {
+    const res = await fetch(u)
+    const ab = await res.arrayBuffer()
+    return Array.from(new Uint8Array(ab))
+  }, url)
+}
 
-    const box = await img.boundingBox().catch(() => null)
-    if (!box || box.width < 80) continue
+async function savePopupBuffer(buf, index, extHint = '') {
+  const ext = isGifBuf(buf) ? 'gif' : isPngBuf(buf) ? 'png' : extHint || 'gif'
+  const file = `popup-${index}.${ext}`
+  fs.writeFileSync(path.join(OUT, file), buf)
+  return { file, ext, size: buf.length }
+}
 
-    const data = await img.evaluate((el) => {
-      const src = el.currentSrc || el.src || ''
-      const isGif = /\.gif/i.test(src) || src.startsWith('data:image/gif')
-      return new Promise((resolve) => {
-        const done = () => {
-          try {
-            const w = el.naturalWidth || el.width
-            const h = el.naturalHeight || el.height
-            if (!w || w < 50) return resolve({ src, blob: null, w, h, isGif })
-            const canvas = document.createElement('canvas')
-            canvas.width = w
-            canvas.height = h
-            canvas.getContext('2d').drawImage(el, 0, 0, w, h)
-            resolve({
-              src: src.slice(0, 120),
-              blob: canvas.toDataURL(isGif ? 'image/png' : 'image/png'),
-              w,
-              h,
-              isGif,
-            })
-          } catch (e) {
-            resolve({ src, blob: null, error: String(e) })
-          }
-        }
-        if (el.complete) done()
-        else {
-          el.onload = done
-          el.onerror = () => resolve({ src, blob: null })
-          setTimeout(done, 2000)
-        }
-      })
-    })
+async function captureImgBytes(page, imgLocator) {
+  const meta = await imgLocator.evaluate((el) => ({
+    src: el.currentSrc || el.src || '',
+    w: el.naturalWidth,
+    h: el.naturalHeight,
+  }))
 
-    if (data.blob) {
-      return { data, box, sel }
-    }
+  if (!meta.src || meta.w < 50) return null
+
+  let buf = null
+
+  if (/^https?:\/\//i.test(meta.src)) {
+    const res = await page.request.get(meta.src).catch(() => null)
+    if (res?.ok()) buf = Buffer.from(await res.body())
+  } else if (meta.src.startsWith('blob:')) {
+    const bytes = await blobUrlToBuffer(page, meta.src).catch(() => null)
+    if (bytes) buf = Buffer.from(bytes)
+  } else if (meta.src.startsWith('data:image/')) {
+    const b64 = meta.src.split(',')[1]
+    if (b64) buf = Buffer.from(b64, 'base64')
   }
 
-  // fallback: screenshot popup container only
-  const popup = page.locator('.van-popup--center, .van-popup').first()
-  if (await popup.isVisible().catch(() => false)) {
-    const buf = await popup.screenshot({ type: 'png' }).catch(() => null)
-    if (buf) return { screenshot: buf }
-  }
-
-  return null
+  if (!buf?.length) return null
+  return { buf, meta }
 }
 
 async function closePopup(page) {
-  const closes = [
-    '.van-popup__close-icon',
-    '.popup-close',
-    '[class*="close"]',
-    'button:has-text("×")',
-  ]
-  for (const sel of closes) {
+  for (const sel of ['.van-popup__close-icon', '.popup-close', '[class*="close"]']) {
     const btn = page.locator(sel).first()
     if (await btn.isVisible().catch(() => false)) {
       await btn.click().catch(() => {})
-      await page.waitForTimeout(600)
+      await page.waitForTimeout(700)
       return true
     }
   }
@@ -99,30 +75,9 @@ async function closePopup(page) {
   return false
 }
 
-async function downloadGifFromNetwork(page, outPath) {
-  return new Promise((resolve) => {
-    const handler = async (res) => {
-      const url = res.url()
-      if (!/\.gif(\?|$)/i.test(url) && !url.includes('data:image/gif')) return
-      try {
-        const buf = Buffer.from(await res.body())
-        if (buf.length > 1000) {
-          fs.writeFileSync(outPath, buf)
-          page.off('response', handler)
-          resolve(outPath)
-        }
-      } catch {}
-    }
-    page.on('response', handler)
-    setTimeout(() => {
-      page.off('response', handler)
-      resolve(null)
-    }, 8000)
-  })
-}
-
 async function main() {
   fs.mkdirSync(OUT, { recursive: true })
+
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({
     userAgent: UA,
@@ -131,69 +86,81 @@ async function main() {
   })
   const page = await context.newPage()
 
-  const gifPromise = downloadGifFromNetwork(page, path.join(OUT, '_pending.gif'))
+  const networkGifs = []
+  page.on('response', async (res) => {
+    try {
+      const url = res.url()
+      const type = res.headers()['content-type'] || ''
+      if (!/gif/i.test(url) && !/gif/i.test(type)) return
+      const body = Buffer.from(await res.body())
+      if (body.length > 2000 && isGifBuf(body)) {
+        networkGifs.push({ url, body })
+      }
+    } catch {}
+  })
 
   await page.goto(`${SITE}/#/launch`, { waitUntil: 'networkidle', timeout: 90000 }).catch(() => {})
-  await page.waitForTimeout(4000)
+  await page.waitForTimeout(5000)
 
   const popups = []
-  const maxPopups = 5
 
-  for (let i = 0; i < maxPopups; i++) {
-    const cap = await capturePopup(page, i)
-    if (!cap) break
+  for (let i = 0; i < 6; i++) {
+    await page.waitForTimeout(1200)
+    const img = page.locator('.van-popup img, .van-popup--center img').first()
+    if (!(await img.isVisible().catch(() => false))) break
 
-    let file = ''
-    let url = ''
-
-    if (cap.data?.blob) {
-      const ext = cap.data.isGif ? 'gif' : 'png'
-      file = `popup-${i + 1}.${ext}`
-      const buf = Buffer.from(cap.data.blob.split(',')[1], 'base64')
-      fs.writeFileSync(path.join(OUT, file), buf)
-      console.log(`  popup ${i + 1}: ${file} (${cap.data.w}x${cap.data.h}) via ${cap.sel}`)
-    } else if (cap.screenshot) {
-      file = `popup-${i + 1}.png`
-      fs.writeFileSync(path.join(OUT, file), cap.screenshot)
-      console.log(`  popup ${i + 1}: ${file} (container screenshot)`)
+    const cap = await captureImgBytes(page, img)
+    if (!cap) {
+      await closePopup(page)
+      continue
     }
 
-    if (file) {
-      popups.push({ image: `/popups/${file}`, url: '' })
-    }
+    const saved = await savePopupBuffer(cap.buf, popups.length + 1)
+    const kind = isGifBuf(cap.buf) ? 'GIF' : isPngBuf(cap.buf) ? 'PNG' : 'BIN'
+    console.log(
+      `  popup ${popups.length + 1}: ${saved.file} [${kind}] ${cap.meta.w}x${cap.meta.h} ${saved.size}b`,
+    )
+    popups.push({ image: `/popups/${saved.file}`, url: '', _src: cap.meta.src.slice(0, 100) })
 
-    const closed = await closePopup(page)
-    if (!closed) break
+    if (!(await closePopup(page))) break
   }
 
-  const pendingGif = await gifPromise
-  if (pendingGif && fs.existsSync(pendingGif)) {
-    const name = `popup-${hashStr('network')}.gif`
-    fs.renameSync(pendingGif, path.join(OUT, name))
-    if (!popups.some((p) => p.image.endsWith('.gif'))) {
-      popups.unshift({ image: `/popups/${name}`, url: '' })
-    }
-    console.log(`  network gif: ${name}`)
+  // fallback: unused network gifs
+  for (const ng of networkGifs) {
+    if (popups.length >= 5) break
+    if (popups.some((p) => p._src.includes(ng.url.slice(-20)))) continue
+    const saved = await savePopupBuffer(ng.body, popups.length + 1)
+    console.log(`  network: ${saved.file} ${ng.body.length}b`)
+    popups.push({ image: `/popups/${saved.file}`, url: '', _src: ng.url })
   }
 
-  // merge enterApp urls from saved API
   const saved = JSON.parse(fs.readFileSync(path.join(ROOT, 'crawled/api/in-page/browser-api.json'), 'utf8'))
   const enterApp = saved.getAllAD?.enterApp || []
   popups.forEach((p, i) => {
+    delete p._src
     if (enterApp[i]?.orgUrl) p.url = enterApp[i].orgUrl
     if (enterApp[i]?.name) p.name = enterApp[i].name
   })
 
   if (!popups.length) {
-    console.log('⚠️ 未抓到弹窗，保留现有配置')
+    console.log('⚠️ 未抓到弹窗')
     await browser.close()
-    return
+    process.exit(1)
+  }
+
+  // remove old fake gif/png popups
+  for (const f of fs.readdirSync(OUT)) {
+    if (/^popup-\d+\.(gif|png)$/i.test(f)) {
+      // keep only newly written - we'll overwrite by same names
+    }
   }
 
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/data/config.json'), 'utf8'))
   config.popups = popups
   fs.writeFileSync(path.join(ROOT, 'src/data/config.json'), JSON.stringify(config, null, 2))
-  console.log(`✅ ${popups.length} 弹窗已更新`)
+
+  const gifCount = popups.filter((p) => p.image.endsWith('.gif')).length
+  console.log(`✅ ${popups.length} 弹窗, 其中 ${gifCount} 个真 GIF`)
   await browser.close()
 }
 
