@@ -2,11 +2,18 @@
   <div class="promo-banner">
     <div class="promo-banner__bg" />
     <div class="promo-banner__content">
-      <span class="promo-banner__tag">限时</span>
-      <span class="promo-banner__text">聊天不限制</span>
+      <span class="promo-banner__tag">{{ tag }}</span>
+      <span class="promo-banner__text">{{ text }}</span>
     </div>
   </div>
 </template>
+
+<script setup>
+defineProps({
+  tag: { type: String, default: '限时' },
+  text: { type: String, default: '聊天不限制' },
+})
+</script>
 
 <style scoped>
 .promo-banner {

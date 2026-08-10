@@ -2,10 +2,10 @@
   <div v-if="visible" class="float-banner">
     <div class="float-banner__icon">PG</div>
     <div class="float-banner__text">
-      <strong>PG电子大放水</strong>
-      <span>投注爆千万</span>
+      <strong>{{ title }}</strong>
+      <span>{{ subtitle }}</span>
     </div>
-    <button class="float-banner__btn">下载</button>
+    <button class="float-banner__btn" @click="open">{{ btn }}</button>
     <button class="float-banner__close" @click="visible = false">×</button>
   </div>
 </template>
@@ -13,7 +13,20 @@
 <script setup>
 import { ref } from 'vue'
 
+const props = defineProps({
+  title: { type: String, default: 'PG电子大放水' },
+  subtitle: { type: String, default: '投注爆千万' },
+  url: { type: String, default: '' },
+  signUrl: { type: String, default: '' },
+  btn: { type: String, default: '下载' },
+})
+
 const visible = ref(true)
+
+function open() {
+  const target = props.signUrl || props.url
+  if (target?.startsWith('http')) window.open(target, '_blank')
+}
 </script>
 
 <style scoped>

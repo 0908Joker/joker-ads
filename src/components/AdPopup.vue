@@ -3,7 +3,7 @@
     <div class="popup-wrap">
       <a
         class="popup-card"
-        :href="current.url || undefined"
+        :href="(current.signUrl || current.url) || undefined"
         target="_blank"
         rel="noopener noreferrer"
         @click="onAdClick"
@@ -55,7 +55,8 @@ function close() {
 }
 
 function onAdClick(e) {
-  if (!current.value.url) e.preventDefault()
+  const target = current.value.signUrl || current.value.url
+  if (!target) e.preventDefault()
 }
 
 onMounted(() => {

@@ -10,7 +10,7 @@
         :key="cat"
         class="hero__tab"
         :class="{ 'is-active': activeCategory === cat }"
-        @click="activeCategory = cat"
+        @click="selectCategory(cat)"
       >
         {{ cat }}
       </button>
@@ -22,7 +22,7 @@
         :key="mode.id"
         class="mode-switch__item"
         :class="{ 'is-active': activeMode === mode.id }"
-        @click="activeMode = mode.id"
+        @click="selectMode(mode.id)"
       >
         <span>{{ mode.label }}</span>
         <span v-if="mode.emoji" class="mode-switch__emoji">{{ mode.emoji }}</span>
@@ -42,6 +42,18 @@ defineProps({
 
 const activeCategory = ref('官方推荐')
 const activeMode = ref('recommend')
+
+const emit = defineEmits(['category-change', 'mode-change'])
+
+function selectCategory(cat) {
+  activeCategory.value = cat
+  emit('category-change', cat)
+}
+
+function selectMode(id) {
+  activeMode.value = id
+  emit('mode-change', id)
+}
 </script>
 
 <style scoped>
