@@ -84,9 +84,14 @@ onMounted(() => {
   align-items: center;
   background: rgba(0, 0, 0, 0.78);
   display: flex;
-  inset: 0;
+  bottom: 0;
   justify-content: center;
+  left: 50%;
+  max-width: 430px;
   position: fixed;
+  top: 0;
+  transform: translateX(-50%);
+  width: 100%;
   z-index: 200;
 }
 
@@ -94,8 +99,9 @@ onMounted(() => {
   align-items: center;
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
+  max-width: 86%;
   width: 6.4rem;
-  max-width: 92vw;
 }
 
 .popup-card {

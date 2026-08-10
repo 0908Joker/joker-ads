@@ -37,11 +37,12 @@ function open() {
   bottom: calc(1.53846rem + env(safe-area-inset-bottom) + 0.16rem);
   display: flex;
   gap: 0.16rem;
-  left: 0.2rem;
+  left: 50%;
+  max-width: 410px;
   padding: 0.16rem 0.24rem;
   position: fixed;
-  right: 0.2rem;
-  width: auto;
+  transform: translateX(-50%);
+  width: calc(100% - 0.4rem);
   z-index: 90;
 }
 
