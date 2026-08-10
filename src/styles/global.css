@@ -7,16 +7,9 @@
 }
 
 html {
-  font-size: calc(100vw / 10);
   background-color: #111;
   height: 100%;
   -webkit-text-size-adjust: 100%;
-}
-
-@media (min-width: 430px) {
-  html {
-    font-size: 43px;
-  }
 }
 
 body {
@@ -30,8 +23,7 @@ body {
 }
 
 #app {
-  max-width: 430px;
-  margin: 0 auto;
+  width: 100%;
   min-height: 100vh;
   position: relative;
   background: #111;

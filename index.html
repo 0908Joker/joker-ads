@@ -11,6 +11,17 @@
     <meta name="referrer" content="no-referrer" />
     <title>小红书</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script>
+      (function () {
+        function setRootFontSize() {
+          var width = document.documentElement.clientWidth || window.innerWidth
+          document.documentElement.style.fontSize = width / 10 + 'px'
+        }
+        setRootFontSize()
+        window.addEventListener('resize', setRootFontSize)
+        window.addEventListener('orientationchange', setRootFontSize)
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>
