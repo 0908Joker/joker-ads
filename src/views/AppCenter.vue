@@ -43,17 +43,20 @@ const activeMode = ref('recommend')
 const appByName = new Map(config.apps.map((a) => [a.name, a]))
 
 const visibleApps = computed(() => {
-  const modeKey = activeMode.value === 'download' ? '热门下载' : '站长推荐'
   const catNames = config.categoryApps?.byCategory?.[activeCategory.value] || []
-  const modeNames = config.categoryApps?.modes?.[modeKey] || []
   let names = catNames
-  if (modeNames.length) {
-    const modeSet = new Set(modeNames)
-    names = catNames.length ? catNames.filter((n) => modeSet.has(n)) : modeNames
+
+  if (activeMode.value === 'download') {
+    const modeNames = config.categoryApps?.modes?.['热门下载'] || []
+    if (modeNames.length) {
+      const modeSet = new Set(modeNames)
+      names = catNames.filter((n) => modeSet.has(n))
+    }
   }
+
   return names
     .map((name) => appByName.get(name))
-    .filter((a) => a && a.icon && !/placeholder/i.test(a.icon))
+    .filter(Boolean)
 })
 
 function onAppClick(app) {
