@@ -4,25 +4,39 @@
 
 - **GitHub Pages 已部署**：https://0908joker.github.io/joker-ads/
 - **自定义域名已绑定**：51-pc.com（GitHub 侧）
-- **Cloudflare DNS 需修改**（目前 A 记录指向 `108.187.7.53`，导致 522）
+- **Cloudflare DNS**：根域名四条 GitHub 官方 A 记录 + `www` CNAME，全部灰云
+- **待完成**：GitHub 签发 HTTPS 证书（DNS 生效后自动进行，通常数分钟到 24 小时）
 
-### Cloudflare DNS 改法（二选一）
+### Cloudflare DNS（GitHub Pages 官方推荐）
 
-**方案 A — 走 GitHub Pages（推荐，已就绪）**
+**根域名 `@` — 四条 A 记录（全部灰云 / 仅 DNS）**
 
-| 类型 | 名称 | 内容 | 代理 |
-|------|------|------|------|
-| CNAME | `@` | `0908joker.github.io` | 仅 DNS（灰云） |
-| CNAME | `www` | `0908joker.github.io` | 仅 DNS（灰云） |
+| 类型 | 名称 | 内容 |
+|------|------|------|
+| A | `@` | `185.199.108.153` |
+| A | `@` | `185.199.109.153` |
+| A | `@` | `185.199.110.153` |
+| A | `@` | `185.199.111.153` |
 
-**方案 B — 走 VPS `107.149.129.35`**
+**`www` — 一条 CNAME（灰云）**
 
-| 类型 | 名称 | 内容 | 代理 |
-|------|------|------|------|
-| A | `@` | `107.149.129.35` | 可开代理 |
-| CNAME | `www` | `51-pc.com` | 可开代理 |
+| 类型 | 名称 | 内容 |
+|------|------|------|
+| CNAME | `www` | `0908joker.github.io` |
 
-VPS 需在安全组放行 **22/SSH**，然后在 VNC 控制台执行：
+注意：
+- **不要**把 `@` 改成 CNAME（当前场景不适用）
+- **不要**开橙云代理
+- **不要**动 VPS
+
+### HTTPS 证书
+
+DNS 生效后，到 GitHub 仓库 **Settings → Pages → Custom domain** 查看证书状态。
+显示绿色勾即完成；若长时间未签发，点 **Remove domain** 再重新 Save 一次可触发重试。
+
+### VPS 备用方案（暂不使用）
+
+VPS IP：`107.149.129.35`。SSH 22 端口当前未开放，需安全组放行后 VNC 执行：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0908Joker/joker-ads/main/deploy/bootstrap.sh | bash

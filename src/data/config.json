@@ -59,13 +59,27 @@
   ],
   "popups": [
     {
-      "image": "/popups/popup-ky.png"
+      "image": "/popups/popup-1.gif",
+      "url": "https://cpa76.cetpam9d.top",
+      "name": "同城约炮"
     },
     {
-      "image": "/popups/popup-xpj.png"
+      "image": "/popups/popup-2.gif",
+      "url": "https://812t.8120198.cc",
+      "name": "PG电子"
     },
     {
-      "image": "/popups/popup-pg.png"
+      "image": "/popups/popup-3.gif",
+      "url": "https://deqyd3290.com",
+      "name": "春药"
+    },
+    {
+      "image": "/popups/popup-4.gif",
+      "url": ""
+    },
+    {
+      "image": "/popups/popup-5.png",
+      "url": ""
     }
   ],
   "apps": [
