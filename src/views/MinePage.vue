@@ -3,45 +3,80 @@
     <section class="profile">
       <div class="avatar" />
       <div class="info">
-        <p class="id">ID: {{ data.user.id }}</p>
-        <h2>{{ data.user.name }}</h2>
-        <p class="bio">{{ data.user.bio }}</p>
+        <p class="id">ID: {{ user.id }}</p>
+        <h2>{{ user.name }}</h2>
+        <p class="bio">{{ user.bio }}</p>
       </div>
       <button class="bind-btn">注册/绑定有礼 1日VIP 去绑定</button>
     </section>
     <div class="stats">
-      <div><strong>{{ data.stats.follow }}</strong><span>关注</span></div>
-      <div><strong>{{ data.stats.like }}</strong><span>点赞</span></div>
-      <div><strong>{{ data.stats.fav }}</strong><span>收藏</span></div>
+      <div><strong>{{ stats.follow }}</strong><span>关注</span></div>
+      <div><strong>{{ stats.like }}</strong><span>点赞</span></div>
+      <div><strong>{{ stats.fav }}</strong><span>收藏</span></div>
     </div>
     <section class="task-card">
       <strong>每日任务</strong>
-      <p>{{ data.task }}</p>
+      <p>完成签到可恢复断签并领取奖励</p>
       <button>立即前往</button>
     </section>
-    <section class="quick-apps">
+    <section class="quick-row">
+      <h3>快捷入口</h3>
       <div class="quick-scroll">
-        <button v-for="app in data.quickApps" :key="app.name" class="quick-app" @click="openApp(app)">
-          <div class="icon">{{ app.name.slice(0, 2) }}</div>
+        <button v-for="app in row1" :key="app.name" class="quick-app" @click="openApp(app)">
+          <img v-if="app.iconLocal || app.icon" :src="app.iconLocal || app.icon" alt="" class="quick-app__img" />
+          <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
           <span>{{ app.name }}</span>
         </button>
       </div>
     </section>
+    <section v-if="row2.length" class="quick-row">
+      <div class="quick-scroll">
+        <button v-for="app in row2" :key="app.name" class="quick-app" @click="openApp(app)">
+          <img v-if="app.iconLocal || app.icon" :src="app.iconLocal || app.icon" alt="" class="quick-app__img" />
+          <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
+          <span>{{ app.name }}</span>
+        </button>
+      </div>
+    </section>
+    <section class="recommend">
+      <h3>推荐应用 <span>更多</span></h3>
+      <p class="recommend__empty">暂无推荐应用</p>
+      <button class="recommend__link" @click="$router.push('/appcenter')">前往应用中心</button>
+    </section>
     <section class="services">
       <h3>更多服务</h3>
       <div class="service-grid">
-        <button v-for="s in data.services" :key="s" class="service">{{ s }}</button>
+        <button v-for="s in services" :key="s" class="service">{{ s }}</button>
       </div>
     </section>
-    <p class="version">{{ data.version }}</p>
+    <p class="version">{{ version }}</p>
   </TabShell>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import TabShell from '../components/TabShell.vue'
-import tabs from '../data/tabs.json'
+import feeds from '../data/feeds.json'
+import tabsFallback from '../data/tabs.json'
+import config from '../data/config.json'
 
-const data = tabs.mine
+const user = computed(() => feeds.mine?.user?.id ? feeds.mine.user : tabsFallback.mine.user)
+const stats = tabsFallback.mine.stats
+const version = feeds.mine?.version || tabsFallback.mine.version
+const services = tabsFallback.mine.services
+
+const myAds = config.apps.filter((a) => {
+  const n = a.name
+  return ['免费看片', '上门约炮', '新葡京', '同城约炮', '波多涩漫', '免费看黄片', '海角社区', '浪浪山', 'JVID'].includes(n)
+})
+
+const row1 = computed(() => {
+  const live = feeds.mine?.quickApps?.filter((a) => a.name)
+  if (live?.length >= 5) return live.slice(0, 6)
+  return myAds.slice(0, 6).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url }))
+})
+
+const row2 = computed(() => myAds.slice(6, 12).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url })))
 
 function openApp(app) {
   const target = app.signUrl || app.url
@@ -63,10 +98,17 @@ function openApp(app) {
 .task-card { background: #1a1a1a; border-radius: 0.16rem; margin: 0 0.32rem 0.32rem; padding: 0.32rem; }
 .task-card p { color: rgba(255,255,255,.55); font-size: 0.28rem; margin: 0.12rem 0 0.24rem; }
 .task-card button { background: #ff2d55; border: none; border-radius: 0.8rem; color: #fff; font-size: 0.28rem; padding: 0.12rem 0.32rem; }
-.quick-apps { padding: 0 0.32rem 0.32rem; }
+.quick-row { padding: 0 0.32rem 0.24rem; }
+.quick-row h3 { font-size: 0.34rem; margin-bottom: 0.16rem; }
 .quick-scroll { display: flex; gap: 0.24rem; overflow-x: auto; }
-.quick-app { align-items: center; background: none; border: none; color: rgba(255,255,255,.75); display: flex; flex-direction: column; flex-shrink: 0; font-size: 0.26rem; gap: 0.12rem; }
-.quick-app .icon { align-items: center; background: #2a2a2a; border-radius: 0.24rem; display: flex; height: 1rem; justify-content: center; width: 1rem; }
+.quick-app { align-items: center; background: none; border: none; color: rgba(255,255,255,.75); display: flex; flex-direction: column; flex-shrink: 0; font-size: 0.24rem; gap: 0.12rem; }
+.quick-app__img { border-radius: 0.24rem; height: 1rem; object-fit: cover; width: 1rem; }
+.quick-app__img--ph { align-items: center; background: #2a2a2a; display: flex; font-size: 0.28rem; font-weight: 700; justify-content: center; }
+.recommend { padding: 0 0.32rem 0.32rem; }
+.recommend h3 { font-size: 0.34rem; }
+.recommend span { color: rgba(255,255,255,.45); float: right; font-size: 0.28rem; font-weight: 400; }
+.recommend__empty { color: rgba(255,255,255,.45); font-size: 0.28rem; margin: 0.16rem 0; }
+.recommend__link { background: none; border: 1px solid rgba(255,255,255,.2); border-radius: 0.8rem; color: rgba(255,255,255,.7); font-size: 0.28rem; padding: 0.12rem 0.32rem; }
 .services { padding: 0 0.32rem; }
 .services h3 { font-size: 0.36rem; margin-bottom: 0.24rem; }
 .service-grid { display: grid; gap: 0.16rem; grid-template-columns: repeat(3, 1fr); }

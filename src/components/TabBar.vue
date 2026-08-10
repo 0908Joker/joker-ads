@@ -38,7 +38,7 @@ const icons = {
   bottom: 0;
   box-sizing: initial;
   display: flex;
-  height: 1.33333rem;
+  height: 1.53846rem;
   left: 50%;
   max-width: 430px;
   padding-bottom: env(safe-area-inset-bottom);
@@ -64,7 +64,7 @@ const icons = {
 
 .tabbar-item.is-active {
   background-color: #171512;
-  color: #ff2d55;
+  color: #f81942;
   font-weight: 500;
 }
 

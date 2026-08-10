@@ -61,12 +61,14 @@
     {
       "image": "/popups/popup-1.gif",
       "url": "https://cpa76.cetpam9d.top",
-      "name": "同城约炮"
+      "name": "同城约炮",
+      "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_69ccf028db5fe96bb1c997ea_607b92b4-7fb7-4eee-b94a-de2ace599d831786203544058_1000147271297&pid=FBI"
     },
     {
       "image": "/popups/popup-2.gif",
       "url": "https://812t.8120198.cc",
-      "name": "PG电子"
+      "name": "PG电子",
+      "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_698b4343d2bee8eef20a075f_0b6dfa20-e882-4d8e-82da-ecdcdd0b541d1786203544058_1000147271297&pid=FBI"
     },
     {
       "image": "/popups/popup-3.gif",
@@ -76,17 +78,20 @@
     {
       "image": "/popups/popup-4.gif",
       "url": "https://312.3120047.cc",
-      "name": "开元棋牌"
+      "name": "开元棋牌",
+      "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_69981cb55960f86e13f37b4d_98b97eb4-711a-43da-9083-5d64cfbfc19c1786203544058_1000147271297&pid=FBI"
     },
     {
       "image": "/popups/popup-5.png",
       "url": "https://93b.pg930270.cc",
-      "name": "新葡京官方"
+      "name": "新葡京官方",
+      "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_692c3bf5ff281bebfd4ca892_665db04d-0c67-4cdd-82be-fdc6f2ee5a1b1786203544058_1000147271297&pid=FBI"
     },
     {
       "image": "/popups/popup-6.gif",
       "url": "https://60t.60pg0415.cc",
-      "name": "PG直营"
+      "name": "PG直营",
+      "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_6971d57d301dafaa0eb420c4_26e6f05d-3e0b-43eb-a790-9c39cfa77ce11786203544058_1000147271297&pid=FBI"
     },
     {
       "name": "姐姐约炮",
@@ -121,6 +126,12 @@
   ],
   "apps": [
     {
+      "name": "专业炮台",
+      "url": "",
+      "signUrl": "",
+      "icon": "/icons/placeholder.png"
+    },
+    {
       "name": "SQ直播",
       "url": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
       "icon": "/icons/0cc55fba73.gif",
@@ -149,6 +160,12 @@
       "url": "https://d21pyok6fpixa9.cloudfront.net?dc=kmcnipxs",
       "icon": "/icons/4935018b98.gif",
       "signUrl": "https://180.188.198.189/api/v1/ad/sign?s=FBI_6a71e37f1328fdc3b4ba5527_8cf213b8-dbf8-4bff-8e36-a94fa69309f81786364184131_1000147564734&pid=FBI"
+    },
+    {
+      "name": "免费黄片",
+      "url": "https://hl50ul0zxm1afu66rdklc.zqchwl.com/1_51sq/dp1/index.html?channelCode=wue246",
+      "signUrl": "https://180.188.198.189/api/v1/ad/sign?s=FBI_6a5f2125744f66f6cb4651e5_bb708475-03da-4817-beeb-c5da257646391786364184131_1000147564734&pid=FBI",
+      "icon": "/icons/067137771c.gif"
     },
     {
       "name": "免费看黄片",
@@ -815,7 +832,7 @@
     },
     {
       "name": "X-chat",
-      "url": "",
+      "url": "chrome-error://chromewebdata/",
       "icon": "/icons/6d87926bb8.png"
     },
     {
@@ -952,7 +969,7 @@
     },
     {
       "name": "日B快线",
-      "url": "",
+      "url": "chrome-error://chromewebdata/",
       "icon": "/icons/fa1d40194d.gif"
     },
     {
@@ -1028,7 +1045,7 @@
     },
     {
       "name": "猎奇快播",
-      "url": "",
+      "url": "chrome-error://chromewebdata/",
       "icon": "/icons/1ba9da0508.gif"
     },
     {
@@ -1374,11 +1391,16 @@
     "signUrls": 56,
     "linkedApps": 209,
     "appsWithSign": 77,
-    "appsWithAnyLink": 209
+    "appsWithAnyLink": 213,
+    "p0At": "2026-08-10T13:44:48.784Z",
+    "popupsWithSign": 5,
+    "appsTotal": 233
   },
   "promo": {
     "tag": "限时",
-    "text": "聊天不限制"
+    "text": "聊天不限制",
+    "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_698b40ead2bee8eef20a070f_40d0acbd-ad65-4aee-a6e7-f1eef6c926fc1786203544058_1000147271297&pid=FBI",
+    "url": "https://60b.60pg0282.cc"
   },
   "categoryApps": {
     "byCategory": {
@@ -1983,11 +2005,6 @@
     }
   },
   "internalRoutes": {
-    "超嫩少女": "/short",
-    "免费直播": "/videosPage",
-    "小红书": "/videosPage",
-    "推特": "/videosPage",
-    "AI引擎": "/vipPage",
-    "51看片": "/videosPage"
+    "超嫩少女": "/short"
   }
 }

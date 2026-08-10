@@ -6,7 +6,7 @@
       @category-change="activeCategory = $event"
       @mode-change="activeMode = $event"
     />
-    <PromoBanner :tag="config.promo?.tag" :text="config.promo?.text" />
+    <PromoBanner v-bind="config.promo || {}" />
 
     <main class="content content--with-tabbar">
       <AppGrid :apps="visibleApps" @open="onAppClick" />
@@ -44,13 +44,13 @@ const appByName = new Map(config.apps.map((a) => [a.name, a]))
 
 const visibleApps = computed(() => {
   const modeKey = activeMode.value === 'download' ? '热门下载' : '站长推荐'
-  let names = config.categoryApps?.byCategory?.[activeCategory.value]
-  const modeNames = config.categoryApps?.modes?.[modeKey]
-  if (modeNames?.length) {
+  const catNames = config.categoryApps?.byCategory?.[activeCategory.value] || []
+  const modeNames = config.categoryApps?.modes?.[modeKey] || []
+  let names = catNames
+  if (modeNames.length) {
     const modeSet = new Set(modeNames)
-    names = names?.length ? names.filter((n) => modeSet.has(n)) : modeNames
+    names = catNames.length ? catNames.filter((n) => modeSet.has(n)) : modeNames
   }
-  if (!names?.length) return config.apps
   return names.map((name) => appByName.get(name)).filter(Boolean)
 })
 
@@ -89,6 +89,6 @@ watch(
 }
 
 .content--with-tabbar {
-  padding-bottom: calc(1.33333rem + env(safe-area-inset-bottom) + 1.2rem);
+  padding-bottom: calc(1.53846rem + env(safe-area-inset-bottom) + 1.2rem);
 }
 </style>

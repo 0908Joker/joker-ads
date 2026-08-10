@@ -1,24 +1,40 @@
 <template>
-  <div class="promo-banner">
+  <a
+    class="promo-banner"
+    :href="href || undefined"
+    target="_blank"
+    rel="noopener noreferrer"
+    @click="onClick"
+  >
     <div class="promo-banner__bg" />
     <div class="promo-banner__content">
       <span class="promo-banner__tag">{{ tag }}</span>
       <span class="promo-banner__text">{{ text }}</span>
     </div>
-  </div>
+  </a>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   tag: { type: String, default: '限时' },
   text: { type: String, default: '聊天不限制' },
+  signUrl: { type: String, default: '' },
+  url: { type: String, default: '' },
 })
+
+const href = props.signUrl || props.url
+
+function onClick(e) {
+  if (!href) e.preventDefault()
+}
 </script>
 
 <style scoped>
 .promo-banner {
+  display: block;
   margin: 0.21333rem 0.32rem 0;
   position: relative;
+  text-decoration: none;
   z-index: 1;
 }
 

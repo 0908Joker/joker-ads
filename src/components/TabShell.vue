@@ -28,6 +28,6 @@ function onChange(id) {
 <style scoped>
 .tab-shell {
   min-height: 100vh;
-  padding-bottom: calc(1.33333rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(1.53846rem + env(safe-area-inset-bottom));
 }
 </style>

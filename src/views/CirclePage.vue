@@ -3,39 +3,53 @@
     <header class="search-bar">美女 巨乳 奶子 帅哥</header>
     <section class="topic-card">
       <p class="topic-label">今日热门话题</p>
-      <h2>{{ data.topic.title }}</h2>
-      <p class="topic-meta">参与话题 {{ data.topic.participants }} · 正方 {{ data.topic.pro }} · 反方 {{ data.topic.con }}</p>
+      <h2>{{ topic.title }}</h2>
+      <p class="topic-meta">参与话题 {{ topic.participants }} · 正方 {{ topic.pro }} · 反方 {{ topic.con }}</p>
       <button class="join-btn">参与每日热门话题讨论，赢大奖</button>
     </section>
     <section class="groups">
       <h3>热门圈子 <span>更多 ></span></h3>
       <div class="group-grid">
-        <div v-for="g in data.groups" :key="g.name" class="group-item">
+        <div v-for="g in groups" :key="g.name" class="group-item">
           <strong>{{ g.name }}</strong>
           <span>{{ g.count }}</span>
         </div>
       </div>
     </section>
     <section class="posts">
-      <article v-for="(p, i) in data.posts" :key="i" class="post">
+      <article v-for="(p, i) in posts" :key="i" class="post">
+        <img v-if="p.coverLocal" :src="p.coverLocal" alt="" class="post__cover" />
         <div class="post-head">
           <strong>{{ p.user }}</strong>
           <span>{{ p.time }}</span>
           <span v-if="p.pinned" class="pin">置顶</span>
         </div>
         <p class="post-title">{{ p.title }}</p>
-        <span class="post-tag">{{ p.tag }}</span>
-        <div class="post-stats">{{ p.likes }} · {{ p.comments }} · {{ p.views }}</div>
+        <span v-if="p.tag" class="post-tag">{{ p.tag }}</span>
+        <div class="post-actions">
+          <button>私信</button>
+          <button>关注</button>
+        </div>
       </article>
     </section>
   </TabShell>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import TabShell from '../components/TabShell.vue'
-import tabs from '../data/tabs.json'
+import feeds from '../data/feeds.json'
+import tabsFallback from '../data/tabs.json'
 
-const data = tabs.circle
+const topic = tabsFallback.circle.topic
+const groups = computed(() => {
+  const g = feeds.circle?.groups?.length ? feeds.circle.groups : tabsFallback.circle.groups
+  return g.some((x) => x.name === '巨乳') ? g : [...g, { name: '巨乳', count: '3115个帖子' }]
+})
+const posts = computed(() => {
+  const live = feeds.circle?.posts?.filter((p) => p.title?.length > 10)
+  return live?.length ? live : tabsFallback.circle.posts
+})
 </script>
 
 <style scoped>
@@ -54,11 +68,13 @@ const data = tabs.circle
 .group-item span { color: rgba(255,255,255,.45); font-size: 0.26rem; }
 .posts { padding: 0.32rem; }
 .post { border-bottom: 1px solid rgba(255,255,255,.06); margin-bottom: 0.32rem; padding-bottom: 0.32rem; }
+.post__cover { border-radius: 0.12rem; margin-bottom: 0.16rem; max-height: 4rem; object-fit: cover; width: 100%; }
 .post-head { align-items: center; display: flex; flex-wrap: wrap; gap: 0.16rem; }
 .post-head strong { font-size: 0.32rem; }
 .post-head span { color: rgba(255,255,255,.45); font-size: 0.26rem; }
 .pin { background: #ff2d55; border-radius: 0.08rem; color: #fff; font-size: 0.22rem; padding: 0.04rem 0.12rem; }
 .post-title { color: rgba(255,255,255,.85); font-size: 0.32rem; line-height: 1.5; margin-top: 0.16rem; }
 .post-tag { color: #7ecbff; font-size: 0.28rem; }
-.post-stats { color: rgba(255,255,255,.35); font-size: 0.26rem; margin-top: 0.12rem; }
+.post-actions { display: flex; gap: 0.16rem; margin-top: 0.16rem; }
+.post-actions button { background: rgba(255,255,255,.08); border: none; border-radius: 0.8rem; color: rgba(255,255,255,.7); font-size: 0.26rem; padding: 0.08rem 0.24rem; }
 </style>

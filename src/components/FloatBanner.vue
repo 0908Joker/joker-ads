@@ -34,7 +34,7 @@ function open() {
   align-items: center;
   background: linear-gradient(90deg, #1a1a1a, #2a2018);
   border-radius: 0.16rem;
-  bottom: calc(1.33333rem + env(safe-area-inset-bottom) + 0.16rem);
+  bottom: calc(1.53846rem + env(safe-area-inset-bottom) + 0.16rem);
   display: flex;
   gap: 0.16rem;
   left: 50%;
