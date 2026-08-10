@@ -86,12 +86,10 @@ onMounted(() => {
   display: flex;
   bottom: 0;
   justify-content: center;
-  left: 50%;
-  max-width: 430px;
+  left: 0;
   position: fixed;
+  right: 0;
   top: 0;
-  transform: translateX(-50%);
-  width: 100%;
   z-index: 200;
 }
 
@@ -100,7 +98,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   max-height: 90vh;
-  max-width: 86%;
+  max-width: min(88vw, 390px);
   width: 6.4rem;
 }
 
@@ -126,9 +124,10 @@ onMounted(() => {
   border: 2px solid rgba(0, 0, 0, 0.12);
   border-radius: 50%;
   display: flex;
-  height: 0.85333rem;
+  flex-shrink: 0;
+  height: 32px;
   justify-content: center;
-  margin-top: 0.32rem;
-  width: 0.85333rem;
+  margin-top: 12px;
+  width: 32px;
 }
 </style>

@@ -39,11 +39,10 @@ const icons = {
   box-sizing: initial;
   display: flex;
   height: 1.53846rem;
-  left: 50%;
-  max-width: 430px;
+  left: 0;
   padding-bottom: env(safe-area-inset-bottom);
   position: fixed;
-  transform: translateX(-50%);
+  right: 0;
   width: 100%;
   z-index: 100;
 }

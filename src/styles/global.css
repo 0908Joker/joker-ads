@@ -24,12 +24,38 @@ body {
 
 #app {
   width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
   min-height: 100vh;
+  margin: 0 auto;
   position: relative;
   background: #111;
   overflow-x: hidden;
+}
+
+html[data-shell='desktop'] #app {
+  max-width: 460px;
+}
+
+html[data-shell='desktop'] .popup-overlay {
+  left: 50%;
+  max-width: 460px;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+html[data-shell='desktop'] .tabbar {
+  left: 50%;
+  max-width: 460px;
+  right: auto;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+html[data-shell='desktop'] .float-banner {
+  left: 50%;
+  max-width: 420px;
+  right: auto;
+  transform: translateX(-50%);
+  width: calc(100% - 0.4rem);
 }
 
 a {

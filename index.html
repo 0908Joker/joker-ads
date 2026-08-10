@@ -13,12 +13,27 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <script>
       (function () {
-        var APP_WIDTH = 430
+        var SHELL_MAX = 460
+        var DESKTOP_REM = 48
+        var MOBILE_RE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i
+
+        function isDesktopBrowser() {
+          return !MOBILE_RE.test(navigator.userAgent)
+        }
+
         function setRootFontSize() {
           var width = document.documentElement.clientWidth || window.innerWidth
-          if (width > APP_WIDTH) width = APP_WIDTH
-          document.documentElement.style.fontSize = width / 10 + 'px'
+          var desktop = isDesktopBrowser()
+
+          if (desktop) {
+            document.documentElement.style.fontSize = DESKTOP_REM + 'px'
+            document.documentElement.dataset.shell = width > SHELL_MAX ? 'desktop' : 'fluid'
+          } else {
+            document.documentElement.style.fontSize = width / 10 + 'px'
+            document.documentElement.dataset.shell = 'fluid'
+          }
         }
+
         setRootFontSize()
         window.addEventListener('resize', setRootFontSize)
         window.addEventListener('orientationchange', setRootFontSize)
