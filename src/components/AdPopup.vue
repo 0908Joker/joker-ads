@@ -39,14 +39,20 @@ const props = defineProps({
   popups: { type: Array, default: () => [] },
 })
 
+const validPopups = computed(() =>
+  props.popups.filter(
+    (p) => p.image && /\.(gif|png|webp)$/i.test(p.image) && !/\/placeholder/i.test(p.image),
+  ),
+)
+
 const visible = ref(true)
 const index = ref(0)
 
-const current = computed(() => props.popups[index.value] || props.popups[0] || {})
+const current = computed(() => validPopups.value[index.value] || validPopups.value[0] || {})
 
 function close() {
   visible.value = false
-  if (index.value < props.popups.length - 1) {
+  if (index.value < validPopups.value.length - 1) {
     setTimeout(() => {
       index.value++
       visible.value = true
@@ -60,7 +66,7 @@ function onAdClick(e) {
 }
 
 onMounted(() => {
-  visible.value = props.popups.length > 0
+  visible.value = validPopups.value.length > 0
 })
 </script>
 

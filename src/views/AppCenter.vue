@@ -51,7 +51,9 @@ const visibleApps = computed(() => {
     const modeSet = new Set(modeNames)
     names = catNames.length ? catNames.filter((n) => modeSet.has(n)) : modeNames
   }
-  return names.map((name) => appByName.get(name)).filter(Boolean)
+  return names
+    .map((name) => appByName.get(name))
+    .filter((a) => a && a.icon && !/placeholder/i.test(a.icon))
 })
 
 function onAppClick(app) {
