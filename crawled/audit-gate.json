@@ -1,0 +1,101 @@
+{
+  "at": "2026-08-10T20:41:07.005Z",
+  "clone": "http://127.0.0.1:4173",
+  "status": "PASS",
+  "checks": {
+    "appCount": {
+      "pass": true,
+      "detail": "224 apps (origin 224)"
+    },
+    "appNameDiff": {
+      "pass": true,
+      "detail": "onlyOrigin=0 onlyClone=0"
+    },
+    "withAnyBehavior": {
+      "pass": true,
+      "detail": "219/233"
+    },
+    "gridWidth": {
+      "pass": true,
+      "detail": "grid w=390"
+    },
+    "tabbarHeight": {
+      "pass": true,
+      "detail": "tabbar h=60"
+    },
+    "gifRatio": {
+      "pass": true,
+      "detail": "88.8% DOM / 209 config .gif"
+    },
+    "popups": {
+      "pass": true,
+      "detail": "5 popups with image"
+    },
+    "tabApiFeatured": {
+      "pass": true,
+      "detail": "1 requests"
+    },
+    "tabApiDouyin": {
+      "pass": true,
+      "detail": "1 requests"
+    },
+    "tabApiDark": {
+      "pass": true,
+      "detail": "dark tag API on click"
+    },
+    "tabApiAnime": {
+      "pass": true,
+      "detail": "1 requests"
+    },
+    "tabApiMine": {
+      "pass": true,
+      "detail": "2 requests"
+    },
+    "freeHuangPian": {
+      "pass": true,
+      "detail": "免费黄片 in grid"
+    }
+  },
+  "origin": {
+    "appCount": 224,
+    "gifIcons": 58,
+    "sizes": {
+      "grid": {
+        "w": 369,
+        "h": 3588
+      },
+      "tabbar": {
+        "w": 390,
+        "h": 60
+      },
+      "popup": null
+    }
+  },
+  "cloneMetrics": {
+    "appCount": 224,
+    "gifIcons": 199,
+    "sizes": {
+      "grid": {
+        "w": 390,
+        "h": 3735
+      },
+      "tabbar": {
+        "w": 390,
+        "h": 60
+      },
+      "popup": {
+        "w": 312,
+        "h": 440
+      }
+    },
+    "onlyOrigin": [],
+    "onlyClone": []
+  },
+  "tabApiHits": {
+    "featured": 1,
+    "douyin": 1,
+    "dark": 0,
+    "anime": 1,
+    "mine": 2
+  }
+}

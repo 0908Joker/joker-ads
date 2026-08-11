@@ -9,7 +9,7 @@
     </section>
     <section class="groups">
       <h3>热门圈子 <span>更多 ></span></h3>
-      <div class="group-grid">
+      <div class="group-scroll">
         <div v-for="g in groups" :key="g.name" class="group-item">
           <strong>{{ g.name }}</strong>
           <span>{{ g.count }}</span>
@@ -18,7 +18,7 @@
     </section>
     <section class="posts">
       <article v-for="(p, i) in posts" :key="i" class="post">
-        <img v-if="p.coverLocal" :src="p.coverLocal" alt="" class="post__cover" />
+        <img v-if="p.coverLocal || p.cover" :src="p.coverLocal || p.cover" alt="" class="post__cover" />
         <div class="post-head">
           <strong>{{ p.user }}</strong>
           <span>{{ p.time }}</span>
@@ -26,6 +26,7 @@
         </div>
         <p class="post-title">{{ p.title }}</p>
         <span v-if="p.tag" class="post-tag">{{ p.tag }}</span>
+        <p class="post-stats">{{ p.likes ?? 115 }} · {{ p.comments ?? 32 }} · {{ p.views ?? '118697' }}</p>
         <div class="post-actions">
           <button>私信</button>
           <button>关注</button>
@@ -42,12 +43,15 @@ import feeds from '../data/feeds.json'
 import tabsFallback from '../data/tabs.json'
 
 const topic = tabsFallback.circle.topic
+const NOISE = /应用|精选|抖阴|暗网|圈子|二次元|我的/i
+
 const groups = computed(() => {
   const g = feeds.circle?.groups?.length ? feeds.circle.groups : tabsFallback.circle.groups
-  return g.some((x) => x.name === '巨乳') ? g : [...g, { name: '巨乳', count: '3115个帖子' }]
+  return g.filter((x) => x.name && !NOISE.test(x.name))
 })
+
 const posts = computed(() => {
-  const live = feeds.circle?.posts?.filter((p) => p.title?.length > 10)
+  const live = feeds.circle?.posts?.filter((p) => p.title?.length > 10 && !NOISE.test(p.title))
   return live?.length ? live : tabsFallback.circle.posts
 })
 </script>
@@ -62,8 +66,8 @@ const posts = computed(() => {
 .groups { padding: 0 0.32rem; }
 .groups h3 { font-size: 0.36rem; margin-bottom: 0.24rem; }
 .groups span { color: rgba(255,255,255,.45); font-size: 0.28rem; font-weight: 400; }
-.group-grid { display: grid; gap: 0.16rem; grid-template-columns: repeat(2, 1fr); }
-.group-item { background: #1a1a1a; border-radius: 0.16rem; padding: 0.24rem; }
+.group-scroll { display: flex; gap: 0.16rem; overflow-x: auto; padding-bottom: 0.16rem; }
+.group-item { background: #1a1a1a; border-radius: 0.16rem; flex-shrink: 0; min-width: 2.4rem; padding: 0.24rem; }
 .group-item strong { display: block; font-size: 0.32rem; }
 .group-item span { color: rgba(255,255,255,.45); font-size: 0.26rem; }
 .posts { padding: 0.32rem; }
@@ -75,6 +79,7 @@ const posts = computed(() => {
 .pin { background: #ff2d55; border-radius: 0.08rem; color: #fff; font-size: 0.22rem; padding: 0.04rem 0.12rem; }
 .post-title { color: rgba(255,255,255,.85); font-size: 0.32rem; line-height: 1.5; margin-top: 0.16rem; }
 .post-tag { color: #7ecbff; font-size: 0.28rem; }
+.post-stats { color: rgba(255,255,255,.45); font-size: 0.26rem; margin-top: 0.12rem; }
 .post-actions { display: flex; gap: 0.16rem; margin-top: 0.16rem; }
 .post-actions button { background: rgba(255,255,255,.08); border: none; border-radius: 0.8rem; color: rgba(255,255,255,.7); font-size: 0.26rem; padding: 0.08rem 0.24rem; }
 </style>

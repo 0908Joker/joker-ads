@@ -1,0 +1,405 @@
+{
+  "counts": {
+    "totalApps": 231,
+    "withUrl": 209,
+    "withSignUrl": 77,
+    "withAnyLink": 209,
+    "noUrlNoSign": 22,
+    "noActionAtAll": 16,
+    "withInternalRoute": 6,
+    "crawledUniqueNames": 393,
+    "retryResolved": 14,
+    "apiUniqueNames": 64,
+    "originAppCount": 232,
+    "cloneAppCount": 230
+  },
+  "noActionApps": [
+    {
+      "name": "香蕉破解版",
+      "crawledUrl": null
+    },
+    {
+      "name": "糖心破解版",
+      "crawledUrl": null
+    },
+    {
+      "name": "Xchat",
+      "crawledUrl": null
+    },
+    {
+      "name": "X-chat",
+      "crawledUrl": "chrome-error://chromewebdata/"
+    },
+    {
+      "name": "日B快线",
+      "crawledUrl": "chrome-error://chromewebdata/"
+    },
+    {
+      "name": "猫扑",
+      "crawledUrl": null
+    },
+    {
+      "name": "猎奇快播",
+      "crawledUrl": "chrome-error://chromewebdata/"
+    },
+    {
+      "name": "猫扑",
+      "crawledUrl": null
+    },
+    {
+      "name": "肉视频",
+      "crawledUrl": null
+    },
+    {
+      "name": "中国好黄片",
+      "crawledUrl": null
+    },
+    {
+      "name": "小污女",
+      "crawledUrl": null
+    },
+    {
+      "name": "夸克视频",
+      "crawledUrl": null
+    },
+    {
+      "name": "豆包视频",
+      "crawledUrl": null
+    },
+    {
+      "name": "香蕉破解版",
+      "crawledUrl": null
+    },
+    {
+      "name": "糖心破解版",
+      "crawledUrl": null
+    },
+    {
+      "name": "免费X站",
+      "crawledUrl": null
+    }
+  ],
+  "noUrlNoSignList": [
+    "免费直播",
+    "超嫩少女",
+    "香蕉破解版",
+    "糖心破解版",
+    "Xchat",
+    "X-chat",
+    "日B快线",
+    "猫扑",
+    "猎奇快播",
+    "猫扑",
+    "AI引擎",
+    "小红书",
+    "推特",
+    "肉视频",
+    "中国好黄片",
+    "小污女",
+    "夸克视频",
+    "豆包视频",
+    "51看片",
+    "香蕉破解版",
+    "糖心破解版",
+    "免费X站"
+  ],
+  "internalRoutes": {
+    "超嫩少女": "/short",
+    "免费直播": "/videosPage",
+    "小红书": "/videosPage",
+    "推特": "/videosPage",
+    "AI引擎": "/vipPage",
+    "51看片": "/videosPage"
+  },
+  "popups": {
+    "total": 6,
+    "noLink": 0,
+    "withSign": 0,
+    "withUrlOnly": 6,
+    "items": [
+      {
+        "name": "同城约炮",
+        "url": true,
+        "signUrl": false
+      },
+      {
+        "name": "PG电子",
+        "url": true,
+        "signUrl": false
+      },
+      {
+        "name": "春药",
+        "url": true,
+        "signUrl": false
+      },
+      {
+        "name": "开元棋牌",
+        "url": true,
+        "signUrl": false
+      },
+      {
+        "name": "新葡京官方",
+        "url": true,
+        "signUrl": false
+      },
+      {
+        "name": "PG直营",
+        "url": true,
+        "signUrl": false
+      }
+    ]
+  },
+  "floatBanner": {
+    "hasUrl": true,
+    "hasSign": true,
+    "clickUses": "signUrl (origin API redirect)"
+  },
+  "promo": {
+    "tag": "限时",
+    "text": "聊天不限制"
+  },
+  "gapAnalysis": {
+    "totalGaps": 16,
+    "originHasExternalCloneMissing": [
+      {
+        "name": "X-chat",
+        "crawledUrl": "chrome-error://chromewebdata/",
+        "originHasExternal": true,
+        "hasInternal": false
+      },
+      {
+        "name": "日B快线",
+        "crawledUrl": "chrome-error://chromewebdata/",
+        "originHasExternal": true,
+        "hasInternal": false
+      },
+      {
+        "name": "猎奇快播",
+        "crawledUrl": "chrome-error://chromewebdata/",
+        "originHasExternal": true,
+        "hasInternal": false
+      }
+    ],
+    "internalOnlyOnClone": [],
+    "bothDeadNoLink": [
+      {
+        "name": "香蕉破解版",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "糖心破解版",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "Xchat",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "猫扑",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "猫扑",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "肉视频",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "中国好黄片",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "小污女",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "夸克视频",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "豆包视频",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "香蕉破解版",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "糖心破解版",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      },
+      {
+        "name": "免费X站",
+        "crawledUrl": "",
+        "originHasExternal": false,
+        "hasInternal": false
+      }
+    ]
+  },
+  "urlMismatches": [
+    {
+      "name": "SQ直播",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://www.643539214-uedaslnmj.cc/?channelCode=ysqk168",
+      "localUsesSign": true
+    },
+    {
+      "name": "PG电子",
+      "local": "https://60b.60pg0282.cc",
+      "crawled": "https://812t.8120198.cc",
+      "localUsesSign": true
+    },
+    {
+      "name": "PG电子",
+      "local": "https://60b.60pg0282.cc",
+      "crawled": "https://812t.8120198.cc",
+      "localUsesSign": true
+    },
+    {
+      "name": "新葡京",
+      "local": "https://887a.5536442.cc",
+      "crawled": "https://908.8261684.cc",
+      "localUsesSign": true
+    },
+    {
+      "name": "新葡京",
+      "local": "https://887a.5536442.cc",
+      "crawled": "https://908.8261684.cc",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费快手",
+      "local": "https://ks93028.afynfw.com/kuaishou/kssp.html?bh892",
+      "crawled": "https://www.kuaishousp.com/1_bh892",
+      "localUsesSign": true
+    },
+    {
+      "name": "抖阴泄密",
+      "local": "https://z1q5c2m.apnwhvb.cn/yy/?channelCode=md015",
+      "crawled": "https://154.216.69.46",
+      "localUsesSign": true
+    },
+    {
+      "name": "永利直播",
+      "local": "https://18ucbnw4w2blu.ktoteeu.net/y32/?channelCode=ylby16",
+      "crawled": "https://2qx8dk16dyyjn.tounail.com/y32/?channelCode=ylby16",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "波多涩漫",
+      "local": "https://qwpy.vdzajf.cn/index.html?c=dm6603",
+      "crawled": "https://qwpy.ujwxtxo.cn/index.html?c=dm6603",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "免费看片",
+      "local": "https://www.538565968-upplaktvg.cc/?channelCode=ysqk168",
+      "crawled": "https://xn--l1q-xd4boc1b6519m8ea.uelbft.cn/?channelCode=dy771",
+      "localUsesSign": true
+    },
+    {
+      "name": "浪浪山",
+      "local": "https://7y.bx3jkh6sc.cc/YVCMJKJOA0",
+      "crawled": "https://uk40hyws.275t8fud3a.cc/YVCMJKJOA0",
+      "localUsesSign": true
+    },
+    {
+      "name": "浪浪山",
+      "local": "https://7y.bx3jkh6sc.cc/YVCMJKJOA0",
+      "crawled": "https://uk40hyws.275t8fud3a.cc/YVCMJKJOA0",
+      "localUsesSign": true
+    },
+    {
+      "name": "JVID",
+      "local": "https://4sh65gz6.jgh9bmfey.cc/RGZS231OO9",
+      "crawled": "https://qq7h.w8ka8m9nwj.top/RGZS231OO9",
+      "localUsesSign": true
+    },
+    {
+      "name": "永利直播",
+      "local": "https://18ucbnw4w2blu.ktoteeu.net/y32/?channelCode=ylby16",
+      "crawled": "https://2qx8dk16dyyjn.tounail.com/y32/?channelCode=ylby16",
+      "localUsesSign": true
+    },
+    {
+      "name": "浪浪山",
+      "local": "https://7y.bx3jkh6sc.cc/YVCMJKJOA0",
+      "crawled": "https://uk40hyws.275t8fud3a.cc/YVCMJKJOA0",
+      "localUsesSign": true
+    },
+    {
+      "name": "JVID",
+      "local": "https://4sh65gz6.jgh9bmfey.cc/RGZS231OO9",
+      "crawled": "https://qq7h.w8ka8m9nwj.top/RGZS231OO9",
+      "localUsesSign": true
+    },
+    {
+      "name": "JVID",
+      "local": "https://4sh65gz6.jgh9bmfey.cc/RGZS231OO9",
+      "crawled": "https://qq7h.w8ka8m9nwj.top/RGZS231OO9",
+      "localUsesSign": true
+    }
+  ],
+  "urlMismatchCount": 22,
+  "alignment": {
+    "withAnyBehavior": 215,
+    "pctWithBehavior": 93.1,
+    "pctExternalAligned": 93.1
+  }
+}

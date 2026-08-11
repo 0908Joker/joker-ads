@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-10T12:38:15.739Z",
+  "at": "2026-08-10T13:23:41.956Z",
   "origin": {
     "url": "https://fbi.xdx794.com/#/appcenter",
     "title": "小红书",
@@ -24,7 +24,7 @@
       "金沙国际",
       "开元棋牌",
       "PG游戏",
-      "杏吧探花",
+      "免费黄片",
       "PG娱乐",
       "新葡京官方",
       "海角社区",
@@ -206,7 +206,7 @@
       "无忧直播",
       "全网片源",
       "91蜜桃",
-      "杏吧探花",
+      "免费黄片",
       "海角社区",
       "嫩模直播",
       "出水少妇",
@@ -282,7 +282,7 @@
     "url": "http://51-pc.com/#/appcenter",
     "title": "小红书",
     "apps": {
-      "count": 230,
+      "count": 231,
       "gifIcons": 208
     },
     "appNames": [
@@ -515,7 +515,8 @@
       "橘香直播",
       "B-Chat",
       "oio禁漫",
-      "黄豆魔改短剧"
+      "黄豆魔改短剧",
+      "P站破解"
     ],
     "categories": [
       "官方推荐",
@@ -531,8 +532,8 @@
       "text": "聊天不限制"
     },
     "floatBanner": {
-      "title": "PG电子大放水",
-      "subtitle": "投注爆千万"
+      "title": "PG电子大放水 投注爆千万",
+      "subtitle": "世界杯投注 输球包赔 错过等4年！"
     },
     "tabbar": [
       {
@@ -567,7 +568,7 @@
     "sizes": {
       "grid": {
         "w": 390,
-        "h": 3817
+        "h": 3900
       },
       "icon": {
         "w": 55,
@@ -594,9 +595,11 @@
   "diff": {
     "appNames": {
       "onlyOrigin": [
-        "P站破解"
+        "免费黄片"
       ],
-      "onlyClone": [],
+      "onlyClone": [
+        "杏吧探花"
+      ],
       "match": 161
     },
     "categories": {
@@ -627,8 +630,8 @@
     "floatBanner": {
       "origin": {},
       "clone": {
-        "title": "PG电子大放水",
-        "subtitle": "投注爆千万"
+        "title": "PG电子大放水 投注爆千万",
+        "subtitle": "世界杯投注 输球包赔 错过等4年！"
       }
     },
     "sizes": {
@@ -655,7 +658,7 @@
       "clone": {
         "grid": {
           "w": 390,
-          "h": 3817
+          "h": 3900
         },
         "icon": {
           "w": 55,
@@ -1024,35 +1027,32 @@
   },
   "links": {
     "localApps": 231,
-    "withUrl": 191,
+    "withUrl": 209,
     "withSign": 77,
-    "withAnyLink": 191,
+    "withAnyLink": 209,
     "apiUniqueNames": 56,
     "sampleNoLink": [
-      "免费资源",
-      "制服直播",
       "免费直播",
       "超嫩少女",
-      "免费P站",
-      "附近快约",
-      "附近上门",
-      "热门直播",
-      "上门操逼",
-      "免费大全",
-      "24h上门",
-      "全国速降",
       "香蕉破解版",
       "糖心破解版",
-      "破解看片"
+      "Xchat",
+      "X-chat",
+      "日B快线",
+      "猫扑",
+      "猎奇快播",
+      "猫扑",
+      "AI引擎",
+      "小红书",
+      "推特",
+      "肉视频",
+      "中国好黄片"
     ]
   },
   "gaps": [
-    "app数量: 原站232 vs 克隆230",
-    "app名称差异: 原站独有1, 克隆独有0",
-    "链接覆盖率: 191/231 (API仅56个唯一名)",
+    "app数量: 原站232 vs 克隆231",
+    "app名称差异: 原站独有1, 克隆独有1",
     "未接入 API 段(9): appsBanner, commentAreaAds, textPopAds, homeSecondFeedBannerAds, freeAppsAds, imListBannerAds, imListFeedNativeAds, imChatNotificationBarAds...",
-    "TabBar 路由未实现（仅 /appcenter）",
-    "分类 Tab 点击未切换 app 列表",
-    "模式切换(站长推荐/热门下载)未切换列表"
+    "分类/模式筛选已接入（需部署后验证）"
   ]
 }

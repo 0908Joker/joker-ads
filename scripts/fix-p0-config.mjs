@@ -54,7 +54,14 @@ for (const app of config.apps) {
 }
 
 // internal routes: only verified
-config.internalRoutes = { 超嫩少女: '/short' }
+config.internalRoutes = {
+  超嫩少女: '/short',
+  免费直播: '/videosPage',
+  小红书: '/videosPage',
+  推特: '/videosPage',
+  AI引擎: '/vipPage',
+  '51看片': '/videosPage',
+}
 
 // ensure 专业炮台 exists
 if (!config.apps.some((a) => a.name === '专业炮台')) {

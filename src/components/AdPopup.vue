@@ -99,7 +99,7 @@ onMounted(() => {
   flex-direction: column;
   max-height: 90vh;
   max-width: min(88vw, 390px);
-  width: 6.4rem;
+  width: 8rem;
 }
 
 .popup-card {

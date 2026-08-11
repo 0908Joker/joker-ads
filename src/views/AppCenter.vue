@@ -14,7 +14,6 @@
 
     <FloatBanner v-bind="config.floatBanner || {}" />
     <TabBar :items="config.tabbar" :active="activeTab" @change="onTabChange" />
-    <AdPopup :popups="config.popups" />
   </div>
 </template>
 
@@ -28,7 +27,6 @@ import PromoBanner from '../components/PromoBanner.vue'
 import AppGrid from '../components/AppGrid.vue'
 import TabBar from '../components/TabBar.vue'
 import FloatBanner from '../components/FloatBanner.vue'
-import AdPopup from '../components/AdPopup.vue'
 
 const props = defineProps({
   initialTab: { type: String, default: 'apps' },
@@ -43,7 +41,8 @@ const activeMode = ref('recommend')
 const appByName = new Map(config.apps.map((a) => [a.name, a]))
 
 const visibleApps = computed(() => {
-  const catNames = config.categoryApps?.byCategory?.[activeCategory.value] || []
+  const cat = activeCategory.value
+  const catNames = config.categoryApps?.byCategory?.[cat] || []
   let names = catNames
 
   if (activeMode.value === 'download') {
@@ -52,11 +51,12 @@ const visibleApps = computed(() => {
       const modeSet = new Set(modeNames)
       names = catNames.filter((n) => modeSet.has(n))
     }
+  } else {
+    const rec = config.categoryApps?.modesByCategory?.[cat]?.['站长推荐']
+    if (rec?.length) names = rec
   }
 
-  return names
-    .map((name) => appByName.get(name))
-    .filter(Boolean)
+  return names.map((name) => appByName.get(name)).filter(Boolean)
 })
 
 function onAppClick(app) {

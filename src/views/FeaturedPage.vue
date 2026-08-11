@@ -9,7 +9,7 @@
 
     <nav class="cat-tabs">
       <button
-        v-for="tab in tabs"
+        v-for="tab in CATEGORY_TABS"
         :key="tab"
         class="cat-tab"
         :class="{ 'is-active': activeTab === tab }"
@@ -27,55 +27,120 @@
     </div>
 
     <div class="sub-tabs">
-      <button v-for="s in subTabs" :key="s" class="sub-tab" :class="{ 'is-active': subTab === s }" @click="subTab = s">{{ s }}</button>
+      <button
+        v-for="s in subTabs"
+        :key="s"
+        class="sub-tab"
+        :class="{ 'is-active': subTab === s }"
+        @click="subTab = s"
+      >{{ s }}</button>
       <span class="more">最新影片 更多</span>
     </div>
 
-    <section class="video-feed">
-      <article v-if="heroVideo" class="video-hero">
-        <img v-if="heroVideo.coverLocal" :src="heroVideo.coverLocal" alt="" class="video-hero__cover" />
-        <div v-else class="video-hero__cover video-hero__cover--ph" />
-        <div class="video-hero__meta">
-          <h3>{{ heroVideo.title }}</h3>
-          <p>{{ heroVideo.views }} · {{ heroVideo.duration }}</p>
-        </div>
+    <section class="video-list">
+      <article
+        v-for="(v, i) in videos"
+        :key="v.id || i"
+        class="video-row"
+        :class="{ 'video-row--ad': v.isAd }"
+      >
+        <template v-if="v.isAd">
+          <div class="video-row__cover video-row__cover--ad">广告</div>
+          <div class="video-row__body">
+            <p class="video-row__stats"><span>SQ直播</span></p>
+            <h3>{{ adCard.name }}</h3>
+            <p class="video-row__meta">{{ adCard.viewers }} · <button class="video-row__link">查看</button></p>
+          </div>
+        </template>
+        <template v-else>
+          <img v-if="v.cover || v.coverLocal" :src="v.coverLocal || v.cover" alt="" class="video-row__cover" />
+          <div v-else class="video-row__cover video-row__cover--ph" />
+          <div class="video-row__body">
+            <p class="video-row__stats"><span>{{ v.views }}</span><span>{{ v.duration }}</span></p>
+            <h3>{{ v.title }}</h3>
+          </div>
+        </template>
       </article>
-      <div class="video-grid">
-        <article v-for="(v, i) in gridVideos" :key="i" class="video-grid__item">
-          <img v-if="v.coverLocal" :src="v.coverLocal" alt="" class="video-grid__cover" />
-          <div v-else class="video-grid__cover video-grid__cover--ph" />
-          <h3>{{ v.title }}</h3>
-          <p>{{ v.views }} · {{ v.duration }}</p>
-        </article>
-      </div>
+      <p v-if="loading" class="video-list__loading">加载中…</p>
     </section>
   </TabShell>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import TabShell from '../components/TabShell.vue'
 import feeds from '../data/feeds.json'
 import tabsFallback from '../data/tabs.json'
+import liveApi from '../data/live-api.json'
+import { fetchRecommend, fetchVideoFilter } from '../api/videos.js'
+import { normalizeFeaturedPayload } from '../api/normalize.js'
+import { cleanFeedList } from '../composables/useApiFeed.js'
 
-const raw = feeds.featured?.videos || []
-const clean = raw
-  .map((v) => ({
-    ...v,
-    title: v.title?.replace(/\s+/g, ' ').trim(),
-  }))
-  .filter((v) => v.title && v.title.length > 6 && !/快速筛选|广告 SQ|^\d/.test(v.title))
+const CATEGORY_TABS = [
+  '最新',
+  '推荐',
+  '夏日限定',
+  '18岁',
+  '制服',
+  '探花',
+  '原创',
+  '乱伦',
+  '国产',
+  '传媒',
+  '日本',
+  '欧美',
+  '同性',
+]
 
-const videos = clean.length ? clean : tabsFallback.featured.videos
-const tabs = feeds.featured?.tabs?.length ? feeds.featured.tabs : tabsFallback.featured.tabs
 const chips = tabsFallback.featured.chips
 const subTabs = tabsFallback.featured.subTabs
 const hotWords = ['美女', '巨乳', '奶子', '帅哥']
 
+const fallbackVideos = cleanFeedList(
+  normalizeFeaturedPayload(liveApi.featured).length
+    ? normalizeFeaturedPayload(liveApi.featured)
+    : feeds.featured?.videos?.length
+      ? feeds.featured.videos
+      : tabsFallback.featured.videos,
+)
+
+const sqAd = tabsFallback.featured.ad || {}
+
 const activeTab = ref('推荐')
 const subTab = ref('推荐')
-const heroVideo = computed(() => videos[0])
-const gridVideos = computed(() => videos.slice(1))
+const videos = ref([])
+const loading = ref(false)
+
+const adCard = computed(() => ({
+  name: sqAd.name || 'SQ直播',
+  viewers: sqAd.remark?.match(/\d+人[^·]*/)?.[0] || '5362人 正在看',
+}))
+
+function withAdSlot(list) {
+  const out = [...list]
+  if (out.length >= 4) out.splice(4, 0, { isAd: true, id: 'sq-ad' })
+  return out
+}
+
+async function loadVideos() {
+  loading.value = true
+  try {
+    const tab = activeTab.value
+    const sort = subTab.value === '最新' ? 'new' : subTab.value === '最热' ? 'hot' : 'recommend'
+    const raw =
+      tab === '推荐'
+        ? await fetchRecommend({ page: 1, pageSize: 20, sort })
+        : await fetchVideoFilter({ category: tab, page: 1, pageSize: 20, sort })
+    const list = normalizeFeaturedPayload(raw.data ?? raw)
+    videos.value = withAdSlot(list.length ? list : fallbackVideos)
+  } catch {
+    videos.value = withAdSlot(fallbackVideos)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 </script>
 
 <style scoped>
@@ -111,15 +176,27 @@ const gridVideos = computed(() => videos.slice(1))
 .sub-tab { background: none; border: none; color: rgba(255,255,255,.55); font-size: 0.36rem; }
 .sub-tab.is-active { color: #fff; font-weight: 600; }
 .more { color: rgba(255,255,255,.45); font-size: 0.28rem; margin-left: auto; }
-.video-feed { padding: 0 0.16rem 0.32rem; }
-.video-hero { margin-bottom: 0.24rem; }
-.video-hero__cover { border-radius: 0.16rem; display: block; height: 5.4rem; object-fit: cover; width: 100%; }
-.video-hero__cover--ph { background: linear-gradient(135deg,#333,#111); }
-.video-hero__meta h3 { font-size: 0.34rem; line-height: 1.4; margin-top: 0.12rem; padding: 0 0.16rem; }
-.video-hero__meta p { color: rgba(255,255,255,.45); font-size: 0.26rem; padding: 0 0.16rem; }
-.video-grid { display: grid; gap: 0.2rem; grid-template-columns: repeat(2, 1fr); }
-.video-grid__cover { aspect-ratio: 16/10; border-radius: 0.12rem; object-fit: cover; width: 100%; }
-.video-grid__cover--ph { background: linear-gradient(135deg,#2a2a2a,#111); }
-.video-grid__item h3 { font-size: 0.28rem; line-height: 1.35; margin-top: 0.08rem; padding: 0 0.08rem; }
-.video-grid__item p { color: rgba(255,255,255,.45); font-size: 0.24rem; padding: 0 0.08rem 0.16rem; }
+.video-list { padding: 0 0.24rem 0.32rem; }
+.video-row {
+  align-items: center; display: flex; gap: 0.24rem; margin-bottom: 0.24rem; min-height: 1.62rem;
+}
+.video-row__cover {
+  border-radius: 0.12rem; flex-shrink: 0; height: 1.62rem; object-fit: cover; width: 2.88rem;
+}
+.video-row__cover--ph { background: linear-gradient(135deg,#333,#111); }
+.video-row__cover--ad {
+  align-items: center; background: linear-gradient(135deg,#2a1520,#111); color: #ff6b8a;
+  display: flex; font-size: 0.28rem; justify-content: center;
+}
+.video-row__body { flex: 1; min-width: 0; }
+.video-row__stats {
+  color: rgba(255,255,255,.45); display: flex; font-size: 0.26rem; gap: 0.16rem; margin-bottom: 0.08rem;
+}
+.video-row__body h3 {
+  -webkit-box-orient: vertical; -webkit-line-clamp: 2; display: -webkit-box;
+  font-size: 0.32rem; line-height: 1.35; overflow: hidden;
+}
+.video-row__meta { color: rgba(255,255,255,.45); font-size: 0.26rem; margin-top: 0.08rem; }
+.video-row__link { background: none; border: none; color: #7ecbff; font-size: 0.26rem; }
+.video-list__loading { color: rgba(255,255,255,.45); font-size: 0.28rem; padding: 0.24rem; text-align: center; }
 </style>

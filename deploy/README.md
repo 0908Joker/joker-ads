@@ -42,6 +42,33 @@ VPS IP：`107.149.129.35`。SSH 22 端口当前未开放，需安全组放行后
 curl -fsSL https://raw.githubusercontent.com/0908Joker/joker-ads/main/deploy/bootstrap.sh | bash
 ```
 
+## API Proxy（实时 Tab 必需）
+
+GitHub Pages 静态站无法直连原站 API（CORS）。生产环境需在 Cloudflare 挂载 Worker：
+
+1. Workers → 创建 Worker，粘贴 [`deploy/api-proxy.js`](api-proxy.js)
+2. 路由：`51-pc.com/api/v1/*` → 该 Worker
+3. 本地开发：`npm run dev` 已通过 Vite `/api-proxy` 转发
+
+克隆站前端请求 `/api/v1/*`（同源 Worker）或 dev 时 `/api-proxy/*`。
+
+## Runbook（crawl + gate + deploy）
+
+```bash
+# 刷新 token + 实时 API 快照
+npm run sync:api
+
+# 全量 crawl（可选）
+npm run crawl
+
+# 构建 + 本地验收
+npm run build
+npm run preview -- --port 4173
+npm run audit:gate   # 需 CLONE_URL=http://127.0.0.1:4173
+
+# 部署：push main → GitHub Pages 自动发布；确认 Worker 路由 51-pc.com/api/v1/*
+```
+
 ## Manual deploy (SSH 可用后)
 
 ```bash

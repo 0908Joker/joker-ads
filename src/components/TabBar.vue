@@ -36,7 +36,7 @@ const icons = {
 .tabbar {
   background-color: #171512;
   bottom: 0;
-  box-sizing: initial;
+  box-sizing: border-box;
   display: flex;
   height: 1.53846rem;
   left: 0;
