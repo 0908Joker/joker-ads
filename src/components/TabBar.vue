@@ -29,6 +29,7 @@ const icons = {
   planet: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="6.5"/><ellipse cx="12" cy="12" rx="11" ry="3.6" transform="rotate(-28 12 12)"/></svg>`,
   eye: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 3l2.2 4.6L19 9l-3.4 3.6.9 5.4L12 15.8 7.5 18l.9-5.4L5 9l4.8-1.4L12 3z"/></svg>`,
   user: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="3"/><path d="M7 17.2c1.4-1.6 3.1-2.4 5-2.4s3.6.8 5 2.4"/></svg>`,
+  smile: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.1" fill="currentColor" stroke="none"/><path d="M8.2 14.2c1.1 1.6 2.4 2.4 3.8 2.4s2.7-.8 3.8-2.4"/></svg>`,
 }
 </script>
 

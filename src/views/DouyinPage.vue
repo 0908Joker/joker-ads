@@ -28,19 +28,17 @@
           v-if="item.videoUrl"
           class="short-slide__media"
           :src="item.videoUrl"
-          :poster="item.cover || item.coverLocal"
+          :poster="item.coverSrc || undefined"
           playsinline
           loop
           muted
           autoplay
         />
-        <img
-          v-else-if="item.cover || item.coverLocal"
-          :src="item.coverLocal || item.cover"
-          alt=""
+        <CebImg
+          v-else
           class="short-slide__media"
+          :path="item.coverLocal || item.cover"
         />
-        <div v-else class="short-slide__media short-slide__media--ph" />
 
         <aside class="short-slide__side">
           <div class="side-avatar">
@@ -71,13 +69,17 @@
 <script setup>
 import { ref, watch } from 'vue'
 import TabShell from '../components/TabShell.vue'
+import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
+import liveApi from '../data/live-api.json'
 import { fetchShortAndImg } from '../api/videos.js'
 import { normalizeShortPayload } from '../api/normalize.js'
+import { decryptMedia } from '../api/media.js'
 
 const tabList = tabsFallback.douyin.tabs
 const activeTab = ref('抖阴')
-const items = ref(tabsFallback.douyin.items)
+const liveFallback = normalizeShortPayload(liveApi.short).map((v) => ({ ...v, videoUrl: '' }))
+const items = ref(liveFallback.length ? liveFallback : tabsFallback.douyin.items)
 const dramaTags = ['#全部', '#玄幻', '#悬疑', '#甜宠', '#总裁', '#穿越', '#逆袭']
 const dramaCards = ref([
   { title: '葡萄成熟时 第4集' },
@@ -91,12 +93,21 @@ async function loadShorts() {
     const raw = await fetchShortAndImg({ page: 1, pageSize: 10, tab: activeTab.value })
     const list = normalizeShortPayload(raw.data ?? raw)
     if (list.length) {
-      items.value = list.map((v, i) => ({
-        ...v,
-        user: v.user && v.user !== '@saixi' ? v.user : tabsFallback.douyin.items[i % 2]?.user,
-        tags: v.hashtags?.length ? v.hashtags : tabsFallback.douyin.items[i % 2]?.tags,
-        shares: v.shares || tabsFallback.douyin.items[i % 2]?.shares,
-      }))
+      items.value = await Promise.all(
+        list.map(async (v, i) => {
+          let coverSrc = ''
+          try {
+            coverSrc = await decryptMedia(v.coverLocal || v.cover)
+          } catch {}
+          return {
+            ...v,
+            coverSrc,
+            user: v.user && v.user !== '@saixi' ? v.user : tabsFallback.douyin.items[i % 2]?.user,
+            tags: v.hashtags?.length ? v.hashtags : tabsFallback.douyin.items[i % 2]?.tags,
+            shares: v.shares || tabsFallback.douyin.items[i % 2]?.shares,
+          }
+        }),
+      )
     }
   } catch {
     items.value = tabsFallback.douyin.items

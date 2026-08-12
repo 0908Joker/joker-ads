@@ -25,7 +25,7 @@
       <header class="sec-head"><h3>{{ sec.title }}</h3><span>更多></span></header>
       <div class="comic-scroll">
         <article v-for="(c, i) in sec.items" :key="i" class="comic-card">
-          <div class="comic-card__cover" />
+          <CebImg class="comic-card__cover" :path="c.coverLocal || c.cover" />
           <p class="comic-card__type">{{ c.type }} · {{ c.status }}</p>
           <h4>{{ c.title }}</h4>
         </article>
@@ -38,6 +38,7 @@
 import { ref, computed, watch } from 'vue'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
+import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import { fetchHomeComic } from '../api/comics.js'
 import { normalizeComic } from '../api/normalize.js'
@@ -108,7 +109,7 @@ watch(active, () => loadComics(), { immediate: true })
 .sec-head span { color: #f81942; font-size: 0.28rem; }
 .comic-scroll { display: flex; gap: 0.16rem; overflow-x: auto; }
 .comic-card { flex-shrink: 0; width: 2.2rem; }
-.comic-card__cover { aspect-ratio: 3/4; background: linear-gradient(135deg,#333,#1a1a1a); border-radius: 0.12rem; }
+.comic-card__cover { aspect-ratio: 3/4; background: linear-gradient(135deg,#333,#1a1a1a); border-radius: 0.12rem; object-fit: cover; width: 100%; }
 .comic-card__type { color: rgba(255,255,255,.45); font-size: 0.22rem; margin-top: 0.08rem; }
 .comic-card h4 { font-size: 0.26rem; line-height: 1.3; margin-top: 0.04rem; }
 </style>

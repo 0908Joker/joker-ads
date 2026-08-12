@@ -46,8 +46,7 @@
           </div>
         </template>
         <template v-else>
-          <img v-if="v.coverLocal || v.cover" :src="v.coverLocal || v.cover" alt="" class="video-row__cover" />
-          <div v-else class="video-row__cover video-row__cover--ph" />
+          <CebImg class="video-row__cover" :path="v.coverLocal || v.cover" />
           <div class="video-row__body">
             <h3>{{ v.title }}</h3>
             <p class="video-row__stats">{{ v.views }} · {{ v.duration }}</p>
@@ -62,7 +61,9 @@
 import { ref, computed, watch } from 'vue'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
+import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
+import liveApi from '../data/live-api.json'
 import { fetchRecommend, fetchVideoFilter } from '../api/videos.js'
 import { normalizeFeaturedPayload } from '../api/normalize.js'
 import { cleanFeedList } from '../composables/useApiFeed.js'
@@ -72,7 +73,11 @@ const CATEGORY_TABS = [
 ]
 const chips = tabsFallback.featured.chips
 const subTabs = tabsFallback.featured.subTabs
-const fallbackVideos = cleanFeedList(tabsFallback.featured.videos, 4)
+const fallbackVideos = (() => {
+  const live = normalizeFeaturedPayload(liveApi.featured)
+  if (live.length) return live
+  return cleanFeedList(tabsFallback.featured.videos, 4)
+})()
 const sqAd = tabsFallback.featured.ad || {}
 
 const activeTab = ref('推荐')
@@ -141,7 +146,10 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
   padding: 0.2rem;
 }
 .video-row__cover {
-  border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; object-fit: cover; width: 2.41026rem;
+  border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
+}
+:deep(.video-row__cover) {
+  border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
 }
 .video-row__cover--ph { background: linear-gradient(135deg,#3a3a3a,#1a1a1a); }
 .video-row__cover--ad {
