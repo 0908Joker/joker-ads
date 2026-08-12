@@ -65,7 +65,9 @@ function iconText(name) {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.21333rem 0.10667rem;
-  padding: 0.32rem 0.26923rem 0.53333rem;
+  margin: 0 0.25641rem;
+  padding: 0.32rem 0 0.53333rem;
+  width: auto;
 }
 
 .app-card {

@@ -22,13 +22,13 @@ defineProps({
 defineEmits(['change'])
 
 const icons = {
-  grid: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
-  crown: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 18h18M5 18l1-8 4 4 3-6 3 6 4-4 1 8"/></svg>`,
-  music: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 3v10.5a3.5 3.5 0 1 0 2 3.15V6.5l8-2.5v8a3.5 3.5 0 1 0 2 3.15V3l-12 3z"/></svg>`,
-  skull: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="6"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><path d="M9 18v3M12 18v3M15 18v3"/></svg>`,
-  planet: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="12" ry="4" transform="rotate(-30 12 12)"/></svg>`,
-  eye: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3"/></svg>`,
-  user: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>`,
+  grid: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="3" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.2"/></svg>`,
+  crown: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 19h18v-2H3v2zm1.5-4h15L21 7l-5 3-4-6-4 6-5-3 1.5 8z"/></svg>`,
+  music: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M17 3v10.26A4 4 0 1 0 19 17V7h4V3h-6zM7 13a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>`,
+  skull: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2a8 8 0 0 0-8 8c0 3.2 1.8 6 4.4 7.4V20h2.2v2h2.8v-2H15.6v-2.6C18.2 16 20 13.2 20 10a8 8 0 0 0-8-8zM9 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>`,
+  planet: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="6.5"/><ellipse cx="12" cy="12" rx="11" ry="3.6" transform="rotate(-28 12 12)"/></svg>`,
+  eye: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 3l2.2 4.6L19 9l-3.4 3.6.9 5.4L12 15.8 7.5 18l.9-5.4L5 9l4.8-1.4L12 3z"/></svg>`,
+  user: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="3"/><path d="M7 17.2c1.4-1.6 3.1-2.4 5-2.4s3.6.8 5 2.4"/></svg>`,
 }
 </script>
 
