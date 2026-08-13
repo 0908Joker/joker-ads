@@ -1364,6 +1364,8 @@
   "promo": {
     "tag": "限时",
     "text": "聊天不限制",
+    "image": "/promo/banner.gif",
+    "cover": "web/static/00c4afc3c31171fc4db9f3c815865a1c.geb",
     "signUrl": "https://34.92.209.217/api/v1/ad/sign?s=FBI_698b40ead2bee8eef20a070f_40d0acbd-ad65-4aee-a6e7-f1eef6c926fc1786203544058_1000147271297&pid=FBI",
     "url": "https://60b.60pg0282.cc"
   },

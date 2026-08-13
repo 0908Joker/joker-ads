@@ -5,6 +5,10 @@ export async function fetchHomeComic(params = {}) {
   return apiFetch(`/comics/getHomeComic?${q}`)
 }
 
+export async function fetchHomeComicSuper() {
+  return apiFetch('/comics/getHomeComic_super')
+}
+
 export async function fetchComicCategories() {
   return apiFetch('/comics/getComicCategories')
 }

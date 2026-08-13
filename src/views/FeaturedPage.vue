@@ -1,6 +1,16 @@
 <template>
   <TabShell active="featured">
-    <SearchBar />
+    <header class="feat-head">
+      <span class="feat-head__tee" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8">
+          <path d="M8 7l-3 2v10h14V9l-3-2" />
+          <path d="M8 7V5h8v2" />
+        </svg>
+      </span>
+      <SearchBar class="feat-head__search" />
+      <span class="feat-head__hist">⏱</span>
+      <span class="feat-head__plus">＋</span>
+    </header>
 
     <nav class="cat-tabs">
       <button
@@ -85,8 +95,8 @@ const subTab = ref('推荐')
 const videos = ref(withAdSlot(fallbackVideos))
 
 const adCard = computed(() => ({
-  name: sqAd.name || 'SQ直播',
-  viewers: sqAd.viewers || '5362人 正在看',
+  name: sqAd.name || '真实直播偷拍迷奸',
+  viewers: sqAd.viewers || '6864人 正在看',
 }))
 
 function withAdSlot(list) {
@@ -114,11 +124,35 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 </script>
 
 <style scoped>
+.feat-head {
+  align-items: center;
+  display: flex;
+  gap: 0.12rem;
+  padding: 0.12rem 0.2rem 0;
+}
+.feat-head__tee,
+.feat-head__hist,
+.feat-head__plus {
+  align-items: center;
+  color: #fff;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 0.4rem;
+  height: 0.64rem;
+  justify-content: center;
+  width: 0.64rem;
+}
+:deep(.feat-head__search.search-bar),
+.feat-head :deep(.search-bar) {
+  flex: 1;
+  margin: 0;
+}
 .cat-tabs {
   display: flex; gap: 0.28rem; overflow-x: auto; padding: 0.08rem 0.32rem 0.16rem; white-space: nowrap;
 }
 .cat-tab {
   background: none; border: none; color: rgba(255,255,255,.7); font-size: 0.36rem; padding: 0.08rem 0.2rem; border-radius: 0.8rem;
+  position: relative;
 }
 .cat-tab.is-active { background: #fff; color: #111; font-weight: 600; }
 .filter-row {
@@ -131,8 +165,11 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
   font-size: 0.28rem; padding: 0.1rem 0.22rem;
 }
 .sub-tabs { align-items: center; display: flex; gap: 0.32rem; padding: 0 0.32rem 0.2rem; }
-.sub-tab { background: none; border: none; color: rgba(255,255,255,.55); font-size: 0.34rem; }
-.sub-tab.is-active { color: #fff; font-weight: 600; }
+.sub-tab {
+  background: rgb(44, 44, 47); border: none; border-radius: 0.8rem; color: rgba(255,255,255,.55);
+  font-size: 0.3rem; padding: 0.08rem 0.22rem;
+}
+.sub-tab.is-active { background: #f81942; color: #fff; font-weight: 600; }
 .more { color: rgba(255,255,255,.45); font-size: 0.28rem; margin-left: auto; }
 .video-list { padding: 0 0.30769rem 0.32rem; }
 .video-row {
@@ -151,7 +188,6 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 :deep(.video-row__cover) {
   border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
 }
-.video-row__cover--ph { background: linear-gradient(135deg,#3a3a3a,#1a1a1a); }
 .video-row__cover--ad {
   align-items: center; background: linear-gradient(135deg,#3a2030,#1a1a1a); color: #ff6b8a;
   display: flex; font-size: 0.26rem; justify-content: center;

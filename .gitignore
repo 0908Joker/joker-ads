@@ -16,3 +16,6 @@ webpack-runtime.js
 appcenter.js
 launch.js
 .DS_Store
+crawled/page-assets.json
+crawled/remaining-assets.json
+src/data/page-assets.json

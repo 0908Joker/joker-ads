@@ -1,6 +1,7 @@
 <template>
   <TabShell active="mine">
     <section class="profile">
+      <img class="profile__bg" src="/mine/bg.png" alt="" />
       <div class="profile__top">
         <p class="id">ID: {{ user.id }} <span>⧉</span></p>
         <div class="profile__tools">⟳ 🎁 🔔 ⬆</div>
@@ -104,10 +105,13 @@ const version = 'v1.1.169'
 const services = tabsFallback.mine.services
 
 const names = ['免费看片', '上门约炮', '新葡京', '同城约炮', '波多涩漫', '免费看黄片', '海角社区', '浪浪山', 'JVID', 'oio禁漫']
+const recNames = ['免费看片', '上门约炮', '同城约炮', '新葡京', '波多涩漫']
 const myAds = config.apps.filter((a) => names.includes(a.name))
 const row1 = computed(() => myAds.slice(0, 6).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url })))
 const row2 = computed(() => myAds.slice(6, 12).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url })))
-const recommend = computed(() => myAds.slice(0, 5))
+const recommend = computed(() =>
+  recNames.map((n) => config.apps.find((a) => a.name === n)).filter(Boolean),
+)
 
 function openApp(app) {
   const target = app.signUrl || app.url
@@ -134,8 +138,25 @@ onMounted(async () => {
 
 <style scoped>
 .profile {
-  background: linear-gradient(180deg, #c45c2a 0%, #3a1a12 42%, #111 100%);
+  overflow: hidden;
   padding: 0.32rem 0.32rem 0.16rem;
+  position: relative;
+}
+.profile__bg {
+  inset: 0;
+  object-fit: cover;
+  object-position: top;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.profile__top,
+.profile__row,
+.bind-btn,
+.stats {
+  position: relative;
+  z-index: 1;
 }
 .profile__top { align-items: center; display: flex; justify-content: space-between; }
 .id { color: rgba(255,255,255,.8); font-size: 0.26rem; }

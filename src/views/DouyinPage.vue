@@ -24,41 +24,42 @@
 
     <section class="short-feed">
       <article v-for="(item, i) in items" :key="item.id || i" class="short-slide">
+        <CebImg
+          class="short-slide__media short-slide__cover"
+          :path="item.coverLocal || item.cover"
+        />
         <video
-          v-if="item.videoUrl"
-          class="short-slide__media"
+          v-if="item.videoUrl && !item.videoFailed"
+          class="short-slide__media short-slide__video"
           :src="item.videoUrl"
           :poster="item.coverSrc || undefined"
           playsinline
           loop
           muted
           autoplay
-        />
-        <CebImg
-          v-else
-          class="short-slide__media"
-          :path="item.coverLocal || item.cover"
+          @error="item.videoFailed = true"
         />
 
         <aside class="short-slide__side">
           <div class="side-avatar">
-            <span>♥</span>
+            <CebImg v-if="item.avatar" class="side-avatar__img" :path="item.avatar" />
+            <span v-else>♥</span>
             <i>+</i>
           </div>
           <div class="side-act"><span>❤</span><small>{{ item.likes || 0 }}</small></div>
           <div class="side-act"><span>💬</span><small>{{ item.comments || 0 }}</small></div>
-          <div class="side-act"><span>★</span><small>{{ item.shares || 0 }}</small></div>
+          <div class="side-act"><span>★</span><small>{{ item.collects || item.shares || 0 }}</small></div>
           <div class="side-act"><span>↗</span><small>分享</small></div>
           <div class="side-act"><span>¥</span><small>打赏</small></div>
-          <div class="side-act"><span>🔇</span><small>关闭</small></div>
+          <div class="side-act"><span>🔇</span><small>打开</small></div>
           <div class="side-act"><span>🎧</span><small>客服</small></div>
         </aside>
 
         <div class="short-slide__overlay">
           <p class="short-slide__user">{{ item.user }}</p>
           <p class="short-slide__title">{{ item.title }}</p>
-          <div v-if="item.tags?.length" class="short-slide__tags">
-            <span v-for="t in item.tags" :key="t">{{ t }}</span>
+          <div v-if="item.tags?.length || item.hashtags?.length" class="short-slide__tags">
+            <span v-for="t in (item.tags || item.hashtags)" :key="t">{{ t }}</span>
           </div>
         </div>
       </article>
@@ -78,7 +79,7 @@ import { decryptMedia } from '../api/media.js'
 
 const tabList = tabsFallback.douyin.tabs
 const activeTab = ref('抖阴')
-const liveFallback = normalizeShortPayload(liveApi.short).map((v) => ({ ...v, videoUrl: '' }))
+const liveFallback = normalizeShortPayload(liveApi.short)
 const items = ref(liveFallback.length ? liveFallback : tabsFallback.douyin.items)
 const dramaTags = ['#全部', '#玄幻', '#悬疑', '#甜宠', '#总裁', '#穿越', '#逆袭']
 const dramaCards = ref([
@@ -99,18 +100,21 @@ async function loadShorts() {
           try {
             coverSrc = await decryptMedia(v.coverLocal || v.cover)
           } catch {}
+          const fb = tabsFallback.douyin.items[i % 2] || {}
           return {
             ...v,
             coverSrc,
-            user: v.user && v.user !== '@saixi' ? v.user : tabsFallback.douyin.items[i % 2]?.user,
-            tags: v.hashtags?.length ? v.hashtags : tabsFallback.douyin.items[i % 2]?.tags,
-            shares: v.shares || tabsFallback.douyin.items[i % 2]?.shares,
+            videoFailed: false,
+            user: v.user && !/@saixi$/.test(v.user) ? v.user : fb.user,
+            tags: v.hashtags?.length ? v.hashtags : fb.tags,
+            shares: v.shares || fb.shares,
+            collects: v.collects || fb.shares,
           }
         }),
       )
     }
   } catch {
-    items.value = tabsFallback.douyin.items
+    items.value = liveFallback.length ? liveFallback : tabsFallback.douyin.items
   }
 }
 
@@ -136,22 +140,29 @@ watch(activeTab, () => loadShorts(), { immediate: true })
   overflow-y: auto; scroll-snap-type: y mandatory;
 }
 .short-slide {
+  background: #111;
   height: calc(100vh - 1.53846rem - env(safe-area-inset-bottom));
   position: relative; scroll-snap-align: start; width: 100%;
 }
 .short-slide__media { height: 100%; object-fit: cover; width: 100%; }
-.short-slide__media--ph { background: linear-gradient(180deg,#2a2a2a,#111); }
+.short-slide__cover { inset: 0; position: absolute; }
+.short-slide__video { inset: 0; position: absolute; z-index: 1; }
 .short-slide__side {
   align-items: center; bottom: 2.4rem; display: flex; flex-direction: column; gap: 0.28rem;
   position: absolute; right: 0.16rem; z-index: 2;
 }
 .side-avatar {
   align-items: center; background: #ff2d55; border-radius: 50%; display: flex; font-size: 0.32rem;
-  height: 0.96rem; justify-content: center; position: relative; width: 0.96rem;
+  height: 0.96rem; justify-content: center; overflow: visible; position: relative; width: 0.96rem;
+}
+.side-avatar__img,
+:deep(.side-avatar__img) {
+  border-radius: 50%; height: 0.96rem; overflow: hidden; width: 0.96rem;
 }
 .side-avatar i {
   background: #f81942; border-radius: 50%; bottom: -0.12rem; color: #fff; font-size: 0.22rem;
   font-style: normal; height: 0.32rem; line-height: 0.32rem; position: absolute; text-align: center; width: 0.32rem;
+  z-index: 1;
 }
 .side-act { align-items: center; color: #fff; display: flex; flex-direction: column; font-size: 0.28rem; text-shadow: 0 1px 2px #000; }
 .side-act small { font-size: 0.22rem; margin-top: 0.04rem; }

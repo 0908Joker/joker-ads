@@ -1,7 +1,10 @@
 <template>
   <div v-if="visible" class="popup-overlay" @click.self="close">
     <div v-if="mode === 'grid'" class="grid-wrap">
-      <div class="grid-bg" :style="{ backgroundImage: `url(${gridBg})` }">
+      <div class="grid-panel">
+        <div class="grid-head">
+          <h2 class="grid-title">精品APP</h2>
+        </div>
         <div class="grid-ads">
           <a
             v-for="(ad, i) in gridAds"
@@ -12,7 +15,6 @@
             rel="noopener noreferrer"
           >
             <CebImg class="grid-ad__img" :path="ad.coverUrl" />
-            <span>{{ ad.name }}</span>
           </a>
         </div>
       </div>
@@ -64,7 +66,6 @@ const afterAds = computed(() => {
 })
 
 const gridAds = computed(() => popupData.gridPopAds || [])
-const gridBg = '/popups/grid-bg.jpg'
 
 const index = ref(0)
 const mode = ref('image')
@@ -145,48 +146,62 @@ onMounted(() => showAt(0))
   object-fit: contain;
   width: 100%;
 }
-.grid-bg {
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  height: 11.06667rem;
+.grid-panel {
+  background: #16161a;
+  border-radius: 0.36rem;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 0 0 0.28rem;
   position: relative;
-  width: 8.58667rem;
+  width: 100%;
+}
+.grid-panel::before {
+  background: linear-gradient(180deg, #ff5aa8 0%, #7ecbff 48%, #4ecbff 100%);
+  border-radius: 0.4rem;
+  content: '';
+  inset: -0.06rem;
+  position: absolute;
+  z-index: -1;
+}
+.grid-head {
+  align-items: center;
+  display: flex;
+  height: 1.36rem;
+  justify-content: center;
+}
+.grid-title {
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin: 0;
+  text-shadow:
+    0 0 4px #ff4da6,
+    0 0 10px #ff2d95,
+    0 0 18px #ff2d95;
 }
 .grid-ads {
   display: grid;
-  gap: 0.2rem 0.16rem;
+  gap: 0.16rem 0.14rem;
   grid-template-columns: repeat(4, 1fr);
-  height: 7.33333rem;
-  left: 0.48rem;
+  max-height: 9.2rem;
+  overflow-x: hidden;
   overflow-y: auto;
-  position: absolute;
-  top: 3.25333rem;
-  width: 7.68rem;
+  padding: 0.08rem 0.28rem 0.12rem;
 }
 .grid-ad {
-  align-items: center;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
+  display: block;
+  line-height: 0;
   text-decoration: none;
-  width: 1.6rem;
 }
-.grid-ad__img {
-  border-radius: 0.32rem;
-  height: 1.28rem;
+.grid-ad__img,
+:deep(.grid-ad__img) {
+  aspect-ratio: 1;
+  border-radius: 0.22rem;
+  display: block;
   overflow: hidden;
-  width: 1.28rem;
-}
-.grid-ad span {
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  display: -webkit-box;
-  font-size: 0.26rem;
-  line-height: 1.2;
-  margin-top: 0.08rem;
-  overflow: hidden;
-  text-align: center;
+  width: 100%;
 }
 .popup-close {
   align-items: center;

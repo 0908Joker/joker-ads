@@ -38,8 +38,10 @@ export function normalizeVideo(item) {
     coverLocal: item.coverLocal || '',
     likes: formatCount(item.likedCnt ?? item.likes),
     comments: formatCount(item.commentCnt ?? item.comments),
-    videoUrl: mediaUrl(item.mp4PlayURL || item.playURL || item.videoUrl),
+    videoUrl: mediaUrl(item.mp4PlayURL || item.videoUrl),
     user: item.uploadId ? `@${item.uploadId}` : item.user || '',
+    avatar: mediaUrl(item.user?.avatarURL || item.avatarURL || ''),
+    collects: formatCount(item.collectedCnt ?? item.collects),
   }
 }
 
@@ -55,8 +57,17 @@ export function normalizeShortPayload(data) {
       const v = row.video || row
       const n = normalizeVideo(v)
       if (!n) return null
-      n.user = v.uploadId ? `@${v.uploadId}` : n.user
-      n.hashtags = row.tags || v.tags || []
+      const u = v.user || row.user || {}
+      n.user = u.username ? `@${u.username}` : n.user
+      n.avatar = mediaUrl(u.avatarURL || n.avatar)
+      const tags = row.tags || v.videoTags || v.tags || []
+      n.hashtags = (Array.isArray(tags) ? tags : [])
+        .map((t) => (typeof t === 'string' ? t : t?.name || t?.tag || ''))
+        .filter(Boolean)
+        .map((t) => (String(t).startsWith('#') ? t : `#${t}`))
+      n.collects = formatCount(v.collectedCnt ?? n.collects)
+      n.comments = formatCount(v.commentCnt ?? n.comments)
+      n.likes = formatCount(v.likedCnt ?? n.likes)
       return n
     })
     .filter(Boolean)
@@ -68,9 +79,9 @@ export function normalizeComic(item) {
   if (!title) return null
   return {
     title,
-    type: item.categoryName || item.type || '韩漫',
-    status: item.updateStatus === 1 ? '完结' : '连载',
-    cover: mediaUrl(item.coverURL || item.cover),
+    type: item.categoryName || item.tags?.[0] || item.type || '韩漫',
+    status: item.schedule || (item.updateStatus === 1 ? '完结' : '连载'),
+    cover: mediaUrl(item.coverURL || item.horizontalCoverUrl || item.cover),
     coverLocal: item.coverLocal || '',
   }
 }
