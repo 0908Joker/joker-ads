@@ -47,6 +47,7 @@
         v-for="(v, i) in videos"
         :key="v.id || i"
         class="video-row"
+        :class="{ 'video-row--ad': v.isAd, 'video-row--video': !v.isAd }"
       >
         <template v-if="v.isAd">
           <div class="video-row__cover video-row__cover--ad">广告</div>
@@ -101,7 +102,7 @@ const adCard = computed(() => ({
 
 function withAdSlot(list) {
   const out = [...list]
-  if (out.length >= 3) out.splice(3, 0, { isAd: true, id: 'sq-ad' })
+  if (out.length >= 4) out.splice(4, 0, { isAd: true, id: 'sq-ad' })
   return out
 }
 
@@ -171,21 +172,42 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 }
 .sub-tab.is-active { background: #f81942; color: #fff; font-weight: 600; }
 .more { color: rgba(255,255,255,.45); font-size: 0.28rem; margin-left: auto; }
-.video-list { padding: 0 0.30769rem 0.32rem; }
+.video-list {
+  display: grid;
+  gap: 0.2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 0.30769rem 0.32rem;
+}
 .video-row {
-  align-items: center;
   background: #1a1a1a;
   border-radius: 0.12rem;
+  min-width: 0;
+  overflow: hidden;
+}
+.video-row--video {
+  display: flex;
+  flex-direction: column;
+}
+.video-row--video :deep(.video-row__cover) {
+  aspect-ratio: 3 / 2;
+  border-radius: 0.1rem 0.1rem 0 0;
+  flex-shrink: 0;
+  height: auto;
+  overflow: hidden;
+  width: 100%;
+}
+.video-row--video .video-row__body {
+  padding: 0.14rem 0.16rem 0.16rem;
+}
+.video-row--ad {
+  align-items: center;
   display: flex;
   gap: 0.2rem;
+  grid-column: 1 / -1;
   height: 2.07692rem;
-  margin-bottom: 0.2rem;
   padding: 0.2rem;
 }
-.video-row__cover {
-  border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
-}
-:deep(.video-row__cover) {
+.video-row--ad .video-row__cover {
   border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
 }
 .video-row__cover--ad {
@@ -195,8 +217,23 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 .video-row__body { flex: 1; min-width: 0; }
 .video-row__body h3 {
   -webkit-box-orient: vertical; -webkit-line-clamp: 2; display: -webkit-box;
-  font-size: 0.32rem; line-height: 1.35; overflow: hidden;
+  line-height: 1.35; overflow: hidden;
 }
-.video-row__stats, .video-row__meta { color: rgba(255,255,255,.45); font-size: 0.26rem; margin-top: 0.08rem; }
+.video-row--video .video-row__body h3 {
+  font-size: 0.28rem;
+  min-height: 2.7em;
+}
+.video-row--ad .video-row__body h3 {
+  font-size: 0.32rem;
+}
+.video-row__stats {
+  color: rgba(255,255,255,.45);
+  font-size: 0.24rem;
+  margin-top: 0.08rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.video-row__meta { color: rgba(255,255,255,.45); font-size: 0.26rem; margin-top: 0.08rem; }
 .video-row__link { color: #7ecbff; }
 </style>
