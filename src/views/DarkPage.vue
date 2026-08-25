@@ -29,7 +29,13 @@
     </div>
 
     <section v-if="results.length" class="results">
-      <article v-for="(v, i) in results" :key="v.id || i" class="result-row">
+      <article
+        v-for="(v, i) in results"
+        :key="v.id || i"
+        class="result-row"
+        :class="{ 'result-row--tap': v.id }"
+        @click="openVideo(v)"
+      >
         <CebImg class="result-row__cover" :path="v.coverLocal || v.cover" />
         <div>
           <p>{{ v.views }} · {{ v.duration }}</p>
@@ -42,6 +48,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
@@ -51,6 +58,12 @@ import { normalizeFeaturedPayload } from '../api/normalize.js'
 const tags = tabsFallback.dark.tags.slice(0, 8)
 const activeTag = ref('')
 const results = ref([])
+const router = useRouter()
+
+function openVideo(v) {
+  if (!v?.id) return
+  router.push(`/play/${v.id}`)
+}
 
 async function onTag(tag) {
   activeTag.value = tag
@@ -116,6 +129,8 @@ async function onTag(tag) {
 .dark-tag.is-active { background: rgba(255,45,85,.2); border-color: #ff2d55; }
 .results { padding: 0 0.32rem 0.48rem; }
 .result-row { align-items: center; display: flex; gap: 0.2rem; margin-bottom: 0.2rem; }
+.result-row--tap { cursor: pointer; }
+.result-row--tap:active { opacity: 0.75; }
 .result-row__cover { background: #222; border-radius: 0.1rem; height: 1.2rem; object-fit: cover; width: 2rem; }
 .result-row p { color: rgba(255,255,255,.45); font-size: 0.24rem; }
 .result-row h3 { font-size: 0.3rem; }

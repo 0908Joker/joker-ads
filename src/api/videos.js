@@ -10,6 +10,19 @@ export async function fetchAlgoRecommendList(params = {}) {
   return apiFetch(`/algoRecommend/getList?${q}`)
 }
 
+/** Origin featured tabs: getSecondCategoriesData → categories/{categoryId} */
+export async function fetchCategoryVideos(categoryId, params = {}) {
+  const q = new URLSearchParams({
+    page: '1',
+    pageSize: '20',
+    timeType: '1',
+    compositeSort: '1',
+    inPool: 'true',
+    ...params,
+  })
+  return apiFetch(`/categories/${categoryId}?${q}`)
+}
+
 export async function fetchVideoFilter(params = {}) {
   const q = new URLSearchParams(params)
   return apiFetch(`/videos/filter?${q}`)

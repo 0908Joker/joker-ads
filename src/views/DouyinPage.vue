@@ -23,7 +23,7 @@
     </section>
 
     <section class="short-feed">
-      <article v-for="(item, i) in items" :key="item.id || i" class="short-slide">
+      <article v-for="(item, i) in items" :key="`${activeTab}-${item.id || i}`" class="short-slide">
         <CebImg
           class="short-slide__media short-slide__cover"
           :path="item.coverLocal || item.cover"
@@ -81,7 +81,7 @@ import { decryptMedia } from '../api/media.js'
 const tabList = tabsFallback.douyin.tabs
 const activeTab = ref('抖阴')
 const liveFallback = normalizeShortPayload(liveApi.short)
-const items = ref(liveFallback.length ? liveFallback : tabsFallback.douyin.items)
+const items = ref([])
 const dramaTags = ['#全部', '#玄幻', '#悬疑', '#甜宠', '#总裁', '#穿越', '#逆袭']
 const dramaCards = ref([
   { title: '葡萄成熟时 第4集' },
@@ -90,36 +90,73 @@ const dramaCards = ref([
   { title: '废柴杂役第8集' },
 ])
 
+async function hydrateShortList(list) {
+  return Promise.all(
+    list.map(async (v, i) => {
+      let coverSrc = ''
+      try {
+        coverSrc = await decryptMedia(v.coverLocal || v.cover)
+      } catch {}
+      const fb = tabsFallback.douyin.items[i % 2] || {}
+      return {
+        ...v,
+        coverSrc,
+        videoFailed: false,
+        user: v.user && !/@saixi$/.test(v.user) ? v.user : fb.user,
+        tags: v.hashtags?.length ? v.hashtags : fb.tags,
+        shares: v.shares || fb.shares,
+        collects: v.collects || fb.shares,
+      }
+    }),
+  )
+}
+
+function cachedShortForTab(tab) {
+  const byTab = liveApi.shortByTab || {}
+  if (byTab[tab] && !byTab[tab].error) {
+    const list = normalizeShortPayload(byTab[tab])
+    if (list.length) return list
+  }
+  if (tab === '抖阴' && liveFallback.length) return liveFallback
+  return []
+}
+
+function tabFallbackItems(tab) {
+  const cached = cachedShortForTab(tab)
+  if (cached.length) return cached
+  // Static labels only — never reuse another tab's feed as fallback.
+  return tabsFallback.douyin.items.map((row, i) => ({
+    ...row,
+    id: `fallback-${tab}-${i}`,
+    title: row.title,
+    videoUrl: '',
+    cover: '',
+    coverLocal: '',
+  }))
+}
+
+let loadSeq = 0
+
 async function loadShorts() {
+  const seq = ++loadSeq
+  const tab = activeTab.value
+  const cate = (shortCategories.categories || []).find((c) => c.name === tab)
+  items.value = []
+
   try {
-    const tab = activeTab.value
-    const cate = (shortCategories.categories || []).find((c) => c.name === tab)
     const raw = cate?.categorieId
       ? await fetchShortByCategorie({ page: 1, pageSize: 10, categorieId: cate.categorieId })
       : await fetchShortAndImg({ page: 1, pageSize: 10, tab })
+    if (seq !== loadSeq) return
     const list = normalizeShortPayload(raw.data ?? raw)
     if (list.length) {
-      items.value = await Promise.all(
-        list.map(async (v, i) => {
-          let coverSrc = ''
-          try {
-            coverSrc = await decryptMedia(v.coverLocal || v.cover)
-          } catch {}
-          const fb = tabsFallback.douyin.items[i % 2] || {}
-          return {
-            ...v,
-            coverSrc,
-            videoFailed: false,
-            user: v.user && !/@saixi$/.test(v.user) ? v.user : fb.user,
-            tags: v.hashtags?.length ? v.hashtags : fb.tags,
-            shares: v.shares || fb.shares,
-            collects: v.collects || fb.shares,
-          }
-        }),
-      )
+      items.value = await hydrateShortList(list)
+      return
     }
+    items.value = await hydrateShortList(tabFallbackItems(tab))
   } catch {
-    items.value = liveFallback.length ? liveFallback : tabsFallback.douyin.items
+    if (seq !== loadSeq) return
+    items.value = await hydrateShortList(tabFallbackItems(tab))
   }
 }
 

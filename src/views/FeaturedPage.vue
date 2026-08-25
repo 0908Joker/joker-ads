@@ -82,8 +82,13 @@ import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
 import videoCategories from '../data/video-categories.json'
-import { fetchRecommend, fetchAlgoRecommendList, fetchTagVideosByName } from '../api/videos.js'
-import { normalizeFeaturedPayload, normalizeAlgoFeaturedPayload } from '../api/normalize.js'
+import {
+  fetchRecommend,
+  fetchCategoryVideos,
+  fetchVideoFilter,
+  fetchTagVideosByName,
+} from '../api/videos.js'
+import { normalizeFeaturedPayload } from '../api/normalize.js'
 import { cleanFeedList } from '../composables/useApiFeed.js'
 
 const FALLBACK_TABS = [
@@ -123,27 +128,38 @@ function withAdSlot(list) {
   return out
 }
 
-async function loadVideos() {
-  try {
-    const tab = activeTab.value
-    const cat = (videoCategories.categories || []).find((c) => c.name === tab)
-    const sortType = subTab.value === '最新' ? 2 : subTab.value === '最热' ? 3 : 1
-    let list = []
+function compositeSortForSubTab(sub) {
+  if (sub === '最新') return 2
+  if (sub === '最热') return 4
+  return 1
+}
 
-    if (tab === '推荐' && sortType === 1) {
+async function loadVideos() {
+  const tab = activeTab.value
+  const cat = (videoCategories.categories || []).find((c) => c.name === tab)
+  const compositeSort = compositeSortForSubTab(subTab.value)
+  let list = []
+
+  try {
+    if (tab === '推荐' && subTab.value === '推荐') {
       const raw = await fetchRecommend({ page: 1, pageSize: 20, sort: 'recommend' })
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
     if (!list.length && cat?.id) {
-      const raw = await fetchAlgoRecommendList({
+      const raw = await fetchCategoryVideos(cat.id, {
         page: 1,
         pageSize: 20,
-        categoryId: cat.id,
-        categoryKey: cat.id,
-        sortType,
+        timeType: 1,
+        compositeSort,
+        inPool: true,
       })
-      list = normalizeAlgoFeaturedPayload(raw.data ?? raw)
+      list = normalizeFeaturedPayload(raw.data ?? raw)
+    }
+
+    if (!list.length && cat?.tags) {
+      const raw = await fetchVideoFilter({ page: 1, pageSize: 20, tagId: cat.tags })
+      list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
     if (!list.length && cat?.name) {
@@ -151,8 +167,7 @@ async function loadVideos() {
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
-    if (list.length) videos.value = withAdSlot(list)
-    else videos.value = withAdSlot(fallbackVideos)
+    videos.value = list.length ? withAdSlot(list) : withAdSlot(fallbackVideos)
   } catch {
     videos.value = withAdSlot(fallbackVideos)
   }

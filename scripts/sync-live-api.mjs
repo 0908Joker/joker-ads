@@ -26,7 +26,6 @@ const snap = await page.evaluate(async () => {
   const out = {}
   const calls = [
     ['featured', () => api.getRecommendVideos?.({ page: 1, pageSize: 20 })],
-    ['short', () => api.getShortVideos?.({ page: 1, pageSize: 10, categorieId: '6a706e1041270793030cdf54' })],
     ['shortCate', () => api.getShortCategorie?.()],
     ['appModule', () => api.getAppModule?.({ fields: '16,20,25,26,28,33,35,36,37,38,40,42,43,50,51,52,55,59,56' })],
     ['userInfo', () => api.getUserInfo?.()],
@@ -37,15 +36,72 @@ const snap = await page.evaluate(async () => {
     if (!fn()) continue
     try {
       const r = await fn()
-      out[key] = r?.data ?? r
+      const data = r?.data ?? r
+      if (data?.errorCode && data.errorCode !== 0) continue
+      out[key] = data
     } catch (e) {
       out[key] = { error: String(e) }
     }
   }
+
+  const shortCats = out.shortCate?.categories || out.shortCate || []
+  if (Array.isArray(shortCats) && shortCats.length) {
+    out.shortByTab = out.shortByTab || {}
+    for (const c of shortCats) {
+      const categorieId = c.categorieId || c.id
+      if (!categorieId || !c.name) continue
+      try {
+        const r = await api.getShortVideos?.({ page: 1, pageSize: 10, categorieId })
+        const data = r?.data ?? r
+        if (data?.errorCode && data.errorCode !== 0) continue
+        out.shortByTab[c.name] = data
+      } catch (e) {
+        out.shortByTab[c.name] = { error: String(e) }
+      }
+    }
+    if (out.shortByTab['抖阴']) out.short = out.shortByTab['抖阴']
+  }
+
+  try {
+    const r = await api.getShortAndImg?.({ page: 1, pageSize: 10, tab: '短剧' })
+    const data = r?.data ?? r
+    if (!data?.errorCode || data.errorCode === 0) {
+      out.shortByTab = out.shortByTab || {}
+      out.shortByTab['短剧'] = data
+    }
+  } catch (e) {
+    out.shortByTab = out.shortByTab || {}
+    out.shortByTab['短剧'] = { error: String(e) }
+  }
+
   return out
 })
 
-const payload = { at: new Date().toISOString(), ...snap }
+function isGoodSnapshot(val) {
+  if (!val || typeof val !== 'object') return false
+  if (val.error) return false
+  if (val.errorCode && val.errorCode !== 0) return false
+  return true
+}
+
+let existing = {}
+try {
+  existing = JSON.parse(fs.readFileSync(OUT, 'utf8'))
+} catch {}
+
+const payload = { ...existing, at: new Date().toISOString() }
+for (const [key, val] of Object.entries(snap)) {
+  if (key === 'shortByTab') continue
+  if (isGoodSnapshot(val)) payload[key] = val
+}
+if (snap.shortByTab) {
+  payload.shortByTab = { ...(existing.shortByTab || {}) }
+  for (const [name, data] of Object.entries(snap.shortByTab)) {
+    if (isGoodSnapshot(data)) payload.shortByTab[name] = data
+  }
+  if (payload.shortByTab['抖阴']) payload.short = payload.shortByTab['抖阴']
+}
+
 fs.writeFileSync(OUT, JSON.stringify(payload, null, 2))
 
 const moduleCats = snap.appModule?.categories || []
@@ -73,6 +129,12 @@ if (shortCats.length) {
 console.log('✅ live-api keys:', Object.keys(snap))
 if (snap.featured?.videos) console.log('  featured videos:', snap.featured.videos.length)
 if (snap.short?.videoInfo || snap.short?.videos) console.log('  short items:', (snap.short.videoInfo || snap.short.videos || []).length)
+if (snap.shortByTab) {
+  for (const [name, data] of Object.entries(snap.shortByTab)) {
+    const n = (data?.videoInfo || data?.videos || []).length
+    if (n) console.log(`  short tab ${name}:`, n)
+  }
+}
 if (moduleCats.length) console.log('  video categories:', moduleCats.length)
 if (shortCats.length) console.log('  short categories:', shortCats.length)
 await browser.close()
