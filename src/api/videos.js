@@ -20,6 +20,10 @@ export async function fetchShortAndImg(params = {}) {
   return apiFetch(`/videos/shortAndImg?${q}`)
 }
 
+export async function fetchVideoDetail(id) {
+  return apiFetch(`/videos/${id}`)
+}
+
 export async function fetchShortVideos(params = {}) {
   const q = new URLSearchParams({ page: '1', pageSize: '10', ...params })
   return apiFetch(`/videos/short?${q}`)

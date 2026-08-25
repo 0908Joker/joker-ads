@@ -47,7 +47,12 @@
         v-for="(v, i) in videos"
         :key="v.id || i"
         class="video-row"
-        :class="{ 'video-row--ad': v.isAd, 'video-row--video': !v.isAd }"
+        :class="{
+          'video-row--ad': v.isAd,
+          'video-row--video': !v.isAd,
+          'video-row--tap': !v.isAd && v.id,
+        }"
+        @click="openVideo(v)"
       >
         <template v-if="v.isAd">
           <div class="video-row__cover video-row__cover--ad">广告</div>
@@ -70,6 +75,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
@@ -91,9 +97,15 @@ const fallbackVideos = (() => {
 })()
 const sqAd = tabsFallback.featured.ad || {}
 
+const router = useRouter()
 const activeTab = ref('推荐')
 const subTab = ref('推荐')
 const videos = ref(withAdSlot(fallbackVideos))
+
+function openVideo(v) {
+  if (v.isAd || !v.id) return
+  router.push(`/play/${v.id}`)
+}
 
 const adCard = computed(() => ({
   name: sqAd.name || '真实直播偷拍迷奸',
@@ -187,6 +199,12 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 .video-row--video {
   display: flex;
   flex-direction: column;
+}
+.video-row--tap {
+  cursor: pointer;
+}
+.video-row--tap:active {
+  opacity: 0.75;
 }
 .video-row--video :deep(.video-row__cover) {
   aspect-ratio: 3 / 2;

@@ -26,8 +26,16 @@ function useProxy() {
 function requestPath(path) {
   const p = path.startsWith('/') ? path : `/${path}`
   if (useProxy()) return `/api-proxy${p}`
-  if (typeof window !== 'undefined') return `/api/v1${p}`
   return `${apiRoot()}${p}`
+}
+
+// Browsers reject the IP-hosted bases on cert mismatch, so try domain bases first.
+function isIpHost(base) {
+  try {
+    return /^\d{1,3}(\.\d{1,3}){3}$/.test(new URL(base).hostname)
+  } catch {
+    return false
+  }
 }
 
 function authHeaders() {
@@ -36,7 +44,9 @@ function authHeaders() {
     (typeof localStorage !== 'undefined' ? localStorage.getItem('token') : '') ||
     ''
   if (!token) return {}
-  return { Authorization: token, token }
+  // Only `token` is in the origin's Access-Control-Allow-Headers; sending
+  // `Authorization` too would fail the browser preflight.
+  return { token }
 }
 
 async function ping(base) {
@@ -56,7 +66,8 @@ async function ping(base) {
 }
 
 export async function pickApiBase(candidates = DEFAULT_BASES) {
-  bases = [...new Set(candidates.filter(Boolean))]
+  const unique = [...new Set(candidates.filter(Boolean))]
+  bases = [...unique.filter((b) => !isIpHost(b)), ...unique.filter(isIpHost)]
   for (const base of bases) {
     if (await ping(base)) {
       activeBase = base
@@ -77,6 +88,10 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: {
       Accept: 'application/json',
+      // k=3 selects the payload scheme our decryptCipher understands; without it
+      // the server encrypts responses with a scheme we cannot read.
+      t: '3',
+      k: '3',
       ...authHeaders(),
       ...(options.headers || {}),
     },

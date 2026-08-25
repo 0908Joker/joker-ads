@@ -45,6 +45,32 @@ export function normalizeVideo(item) {
   }
 }
 
+export function normalizeVideoDetail(data) {
+  if (!data) return null
+  const v = data.video || {}
+  const tags = v.videoTags || v.tags || []
+  return {
+    id: v.id,
+    title: v.name || v.title || '',
+    // Full stream when entitled, otherwise the trial playlist; both are m3u8.
+    playUrl: data.url || data.previewUrl || '',
+    isPreview: !data.url && !!data.previewUrl,
+    needBuy: !!data.buyVideo,
+    trialSeconds: Number(data.trialPreviewSeconds) || 0,
+    cover: v.coverURL || v.verticalCoverURL || '',
+    views: formatCount(v.playCnt ?? v.hot),
+    duration: formatDuration(v.time),
+    likes: formatCount(v.likedCnt),
+    comments: formatCount(v.commentCnt),
+    collects: formatCount(v.collectedCnt),
+    user: v.user?.username || '',
+    tags: (Array.isArray(tags) ? tags : [])
+      .map((t) => (typeof t === 'string' ? t : t?.name || ''))
+      .filter(Boolean),
+    others: (data.otherVideos || []).map(normalizeVideo).filter(Boolean),
+  }
+}
+
 export function normalizeFeaturedPayload(data) {
   const list = data?.videos || data?.list || data?.records || []
   return list.map(normalizeVideo).filter(Boolean)

@@ -6,6 +6,7 @@ import DarkPage from '../views/DarkPage.vue'
 import CirclePage from '../views/CirclePage.vue'
 import AnimePage from '../views/AnimePage.vue'
 import MinePage from '../views/MinePage.vue'
+import PlayPage from '../views/PlayPage.vue'
 
 const routes = [
   { path: '/', redirect: '/appcenter' },
@@ -16,6 +17,7 @@ const routes = [
   { path: '/circle', component: CirclePage },
   { path: '/vipPage', component: AnimePage },
   { path: '/my', component: MinePage },
+  { path: '/play/:id', component: PlayPage },
   // 兼容旧路由
   { path: '/featured', redirect: '/videosPage' },
   { path: '/douyin', redirect: '/short' },
