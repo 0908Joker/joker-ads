@@ -76,6 +76,19 @@ export function normalizeFeaturedPayload(data) {
   return list.map(normalizeVideo).filter(Boolean)
 }
 
+// Origin featured tabs load algoRecommend/getList; videos sit under childCategories.
+export function normalizeAlgoFeaturedPayload(data) {
+  if (!data) return []
+  const direct = data?.videos || data?.list || data?.records
+  if (Array.isArray(direct) && direct.length) return direct.map(normalizeVideo).filter(Boolean)
+  const children = data?.childCategories || []
+  const videos = []
+  for (const child of children) {
+    if (Array.isArray(child?.videos)) videos.push(...child.videos)
+  }
+  return videos.map(normalizeVideo).filter(Boolean)
+}
+
 export function normalizeShortPayload(data) {
   const list = data?.videoInfo || data?.videos || data?.list || []
   return list

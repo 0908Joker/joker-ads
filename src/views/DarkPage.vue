@@ -45,7 +45,7 @@ import { ref } from 'vue'
 import TabShell from '../components/TabShell.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
-import { fetchVideoFilter } from '../api/videos.js'
+import { fetchTagVideosByName } from '../api/videos.js'
 import { normalizeFeaturedPayload } from '../api/normalize.js'
 
 const tags = tabsFallback.dark.tags.slice(0, 8)
@@ -55,7 +55,7 @@ const results = ref([])
 async function onTag(tag) {
   activeTag.value = tag
   try {
-    const raw = await fetchVideoFilter({ tag, page: 1, pageSize: 12 })
+    const raw = await fetchTagVideosByName({ page: 1, pageSize: 12, name: tag })
     results.value = normalizeFeaturedPayload(raw.data ?? raw)
   } catch {
     results.value = []

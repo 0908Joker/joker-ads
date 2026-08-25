@@ -73,7 +73,8 @@ import TabShell from '../components/TabShell.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
-import { fetchShortAndImg } from '../api/videos.js'
+import shortCategories from '../data/short-categories.json'
+import { fetchShortByCategorie, fetchShortAndImg } from '../api/videos.js'
 import { normalizeShortPayload } from '../api/normalize.js'
 import { decryptMedia } from '../api/media.js'
 
@@ -91,7 +92,11 @@ const dramaCards = ref([
 
 async function loadShorts() {
   try {
-    const raw = await fetchShortAndImg({ page: 1, pageSize: 10, tab: activeTab.value })
+    const tab = activeTab.value
+    const cate = (shortCategories.categories || []).find((c) => c.name === tab)
+    const raw = cate?.categorieId
+      ? await fetchShortByCategorie({ page: 1, pageSize: 10, categorieId: cate.categorieId })
+      : await fetchShortAndImg({ page: 1, pageSize: 10, tab })
     const list = normalizeShortPayload(raw.data ?? raw)
     if (list.length) {
       items.value = await Promise.all(

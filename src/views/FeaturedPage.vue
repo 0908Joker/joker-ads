@@ -81,13 +81,18 @@ import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
-import { fetchRecommend, fetchVideoFilter } from '../api/videos.js'
-import { normalizeFeaturedPayload } from '../api/normalize.js'
+import videoCategories from '../data/video-categories.json'
+import { fetchRecommend, fetchAlgoRecommendList, fetchTagVideosByName } from '../api/videos.js'
+import { normalizeFeaturedPayload, normalizeAlgoFeaturedPayload } from '../api/normalize.js'
 import { cleanFeedList } from '../composables/useApiFeed.js'
 
-const CATEGORY_TABS = [
+const FALLBACK_TABS = [
   '最新', '推荐', '夏日限定', '18岁', '制服', '探花', '原创', '乱伦', '国产', '传媒', '日本', '欧美', '同性',
 ]
+const CATEGORY_TABS =
+  (videoCategories.categories || []).map((c) => c.name).filter(Boolean).length
+    ? (videoCategories.categories || []).map((c) => c.name).filter(Boolean)
+    : FALLBACK_TABS
 const chips = tabsFallback.featured.chips
 const subTabs = tabsFallback.featured.subTabs
 const fallbackVideos = (() => {
@@ -121,13 +126,33 @@ function withAdSlot(list) {
 async function loadVideos() {
   try {
     const tab = activeTab.value
-    const sort = subTab.value === '最新' ? 'new' : subTab.value === '最热' ? 'hot' : 'recommend'
-    const raw =
-      tab === '推荐'
-        ? await fetchRecommend({ page: 1, pageSize: 20, sort })
-        : await fetchVideoFilter({ category: tab, page: 1, pageSize: 20, sort })
-    const list = normalizeFeaturedPayload(raw.data ?? raw)
+    const cat = (videoCategories.categories || []).find((c) => c.name === tab)
+    const sortType = subTab.value === '最新' ? 2 : subTab.value === '最热' ? 3 : 1
+    let list = []
+
+    if (tab === '推荐' && sortType === 1) {
+      const raw = await fetchRecommend({ page: 1, pageSize: 20, sort: 'recommend' })
+      list = normalizeFeaturedPayload(raw.data ?? raw)
+    }
+
+    if (!list.length && cat?.id) {
+      const raw = await fetchAlgoRecommendList({
+        page: 1,
+        pageSize: 20,
+        categoryId: cat.id,
+        categoryKey: cat.id,
+        sortType,
+      })
+      list = normalizeAlgoFeaturedPayload(raw.data ?? raw)
+    }
+
+    if (!list.length && cat?.name) {
+      const raw = await fetchTagVideosByName({ page: 1, pageSize: 20, name: cat.name })
+      list = normalizeFeaturedPayload(raw.data ?? raw)
+    }
+
     if (list.length) videos.value = withAdSlot(list)
+    else videos.value = withAdSlot(fallbackVideos)
   } catch {
     videos.value = withAdSlot(fallbackVideos)
   }

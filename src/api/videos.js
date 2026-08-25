@@ -5,6 +5,11 @@ export async function fetchRecommend(params = {}) {
   return apiFetch(`/videos/recommend?${q}`)
 }
 
+export async function fetchAlgoRecommendList(params = {}) {
+  const q = new URLSearchParams({ page: '1', pageSize: '20', ...params })
+  return apiFetch(`/algoRecommend/getList?${q}`)
+}
+
 export async function fetchVideoFilter(params = {}) {
   const q = new URLSearchParams(params)
   return apiFetch(`/videos/filter?${q}`)
@@ -15,9 +20,23 @@ export async function fetchTagVideos(tag, params = {}) {
   return apiFetch(`/tag/videos?${q}`)
 }
 
+export async function fetchTagVideosByName(params = {}) {
+  const q = new URLSearchParams({ page: '1', pageSize: '20', ...params })
+  return apiFetch(`/tag/videos/name?${q}`)
+}
+
+export async function fetchShortCate() {
+  return apiFetch('/videos/shortCate')
+}
+
 export async function fetchShortAndImg(params = {}) {
   const q = new URLSearchParams({ page: '1', pageSize: '10', ...params })
   return apiFetch(`/videos/shortAndImg?${q}`)
+}
+
+export async function fetchShortByCategorie(params = {}) {
+  const q = new URLSearchParams({ page: '1', pageSize: '10', ...params })
+  return apiFetch(`/videos/short?${q}`)
 }
 
 export async function fetchVideoDetail(id) {
