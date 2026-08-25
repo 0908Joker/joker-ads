@@ -19,3 +19,32 @@ launch.js
 crawled/page-assets.json
 crawled/remaining-assets.json
 src/data/page-assets.json
+
+# Local browser / Cloudflare profile cache (never commit)
+.cf-browser-profile/
+
+# Local audit screenshots and visual-diff dumps
+crawled/audit-*.png
+crawled/layout-*.png
+crawled/origin-layout-*.png
+crawled/visual-diff/
+crawled/circle-imgs.json
+live-check.png
+test.webp
+scripts/audit-*.png
+scripts/live-check.png
+scripts/verify-grid.png
+
+# Local-only deploy / scrape helpers (not site source)
+scripts/cf-enable-proxy.mjs
+scripts/deploy-api-proxy.mjs
+scripts/extract-circle-comics.mjs
+scripts/extract-popups-and-poster.mjs
+scripts/extract-remaining-assets.mjs
+scripts/live-full-audit.mjs
+scripts/probe-origin-structure.mjs
+scripts/probe-visual-diff.mjs
+scripts/save-circle-imgs.mjs
+scripts/setup-cloudflare-worker.mjs
+scripts/test-filter-clone.mjs
+wrangler.toml
