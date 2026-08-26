@@ -10,10 +10,10 @@
         @click="active = tab"
       >{{ tab }}</button>
       <span class="tab-tools">
-        <button class="tool-btn" aria-label="筛选">
+        <button class="tool-btn" aria-label="筛选" @click="onFilterTool">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffd24a"><path d="M4 6h16v2H4zm3 5h10v2H7zm3 5h4v2h-4z"/></svg>
         </button>
-        <button class="tool-btn" aria-label="书架">
+        <button class="tool-btn" aria-label="书架" @click="onBookshelf">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffd24a"><path d="M6 4h3v16H6zm5 0h3v16h-3zm5 0h3v16h-3z"/></svg>
         </button>
       </span>
@@ -24,7 +24,7 @@
       </div>
       <button>开通会员</button>
     </div>
-    <div class="filters">
+    <div ref="filtersEl" class="filters">
       <button
         v-for="f in filters"
         :key="f"
@@ -53,10 +53,14 @@
       </div>
     </section>
     <div class="mid-actions">
-      <button>分类</button>
-      <button>最近观看</button>
+      <button @click="onClassify">分类</button>
+      <button @click="onRecent">最近观看</button>
     </div>
-    <section v-for="sec in sections" :key="sec.id || sec.title" class="section">
+    <p v-if="notice" class="anime-notice">{{ notice }}</p>
+    <section v-if="!filteredSections.length && !preview.length" class="section">
+      <p class="anime-notice">暂无内容</p>
+    </section>
+    <section v-for="sec in filteredSections" :key="sec.id || sec.title" class="section">
       <header class="sec-head"><h3>{{ sec.title }}</h3><span>更多></span></header>
       <div class="comic-scroll">
         <article v-for="(c, i) in sec.items" :key="c.id || i" class="comic-card">
@@ -119,10 +123,30 @@ const dates = computed(() => {
 })
 
 const activeDate = ref(ymd(new Date()))
+const notice = ref('')
+const filtersEl = ref(null)
+let noticeTimer = null
+
+function showNotice(msg) {
+  notice.value = msg
+  clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => {
+    notice.value = ''
+  }, 2200)
+}
+
+function matchFilter(item) {
+  if (!item) return false
+  if (activeFilter.value === '全部') return true
+  const hay = `${item.type || ''} ${item.title || ''} ${item.status || ''}`
+  return hay.includes(activeFilter.value)
+}
 
 const preview = computed(() => {
-  if (previewItems.value.length) return previewItems.value
-  return liveSections.value.find((s) => s.title === '更新预告')?.items || comics.value.slice(0, 4)
+  const list = previewItems.value.length
+    ? previewItems.value
+    : liveSections.value.find((s) => s.title === '更新预告')?.items || comics.value.slice(0, 4)
+  return list.filter(matchFilter)
 })
 
 const sections = computed(() => {
@@ -134,6 +158,31 @@ const sections = computed(() => {
     { title: '同人', items: list.slice(2, 8) },
   ]
 })
+
+const filteredSections = computed(() =>
+  sections.value
+    .map((sec) => ({ ...sec, items: (sec.items || []).filter(matchFilter) }))
+    .filter((sec) => sec.items.length > 0),
+)
+
+function onFilterTool() {
+  filtersEl.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  showNotice('请选择下方筛选标签')
+}
+
+function onBookshelf() {
+  showNotice('书架暂无收藏')
+}
+
+function onClassify() {
+  filtersEl.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  if (activeFilter.value === '全部' && filters.length > 1) activeFilter.value = filters[1]
+  showNotice(`已切换分类：${activeFilter.value}`)
+}
+
+function onRecent() {
+  showNotice('暂无最近观看记录')
+}
 
 async function expandSection(sec) {
   if (!sec?.id) return sec
@@ -238,6 +287,9 @@ watch(active, () => loadComics(), { immediate: true })
 .mid-actions { display: flex; gap: 0.16rem; padding: 0 0.32rem 0.24rem; }
 .mid-actions button {
   background: #f81942; border: none; border-radius: 0.8rem; color: #fff; flex: 1; font-size: 0.32rem; padding: 0.16rem;
+}
+.anime-notice {
+  color: rgba(255,255,255,.65); font-size: 0.28rem; padding: 0 0.32rem 0.16rem; text-align: center;
 }
 .section { padding: 0 0.32rem 0.24rem; }
 .sec-head { align-items: center; display: flex; justify-content: space-between; margin-bottom: 0.12rem; }

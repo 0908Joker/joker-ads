@@ -7,7 +7,7 @@
         <div class="profile__tools">⟳ 🎁 🔔 ⬆</div>
       </div>
       <div class="profile__row">
-        <div class="avatar">小红书</div>
+        <div class="avatar">{{ avatarText }}</div>
         <div class="info">
           <h2>{{ user.name }}</h2>
           <p class="bio">{{ user.bio }}</p>
@@ -50,7 +50,7 @@
 
     <section class="quick-row">
       <div class="quick-scroll">
-        <button v-for="app in row1" :key="app.name" class="quick-app" @click="openApp(app)">
+        <button v-for="(app, i) in row1" :key="'q1-' + app.name + i" class="quick-app" @click="openApp(app)">
           <img v-if="app.iconLocal || app.icon" :src="app.iconLocal || app.icon" alt="" class="quick-app__img" />
           <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
           <span>{{ app.name }}</span>
@@ -59,7 +59,7 @@
     </section>
     <section v-if="row2.length" class="quick-row">
       <div class="quick-scroll">
-        <button v-for="app in row2" :key="app.name + '-2'" class="quick-app" @click="openApp(app)">
+        <button v-for="(app, i) in row2" :key="'q2-' + app.name + i" class="quick-app" @click="openApp(app)">
           <img v-if="app.iconLocal || app.icon" :src="app.iconLocal || app.icon" alt="" class="quick-app__img" />
           <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
           <span>{{ app.name }}</span>
@@ -70,7 +70,7 @@
     <section class="recommend">
       <h3>推荐应用 <span @click="$router.push('/appcenter')">更多</span></h3>
       <div class="quick-scroll">
-        <button v-for="app in recommend" :key="'r-' + app.name" class="quick-app" @click="openApp(app)">
+        <button v-for="(app, i) in recommend" :key="'r-' + app.name + i" class="quick-app" @click="openApp(app)">
           <img v-if="app.icon" :src="app.icon" alt="" class="quick-app__img" />
           <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
           <span>{{ app.name }}</span>
@@ -101,17 +101,29 @@ import { openAdSign } from '../api/ad.js'
 const router = useRouter()
 const user = ref({ ...tabsFallback.mine.user })
 const stats = ref({ ...tabsFallback.mine.stats })
-const version = 'v1.1.169'
+const version = tabsFallback.mine.version || 'v1.1.169'
 const services = tabsFallback.mine.services
 
-const names = ['免费看片', '上门约炮', '新葡京', '同城约炮', '波多涩漫', '免费看黄片', '海角社区', '浪浪山', 'JVID', 'oio禁漫']
-const recNames = ['免费看片', '上门约炮', '同城约炮', '新葡京', '波多涩漫']
-const myAds = config.apps.filter((a) => names.includes(a.name))
-const row1 = computed(() => myAds.slice(0, 6).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url })))
-const row2 = computed(() => myAds.slice(6, 12).map((a) => ({ name: a.name, icon: a.icon, signUrl: a.signUrl, url: a.url })))
-const recommend = computed(() =>
-  recNames.map((n) => config.apps.find((a) => a.name === n)).filter(Boolean),
-)
+const ROW1_NAMES = ['oio禁漫', '免费看黄片', '新葡京', '海角社区', '同城约炮', '新葡京']
+const ROW2_NAMES = ['免费看黄片', '免费看片', '同城约炮', '免费看片', '免费看片', '免费看黄片']
+const REC_NAMES = ['免费看片', '上门约炮', '同城约炮', '新葡京', '波多涩漫']
+
+function resolveApp(name) {
+  const hit = config.apps.find((a) => a.name === name)
+  if (hit) return { name: hit.name, icon: hit.icon, signUrl: hit.signUrl, url: hit.url }
+  const fromTabs = (tabsFallback.mine.quickApps || []).find((a) => a.name === name)
+  if (fromTabs) return { name: fromTabs.name, icon: fromTabs.icon, signUrl: fromTabs.signUrl, url: fromTabs.url }
+  return { name, icon: '', signUrl: '', url: '' }
+}
+
+const row1 = computed(() => ROW1_NAMES.map(resolveApp))
+const row2 = computed(() => ROW2_NAMES.map(resolveApp))
+const recommend = computed(() => REC_NAMES.map(resolveApp))
+
+const avatarText = computed(() => {
+  const n = String(user.value.name || '小红书').trim()
+  return n.slice(0, 1) || '小'
+})
 
 function openApp(app) {
   const target = app.signUrl || app.url
@@ -163,7 +175,7 @@ onMounted(async () => {
 .profile__tools { font-size: 0.32rem; letter-spacing: 0.12rem; }
 .profile__row { align-items: center; display: flex; gap: 0.24rem; margin-top: 0.24rem; }
 .avatar {
-  align-items: center; background: #f81942; border-radius: 50%; display: flex; font-size: 0.22rem;
+  align-items: center; background: #f81942; border-radius: 50%; color: #fff; display: flex; font-size: 0.48rem; font-weight: 700;
   height: 1.28rem; justify-content: center; width: 1.28rem;
 }
 .info h2 { font-size: 0.44rem; }

@@ -7,11 +7,9 @@
           <path d="M8 7V5h8v2"/>
         </svg>
       </span>
-      <div class="dark-search">
-        <span>🔍</span>
-        <span>学生</span>
-      </div>
+      <SearchBar class="dark-head__search" :words="['学生', '强奸', '自慰', '妈妈']" />
       <span class="dark-head__hist">⏱</span>
+      <span class="dark-head__plus">＋</span>
     </header>
 
     <section class="poster">
@@ -50,6 +48,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
+import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import { fetchTagVideosByName } from '../api/videos.js'
@@ -81,28 +80,30 @@ async function onTag(tag) {
   align-items: center;
   background: #ff2d55;
   display: flex;
-  gap: 0.16rem;
-  padding: 0.2rem 0.24rem;
+  gap: 0.12rem;
+  padding: 0.12rem 0.2rem;
 }
-.dark-head__tee, .dark-head__hist {
+.dark-head__tee,
+.dark-head__hist,
+.dark-head__plus {
   align-items: center;
+  color: #fff;
   display: flex;
   flex-shrink: 0;
+  font-size: 0.4rem;
   height: 0.64rem;
   justify-content: center;
   width: 0.64rem;
 }
-.dark-head__hist { color: #fff; font-size: 0.4rem; }
-.dark-search {
-  align-items: center;
+:deep(.dark-head__search.search-bar),
+.dark-head :deep(.search-bar) {
   background: #f2f2f2;
-  border-radius: 0.8rem;
-  color: #999;
-  display: flex;
   flex: 1;
-  font-size: 0.32rem;
-  gap: 0.12rem;
-  padding: 0.12rem 0.24rem;
+  margin: 0;
+}
+.dark-head :deep(.search-bar__icon),
+.dark-head :deep(.search-bar__word) {
+  color: #999;
 }
 .poster { padding: 0.16rem 0.28rem 0.08rem; }
 .poster__img {
