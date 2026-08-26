@@ -3,8 +3,16 @@
     <section class="profile">
       <img class="profile__bg" src="/mine/bg.png" alt="" />
       <div class="profile__top">
-        <p class="id">ID: {{ user.id }} <span>⧉</span></p>
-        <div class="profile__tools">⟳ 🎁 🔔 ⬆</div>
+        <p class="id">
+          ID: {{ user.id }}
+          <button class="id__copy" aria-label="复制ID" @click="copyId">⧉</button>
+        </p>
+        <div class="profile__tools">
+          <button aria-label="刷新" @click="refresh">⟳</button>
+          <button aria-label="福利中心" @click="router.push('/myBenefits')">🎁</button>
+          <button aria-label="消息" @click="router.push('/message')">🔔</button>
+          <button aria-label="分享邀请" @click="router.push('/my/shareApp')">⬆</button>
+        </div>
       </div>
       <div class="profile__row">
         <div class="avatar">{{ avatarText }}</div>
@@ -13,7 +21,7 @@
           <p class="bio">{{ user.bio }}</p>
         </div>
       </div>
-      <button class="bind-btn">注册/绑定有礼 1日VIP 去绑定</button>
+      <button class="bind-btn" @click="onBind">注册/绑定有礼 1日VIP 去绑定</button>
       <div class="stats">
         <div><strong>{{ stats.follow }}</strong><span>关注</span></div>
         <div><strong>{{ stats.like }}</strong><span>点赞</span></div>
@@ -39,13 +47,19 @@
         <strong>每日任务</strong>
         <p>完成签到可恢复断签并领取奖励</p>
       </div>
-      <button @click="onSignin">立即前往</button>
+      <button @click="router.push('/activityPage/dailyCheckIn')">立即前往</button>
     </section>
 
     <div class="feature-row">
-      <button class="feature feature--green"><strong>身份卡</strong><span>权利象征</span></button>
-      <button class="feature feature--yellow"><strong>AI创造中心</strong><span>女友相伴</span></button>
-      <button class="feature feature--pink"><strong>分享邀请</strong><span>邀请好友得好礼</span></button>
+      <button class="feature feature--green" @click="router.push('/myBenefits')">
+        <strong>身份卡</strong><span>权利象征</span>
+      </button>
+      <button class="feature feature--yellow" @click="showToast('AI创造中心暂未开放')">
+        <strong>AI创造中心</strong><span>女友相伴</span>
+      </button>
+      <button class="feature feature--pink" @click="router.push('/my/shareApp')">
+        <strong>分享邀请</strong><span>邀请好友得好礼</span>
+      </button>
     </div>
 
     <section class="quick-row">
@@ -94,9 +108,10 @@ import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import tabsFallback from '../data/tabs.json'
 import config from '../data/config.json'
-import { fetchUserInfo, fetchUserSignin, fetchActionStats } from '../api/users.js'
+import { fetchUserInfo } from '../api/users.js'
 import { normalizeUser, normalizeStats } from '../api/normalize.js'
 import { openAd } from '../api/ad.js'
+import { copyText, showToast } from '../composables/useToast.js'
 
 const router = useRouter()
 const user = ref({ ...tabsFallback.mine.user })
@@ -135,19 +150,42 @@ function onService(name) {
   if (name === '我的视频') router.push('/videosPage')
   else if (name === '下载管理') router.push('/appcenter')
   else if (name === '充值记录' || name === '购买记录') router.push('/recharge')
+  else if (name === '在线客服' || name === '联系客服') router.push('/message')
+  else if (name === '邀请好友' || name === '分享推广') router.push('/my/shareApp')
+  else showToast(`${name}暂未开放`)
 }
-async function onSignin() {
-  try { await fetchUserSignin() } catch {}
+
+async function copyId() {
+  const id = String(user.value.id || '')
+  if (!id) {
+    showToast('ID 暂不可用')
+    return
+  }
+  showToast((await copyText(id)) ? 'ID 已复制' : '复制失败，请手动选择')
 }
-onMounted(async () => {
+
+function onBind() {
+  showToast('绑定功能需在 App 内完成')
+}
+
+async function loadUser() {
+  const info = await fetchUserInfo()
+  const data = info.data ?? info
+  user.value = normalizeUser(data, tabsFallback.mine.user)
+  stats.value = normalizeStats(data, tabsFallback.mine.stats)
+}
+
+async function refresh() {
   try {
-    const info = await fetchUserInfo()
-    user.value = normalizeUser(info.data ?? info, tabsFallback.mine.user)
-  } catch {}
-  try {
-    const s = await fetchActionStats()
-    stats.value = normalizeStats(s.data ?? s, tabsFallback.mine.stats)
-  } catch {}
+    await loadUser()
+    showToast('已刷新')
+  } catch {
+    showToast('刷新失败，请稍后再试')
+  }
+}
+
+onMounted(() => {
+  loadUser().catch(() => {})
 })
 </script>
 
@@ -174,8 +212,13 @@ onMounted(async () => {
   z-index: 1;
 }
 .profile__top { align-items: center; display: flex; justify-content: space-between; }
-.id { color: rgba(255,255,255,.8); font-size: 0.26rem; }
-.profile__tools { font-size: 0.32rem; letter-spacing: 0.12rem; }
+.id { align-items: center; color: rgba(255,255,255,.8); display: flex; font-size: 0.26rem; gap: 0.08rem; }
+.id__copy { background: none; border: none; color: inherit; font-size: 0.28rem; line-height: 1; padding: 0.04rem; }
+.profile__tools { display: flex; gap: 0.16rem; }
+.profile__tools button {
+  background: none; border: none; color: #fff; font-size: 0.32rem; line-height: 1; padding: 0.06rem;
+}
+.profile__tools button:active, .id__copy:active { opacity: 0.6; }
 .profile__row { align-items: center; display: flex; gap: 0.24rem; margin-top: 0.24rem; }
 .avatar {
   align-items: center; background: #f81942; border-radius: 50%; color: #fff; display: flex; font-size: 0.48rem; font-weight: 700;

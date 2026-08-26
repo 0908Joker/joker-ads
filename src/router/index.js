@@ -9,6 +9,10 @@ import MinePage from '../views/MinePage.vue'
 import PlayPage from '../views/PlayPage.vue'
 import RechargePage from '../views/RechargePage.vue'
 import SearchPage from '../views/SearchPage.vue'
+import BenefitsPage from '../views/BenefitsPage.vue'
+import SharePage from '../views/SharePage.vue'
+import DailyTaskPage from '../views/DailyTaskPage.vue'
+import MessagePage from '../views/MessagePage.vue'
 
 const routes = [
   { path: '/', redirect: '/appcenter' },
@@ -23,6 +27,10 @@ const routes = [
   { path: '/recharge', component: RechargePage },
   { path: '/recharge/vipRecharge', redirect: '/recharge?type=vip' },
   { path: '/searchPage', component: SearchPage },
+  { path: '/myBenefits', component: BenefitsPage },
+  { path: '/my/shareApp', component: SharePage },
+  { path: '/activityPage/dailyCheckIn', component: DailyTaskPage },
+  { path: '/message', component: MessagePage },
   // 兼容旧路由
   { path: '/featured', redirect: '/videosPage' },
   { path: '/douyin', redirect: '/short' },

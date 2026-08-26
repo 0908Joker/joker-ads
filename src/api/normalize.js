@@ -254,11 +254,12 @@ export function normalizeAccount(data) {
   }
 }
 
+/** Counts live on the user record; actionStats only carries comment/download tallies. */
 export function normalizeStats(data, fallback = {}) {
-  const s = data?.actionStats || data || {}
+  const s = data?.userInfo || data?.actionStats || data || {}
   return {
     follow: s.followCnt ?? s.follow ?? fallback.follow ?? 0,
-    like: s.likeCnt ?? s.like ?? fallback.like ?? 0,
+    like: s.likedCnt ?? s.likeCnt ?? s.like ?? fallback.like ?? 0,
     fav: s.collectCnt ?? s.fav ?? fallback.fav ?? 0,
   }
 }
