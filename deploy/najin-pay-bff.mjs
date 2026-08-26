@@ -81,6 +81,70 @@ function orderNo(kind) {
   return `FBI${Date.now()}${Math.random().toString(36).slice(2, 8)}${kind === 'gold' ? 'G' : 'V'}`
 }
 
+const UA_DESKTOP =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+
+function findRedirect(html) {
+  const patterns = [
+    /location\.replace\(\s*['"]([^'"]+)['"]/i,
+    /location\.href\s*=\s*['"]([^'"]+)['"]/i,
+    /window\.location\s*=\s*['"]([^'"]+)['"]/i,
+    /<meta[^>]+http-equiv=["']refresh["'][^>]+url=([^"'>\s]+)/i,
+  ]
+  for (const re of patterns) {
+    const m = html.match(re)
+    if (m) return m[1]
+  }
+  return null
+}
+
+/**
+ * Cashier gateways hand back an http:// bounce page that only reaches the real
+ * https checkout via JS redirects, so the browser cannot frame it directly.
+ * Walk the chain here and hand the frontend the last https hop.
+ */
+async function resolvePayPage(startUrl, maxHops = 5) {
+  let url = startUrl
+  let httpsPage = /^https:/i.test(startUrl) ? startUrl : ''
+  let deeplink = ''
+
+  for (let i = 0; i < maxHops; i++) {
+    let res
+    try {
+      res = await fetch(url, {
+        redirect: 'follow',
+        headers: { 'User-Agent': UA_DESKTOP },
+        signal: AbortSignal.timeout(6000),
+      })
+    } catch {
+      break
+    }
+    if (!res.ok) break
+
+    const landed = res.url || url
+    if (/^https:/i.test(landed)) httpsPage = landed
+    if (!/text\/html/i.test(res.headers.get('content-type') || '')) break
+
+    const html = await res.text()
+    const next = findRedirect(html)
+    if (!next) break
+
+    let abs
+    try {
+      abs = new URL(next, landed).href
+    } catch {
+      break
+    }
+    if (!/^https?:/i.test(abs)) {
+      deeplink = abs
+      break
+    }
+    url = abs
+  }
+
+  return { httpsPage, deeplink }
+}
+
 async function handleCreate(body, origin) {
   if (!MCH_ID || !KEY) {
     return { status: 500, data: { ok: false, message: 'pay_bff_not_configured' } }
@@ -122,13 +186,18 @@ async function handleCreate(body, origin) {
   }
 
   const payParams = out.payParams || {}
+  const payUrl = payParams.payUrl || ''
+  const { httpsPage, deeplink } = payUrl ? await resolvePayPage(payUrl) : {}
+
   return {
     status: 200,
     data: {
       ok: true,
       mchOrderNo,
       payOrderId: out.payOrderId,
-      payUrl: payParams.payUrl || '',
+      payUrl,
+      payPageUrl: httpsPage || '',
+      payDeeplink: deeplink || '',
       payMethod: payParams.payMethod || 'codeImg',
       productId,
       amount: amountYuan,

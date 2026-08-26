@@ -60,7 +60,15 @@
         </header>
         <p class="pay-modal__sub">{{ payModal.channelName }} · 订单 {{ payModal.mchOrderNo }}</p>
         <div class="pay-modal__frame-wrap">
-          <iframe v-if="payModal.payUrl" class="pay-modal__frame" :src="payModal.payUrl" title="支付二维码" />
+          <iframe
+            v-if="payModal.frameUrl"
+            class="pay-modal__frame"
+            :src="payModal.frameUrl"
+            title="支付二维码"
+          />
+          <p v-else class="pay-modal__fallback">
+            该通道不支持页面内嵌，请点击下方「新窗口打开」扫码支付。
+          </p>
         </div>
         <p v-if="pollStatus === 'paid'" class="pay-modal__ok">支付成功，正在返回…</p>
         <p v-else-if="pollStatus === 'pending'" class="pay-modal__wait">请使用手机扫码完成支付</p>
@@ -153,7 +161,6 @@ async function loadPackages() {
     }
   } catch {
     packages.value = activeTab.value === 'gold' ? FALLBACK_GOLD : FALLBACK_VIP
-    error.value = '套餐加载失败，已显示默认档位'
   } finally {
     loading.value = false
     ensurePayChannel()
@@ -219,7 +226,8 @@ function startPoll(mchOrderNo) {
 }
 
 function openPayUrl() {
-  if (payModal.value?.payUrl) window.open(payModal.value.payUrl, '_blank')
+  const target = payModal.value?.frameUrl || payModal.value?.payUrl
+  if (target) window.open(target, '_blank')
 }
 
 async function submit() {
@@ -240,8 +248,11 @@ async function submit() {
       kind: activeTab.value,
       packageName: pkg.name,
     })
+    // Only https can render inside the frame; an http checkout is mixed content.
+    const framable = /^https:/i.test(res.payPageUrl || '') ? res.payPageUrl : ''
     payModal.value = {
       payUrl: res.payUrl,
+      frameUrl: framable,
       mchOrderNo: res.mchOrderNo,
       amount: res.amount,
       channelName: channel.name,
@@ -390,8 +401,16 @@ onBeforeUnmount(() => stopPoll())
 .pay-modal__frame-wrap {
   background: #fff;
   border-radius: 0.12rem;
-  height: 360px;
-  overflow: hidden;
+  height: 540px;
+  max-height: 62vh;
+  overflow: auto;
+}
+.pay-modal__fallback {
+  color: #333;
+  font-size: 0.28rem;
+  line-height: 1.6;
+  padding: 0.4rem;
+  text-align: center;
 }
 .pay-modal__frame {
   border: none;
