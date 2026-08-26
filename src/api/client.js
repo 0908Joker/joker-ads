@@ -12,6 +12,11 @@ const DEFAULT_BASES = [
 let activeBase = null
 let bases = [...DEFAULT_BASES]
 let lastFetchAt = null
+let apiSid = null
+
+function isSidError(message) {
+  return typeof message === 'string' && /^fail\/sid:/i.test(message)
+}
 
 function apiRoot(base) {
   const b = (base || activeBase || bases[0]).replace(/\/$/, '')
@@ -106,8 +111,28 @@ export async function pickApiBase(candidates = DEFAULT_BASES) {
   return activeBase
 }
 
-export async function apiFetch(path, options = {}) {
+export async function refreshApiSid() {
+  const url = requestPath('/speedtest')
+  const sep = url.includes('?') ? '&' : '?'
+  const withPid = `${url}${sep}pid=${PID}`
+  const res = await fetch(withPid, {
+    headers: {
+      Accept: 'application/json',
+      t: '3',
+      k: '3',
+      ...authHeaders(),
+      ...(apiSid ? { sid: apiSid } : {}),
+    },
+  })
+  if (!res.ok) return apiSid
+  const json = await res.json()
+  if (json.sid) apiSid = json.sid
+  return apiSid
+}
+
+export async function apiFetch(path, options = {}, retry = true) {
   if (!activeBase) await pickApiBase()
+  if (!apiSid) await refreshApiSid()
   const url = requestPath(path)
   const sep = url.includes('?') ? '&' : '?'
   const withPid = url.includes('pid=') ? url : `${url}${sep}pid=${PID}`
@@ -116,17 +141,21 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: {
       Accept: 'application/json',
-      // k=3 selects the payload scheme our decryptCipher understands; without it
-      // the server encrypts responses with a scheme we cannot read.
       t: '3',
       k: '3',
       ...authHeaders(),
+      ...(apiSid ? { sid: apiSid } : {}),
       ...(options.headers || {}),
     },
   })
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`)
   const json = await res.json()
+  if (json.sid) apiSid = json.sid
   if (json.errorCode && json.errorCode !== 0) {
+    if (retry && isSidError(json.message)) {
+      await refreshApiSid()
+      return apiFetch(path, options, false)
+    }
     throw new Error(json.message || `API error ${json.errorCode}`)
   }
   const unwrapped = unwrapApiPayload(json)
