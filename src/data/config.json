@@ -37,16 +37,6 @@
       "icon": "music"
     },
     {
-      "id": "dark",
-      "label": "暗网",
-      "icon": "skull"
-    },
-    {
-      "id": "circle",
-      "label": "圈子",
-      "icon": "planet"
-    },
-    {
       "id": "anime",
       "label": "二次元",
       "icon": "eye"

@@ -3,8 +3,6 @@
     "apps": "/appcenter",
     "featured": "/videosPage",
     "douyin": "/short",
-    "dark": "/darkWeb/darkSecond",
-    "circle": "/circle",
     "anime": "/vipPage",
     "mine": "/my"
   },
@@ -97,68 +95,6 @@
         "likes": 349,
         "comments": 10,
         "shares": 14
-      }
-    ]
-  },
-  "dark": {
-    "tags": [
-      "强奸",
-      "学生",
-      "自慰",
-      "妈妈",
-      "乱伦",
-      "巨乳",
-      "户外",
-      "内射"
-    ]
-  },
-  "circle": {
-    "topic": {
-      "title": "第一百零五期 做爱减肥真可以？ 5种爱爱姿",
-      "participants": 441,
-      "pro": "28.80%",
-      "con": "71.20%",
-      "issue": "零五"
-    },
-    "groups": [
-      { "name": "老司机解说", "count": "97个帖子" },
-      { "name": "女优资讯", "count": "437个帖子" },
-      { "name": "骚货", "count": "4888个帖子" },
-      { "name": "cosplay", "count": "278个帖子" },
-      { "name": "品茶约炮", "count": "404个帖子" },
-      { "name": "反差婊爆料", "count": "1633个帖子" },
-      { "name": "吃瓜", "count": "11198个帖子" },
-      { "name": "裸聊直播", "count": "337个帖子" },
-      { "name": "巨乳", "count": "3138个帖子" }
-    ],
-    "posts": [
-      {
-        "user": "小红书官方",
-        "time": "2026.6.16 16:37",
-        "title": "💞全国外围💞1234线城市上门服务安排!《人到满意付款》",
-        "tag": "#外围",
-        "likes": 115,
-        "comments": 32,
-        "views": "118697",
-        "pinned": true
-      },
-      {
-        "user": "全网最牛真实露脸反差婊调教",
-        "time": "2026.8.10 17:50",
-        "title": "台湾某传媒大学，颜值超高的美少女学姐与男友的性爱私密视频流出…",
-        "tag": "#反差婊爆料",
-        "likes": 74,
-        "comments": 1,
-        "views": "908"
-      },
-      {
-        "user": "18撸王",
-        "time": "2026.8.9 16:07",
-        "title": "做爱减肥真可以？ 5种爱爱姿势越做身材越好！",
-        "tag": "#性爱知识",
-        "likes": 0,
-        "comments": 0,
-        "views": "0"
       }
     ]
   },
