@@ -55,6 +55,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CebImg from '../components/CebImg.vue'
 import { fetchVideoDetail } from '../api/videos.js'
+import { proxyMediaUrl } from '../api/client.js'
 import { normalizeVideoDetail } from '../api/normalize.js'
 import { decryptMedia } from '../api/media.js'
 
@@ -133,7 +134,7 @@ async function load() {
     decryptMedia(d.cover)
       .then((src) => (poster.value = src))
       .catch(() => {})
-    await attachStream(d.playUrl)
+    await attachStream(proxyMediaUrl(d.playUrl))
   } catch (e) {
     status.value = '加载失败，请稍后重试'
   }

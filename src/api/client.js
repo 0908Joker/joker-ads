@@ -18,15 +18,38 @@ function apiRoot(base) {
   return `${b}/api/v1`
 }
 
+/** Production (GitHub Pages) uses HTTPS VPS reverse proxy; local uses Vite proxy. */
+function proxyOrigin() {
+  const fromEnv = (import.meta.env.VITE_API_PROXY_ORIGIN || '').replace(/\/$/, '')
+  if (fromEnv) return fromEnv
+  if (typeof window === 'undefined') return ''
+  const h = window.location.hostname
+  if (h === 'localhost' || h === '127.0.0.1') return ''
+  return ''
+}
+
 function useProxy() {
   if (typeof window === 'undefined') return false
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  if (proxyOrigin()) return true
+  const h = window.location.hostname
+  return h === 'localhost' || h === '127.0.0.1'
 }
 
 function requestPath(path) {
   const p = path.startsWith('/') ? path : `/${path}`
-  if (useProxy()) return `/api-proxy${p}`
+  if (useProxy()) {
+    const origin = proxyOrigin()
+    return origin ? `${origin}/api-proxy${p}` : `/api-proxy${p}`
+  }
   return `${apiRoot()}${p}`
+}
+
+/** Rewrite origin API stream URLs onto the VPS proxy (same host as m3u8). */
+export function proxyMediaUrl(url) {
+  if (!url || !useProxy()) return url
+  const origin = proxyOrigin()
+  const prefix = origin ? `${origin}/api-proxy` : '/api-proxy'
+  return String(url).replace(/^https?:\/\/[^/]+\/api\/v1/i, prefix)
 }
 
 // Browsers reject the IP-hosted bases on cert mismatch, so try domain bases first.
@@ -53,9 +76,14 @@ async function ping(base) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 4000)
   try {
-    const url = useProxy()
-      ? `/api-proxy/speedtest?base=${encodeURIComponent(base)}`
-      : `${apiRoot(base)}/speedtest`
+    let url
+    if (useProxy()) {
+      const origin = proxyOrigin()
+      url = `${origin}/api-proxy/speedtest?base=${encodeURIComponent(base)}`
+      if (!origin) url = `/api-proxy/speedtest?base=${encodeURIComponent(base)}`
+    } else {
+      url = `${apiRoot(base)}/speedtest`
+    }
     const res = await fetch(url, { signal: ctrl.signal, method: 'GET' })
     clearTimeout(t)
     return res.ok

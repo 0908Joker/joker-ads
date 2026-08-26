@@ -135,6 +135,16 @@ function showNotice(msg) {
   }, 2200)
 }
 
+function dedupeComics(list) {
+  const seen = new Set()
+  return (list || []).filter((c) => {
+    const key = String(c?.id || c?.title || '').trim()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 function matchFilter(item) {
   if (!item) return false
   if (activeFilter.value === '全部') return true
@@ -146,7 +156,7 @@ const preview = computed(() => {
   const list = previewItems.value.length
     ? previewItems.value
     : liveSections.value.find((s) => s.title === '更新预告')?.items || comics.value.slice(0, 4)
-  return list.filter(matchFilter)
+  return dedupeComics(list.filter(matchFilter))
 })
 
 const sections = computed(() => {
@@ -161,7 +171,7 @@ const sections = computed(() => {
 
 const filteredSections = computed(() =>
   sections.value
-    .map((sec) => ({ ...sec, items: (sec.items || []).filter(matchFilter) }))
+    .map((sec) => ({ ...sec, items: dedupeComics((sec.items || []).filter(matchFilter)) }))
     .filter((sec) => sec.items.length > 0),
 )
 

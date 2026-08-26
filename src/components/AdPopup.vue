@@ -50,6 +50,10 @@ import { decryptMedia } from '../api/media.js'
 import popupData from '../data/popups.json'
 import config from '../data/config.json'
 
+// Survive remount when leaving /play (App v-if); avoid endless re-queue.
+let sessionQueueDone = false
+let sessionIndex = 0
+
 const props = defineProps({
   popups: { type: Array, default: () => [] },
 })
@@ -67,7 +71,7 @@ const afterAds = computed(() => {
 
 const gridAds = computed(() => popupData.gridPopAds || [])
 
-const index = ref(0)
+const index = ref(sessionIndex)
 const mode = ref('image')
 const visible = ref(false)
 const currentSrc = ref('')
@@ -97,19 +101,38 @@ async function showAt(i) {
   }
 }
 
+const DONE_KEY = 'adPopupDone'
+
+function markDone() {
+  sessionQueueDone = true
+  try {
+    sessionStorage.setItem(DONE_KEY, '1')
+  } catch {}
+}
+
 function close() {
   visible.value = false
   index.value += 1
+  sessionIndex = index.value
   if (index.value < queueLen.value) {
     setTimeout(() => showAt(index.value), 280)
+    return
   }
+  markDone()
 }
 
 function onAdClick(e) {
   if (!currentHref.value) e.preventDefault()
 }
 
-onMounted(() => showAt(0))
+onMounted(() => {
+  try {
+    if (sessionStorage.getItem(DONE_KEY) === '1' || sessionQueueDone) return
+  } catch {
+    if (sessionQueueDone) return
+  }
+  showAt(sessionIndex)
+})
 </script>
 
 <style scoped>
