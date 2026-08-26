@@ -139,6 +139,25 @@ VITE_PAY_BFF_ORIGIN=https://al-ads.com
 
 本地 `npm run dev` 走 Vite 的 `/api-proxy` 转发，不需要这两个变量。
 
+### 视频数据
+
+分类 Tab 的内容来自烘焙数据 `src/data/video-pool.json`，**不是**实时接口。
+
+原因：原站的 `categories/{id}`、`tag/videos/name`、`videos/filter` 对我们的 token 一律返回 0 条，只有 `videos/recommend` 还能分页取数。所以采集 recommend 的分页结果存成池子，前端按 Tab 和子 Tab 切片，保证每个 Tab 都有内容且互不重复。
+
+刷新数据：
+
+```bash
+node scripts/sync-video-pool.mjs
+```
+
+| 环境变量 | 默认 | 说明 |
+|----------|------|------|
+| `MAX_PAGES` | 80 | 最多翻多少页；实测翻到 500 页仍有新内容 |
+| `POOL_MAX` | 1200 | 保留条数，即 14 Tab × 3 子 Tab × 24 条 |
+
+池子会打成独立 chunk 异步加载，别把它 `import` 进主包——1200 条约 316 KB，直接内联会让首屏包翻倍。
+
 ### 发布
 
 Pages 的来源是 **`gh-pages` 分支**（`build_type=legacy`），**不是** Actions 工作流。所以：
