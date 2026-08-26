@@ -22,15 +22,6 @@
       >{{ tab }}</button>
     </nav>
 
-    <div class="filter-row">
-      <span>快速筛选</span>
-      <span>展开</span>
-    </div>
-
-    <div class="chips">
-      <span v-for="c in chips" :key="c" class="chip">{{ c }}</span>
-    </div>
-
     <div class="sub-tabs">
       <button
         v-for="s in subTabs"
@@ -74,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
@@ -82,15 +73,8 @@ import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
 import videoCategories from '../data/video-categories.json'
-import {
-  fetchRecommend,
-  fetchCategoryVideos,
-  fetchVideoFilter,
-  fetchTagVideosByName,
-  fetchAlgoRecommendList,
-} from '../api/videos.js'
-import { normalizeFeaturedPayload, normalizeAlgoFeaturedPayload } from '../api/normalize.js'
-import { cleanFeedList } from '../composables/useApiFeed.js'
+import { fetchRecommend } from '../api/videos.js'
+import { normalizeFeaturedPayload } from '../api/normalize.js'
 
 const FALLBACK_TABS = [
   '最新', '推荐', '夏日限定', '18岁', '制服', '探花', '原创', '乱伦', '国产', '传媒', '日本', '欧美', '同性',
@@ -99,19 +83,39 @@ const CATEGORY_TABS =
   (videoCategories.categories || []).map((c) => c.name).filter(Boolean).length
     ? (videoCategories.categories || []).map((c) => c.name).filter(Boolean)
     : FALLBACK_TABS
-const chips = tabsFallback.featured.chips
 const subTabs = tabsFallback.featured.subTabs
-const fallbackVideos = (() => {
-  const live = normalizeFeaturedPayload(liveApi.featured)
-  if (live.length) return live
-  return cleanFeedList(tabsFallback.featured.videos, 4)
-})()
+const PAGE_SIZE = 24
+
+/**
+ * The origin answers 0 videos for every `categories/{id}` and `tag/videos/name`
+ * request on our token, so there is no per-category feed to read. Slice a baked
+ * pool instead so every tab shows different titles rather than nothing.
+ *
+ * The pool is ~316 KB, which would double the entry bundle, so it loads as its
+ * own chunk; until it lands the smaller snapshot in live-api.json fills in.
+ */
+const pool = ref([])
+const seed = normalizeFeaturedPayload(liveApi.featured)
+
+function poolSlice(tab, sub) {
+  const source = pool.value.length ? pool.value : seed
+  if (!source.length) return []
+  if (source.length <= PAGE_SIZE) return source
+  const tabIndex = Math.max(0, CATEGORY_TABS.indexOf(tab))
+  const subIndex = Math.max(0, subTabs.indexOf(sub))
+  const start = ((tabIndex * subTabs.length + subIndex) * PAGE_SIZE) % source.length
+  const slice = source.slice(start, start + PAGE_SIZE)
+  return slice.length === PAGE_SIZE
+    ? slice
+    : [...slice, ...source.slice(0, PAGE_SIZE - slice.length)]
+}
+
 const sqAd = tabsFallback.featured.ad || {}
 
 const router = useRouter()
 const activeTab = ref('推荐')
 const subTab = ref('推荐')
-const videos = ref(withAdSlot(fallbackVideos))
+const videos = ref(withAdSlot(poolSlice('推荐', '推荐')))
 
 function openVideo(v) {
   if (v.isAd || !v.id) return
@@ -129,20 +133,13 @@ function withAdSlot(list) {
   return out
 }
 
-function cachedFeaturedForTab(tab) {
+function cachedFeaturedForTab(tab, sub) {
   const byCat = liveApi.featuredByCat || {}
   if (byCat[tab] && !byCat[tab].error) {
     const list = normalizeFeaturedPayload(byCat[tab])
     if (list.length) return list
   }
-  if (tab === '推荐') return fallbackVideos
-  return []
-}
-
-function compositeSortForSubTab(sub) {
-  if (sub === '最新') return 2
-  if (sub === '最热') return 4
-  return 1
+  return poolSlice(tab, sub)
 }
 
 function tabPageOffset(tab) {
@@ -165,61 +162,43 @@ function sortFeaturedList(list, sub) {
   })
 }
 
+// Guards against a slow response for a previous tab overwriting the current one.
+let loadToken = 0
+
 async function loadVideos() {
   const tab = activeTab.value
-  const cat = (videoCategories.categories || []).find((c) => c.name === tab)
-  const compositeSort = compositeSortForSubTab(subTab.value)
-  const page = tabPageOffset(tab) + subTabPageBump(subTab.value)
-  let list = []
+  const sub = subTab.value
+  const token = ++loadToken
+
+  // Render immediately; a live response upgrades this in place if one arrives.
+  videos.value = withAdSlot(cachedFeaturedForTab(tab, sub))
 
   try {
-    if (cat?.id) {
-      const raw = await fetchCategoryVideos(cat.id, {
-        page: 1,
-        pageSize: 20,
-        timeType: 1,
-        compositeSort,
-        inPool: true,
-      })
-      list = normalizeFeaturedPayload(raw.data ?? raw)
-    }
-
-    if (!list.length && cat?.id) {
-      const raw = await fetchAlgoRecommendList({
-        categoryId: cat.id,
-        page: 1,
-        pageSize: 20,
-        compositeSort,
-      })
-      list = normalizeAlgoFeaturedPayload(raw.data ?? raw)
-    }
-
-    if (!list.length && cat?.tags) {
-      const raw = await fetchVideoFilter({ page: 1, pageSize: 20, tagId: cat.tags })
-      list = normalizeFeaturedPayload(raw.data ?? raw)
-    }
-
-    if (!list.length && cat?.name && tab !== '推荐') {
-      const raw = await fetchTagVideosByName({ page: 1, pageSize: 20, name: cat.name })
-      list = normalizeFeaturedPayload(raw.data ?? raw)
-    }
-
-    if (!list.length) {
-      const sort =
-        subTab.value === '最新' ? 'latest' : subTab.value === '最热' ? 'hot' : 'recommend'
-      const raw = await fetchRecommend({ page, pageSize: 20, sort })
-      list = sortFeaturedList(normalizeFeaturedPayload(raw.data ?? raw), subTab.value)
-    }
-
-    if (!list.length) list = cachedFeaturedForTab(tab)
-
-    videos.value = withAdSlot(list.length ? list : cachedFeaturedForTab(tab))
+    const sort = sub === '最新' ? 'latest' : sub === '最热' ? 'hot' : 'recommend'
+    const raw = await fetchRecommend({
+      page: tabPageOffset(tab) + subTabPageBump(sub),
+      pageSize: 20,
+      sort,
+    })
+    if (token !== loadToken) return
+    const list = sortFeaturedList(normalizeFeaturedPayload(raw.data ?? raw), sub)
+    if (list.length) videos.value = withAdSlot(list)
   } catch {
-    videos.value = withAdSlot(cachedFeaturedForTab(tab))
+    // Keep whatever the pool already rendered.
   }
 }
 
 watch([activeTab, subTab], () => loadVideos(), { immediate: true })
+
+onMounted(async () => {
+  try {
+    const mod = await import('../data/video-pool.json')
+    pool.value = normalizeFeaturedPayload({ videos: mod.default.videos })
+    loadVideos()
+  } catch {
+    // Seed data already covers the tabs.
+  }
+})
 </script>
 
 <style scoped>
@@ -254,16 +233,7 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
   position: relative;
 }
 .cat-tab.is-active { background: #fff; color: #111; font-weight: 600; }
-.filter-row {
-  color: rgba(255,255,255,.45); display: flex; font-size: 0.28rem;
-  justify-content: space-between; padding: 0.04rem 0.32rem 0.12rem;
-}
-.chips { display: flex; flex-wrap: wrap; gap: 0.16rem; padding: 0 0.32rem 0.16rem; }
-.chip {
-  background: rgb(44, 44, 47); border-radius: 0.8rem; color: rgb(153, 153, 153);
-  font-size: 0.28rem; padding: 0.1rem 0.22rem;
-}
-.sub-tabs { align-items: center; display: flex; gap: 0.32rem; padding: 0 0.32rem 0.2rem; }
+.sub-tabs { align-items: center; display: flex; gap: 0.32rem; padding: 0.12rem 0.32rem 0.2rem; }
 .sub-tab {
   background: rgb(44, 44, 47); border: none; border-radius: 0.8rem; color: rgba(255,255,255,.55);
   font-size: 0.3rem; padding: 0.08rem 0.22rem;

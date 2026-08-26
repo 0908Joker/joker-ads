@@ -31,10 +31,13 @@ fs.writeFileSync(path.join(DIST, '.nojekyll'), '')
 
 const head = git(['rev-parse', '--short', 'HEAD'])
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'ghpages-'))
+// A fresh orphan name each run; `--orphan gh-pages` fails once the local
+// branch exists, and the published tree is a full replacement anyway.
+const staging = `gh-pages-staging-${Date.now()}`
 
 try {
   git(['worktree', 'add', '--detach', work])
-  git(['checkout', '--orphan', BRANCH], { cwd: work })
+  git(['checkout', '--orphan', staging], { cwd: work })
   try {
     git(['rm', '-rq', '--cached', '.'], { cwd: work })
   } catch {}
@@ -47,13 +50,16 @@ try {
 
   git(['add', '-A'], { cwd: work })
   git(['commit', '-q', '-m', `Publish build ${head}.`], { cwd: work })
-  git(['push', '-f', 'origin', BRANCH], { cwd: work })
+  git(['push', '-f', 'origin', `HEAD:${BRANCH}`], { cwd: work })
   console.log(`published ${head} to ${BRANCH}`)
 } finally {
   try {
     git(['worktree', 'remove', work, '--force'])
   } catch {}
   git(['worktree', 'prune'])
+  try {
+    git(['branch', '-D', staging])
+  } catch {}
 }
 
 console.log('Pages will rebuild automatically; force one with:')
