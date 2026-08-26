@@ -8,7 +8,7 @@
 
 | 组件 | 域名 | 托管在哪 | 怎么发布 |
 |------|------|----------|----------|
-| 前端站点 | `b12sl5x.cn` | **GitHub Pages**（迁移中，见下文） | push `main` → Actions 自动构建部署 |
+| 前端站点 | `b12sl5x.cn` | **GitHub Pages**（`gh-pages` 分支，迁移中） | `npm run publish` |
 | 接口 / 支付 | `al-ads.com` | **自有服务器** `107.149.129.35` | ssh 上去改，手动 reload |
 
 也就是说：**前端目前仍然依赖 GitHub**，服务器只承载后端服务。迁移已在进行，服务器端就绪，等 DNS 切换。
@@ -141,10 +141,17 @@ VITE_PAY_BFF_ORIGIN=https://al-ads.com
 
 ### 发布
 
+Pages 的来源是 **`gh-pages` 分支**（`build_type=legacy`），**不是** Actions 工作流。所以：
+
+> **推 `main` 不会部署任何东西**，必须跑发布命令。
+
 ```bash
-npm run build
-git push origin main      # 触发 GitHub Actions → Pages
+npm run publish     # 构建 + 推 gh-pages + 触发 Pages 重建
 ```
+
+为什么这么改：2026-08-26 GitHub Actions 发生 major outage，部署任务排队一个多小时没有 runner 接手，而 Pages 组件本身是正常的。分支部署走 GitHub 自己的 Pages 构建器，不依赖 Actions runner，所以能绕过这类故障。
+
+`.github/workflows/` 里的 `pages.yml` 现在是**空转**的，留着以备将来切回 Actions 模式。
 
 确认线上拿到新版本（比对构建产物文件名）：
 
@@ -153,10 +160,18 @@ ls dist/assets/index-*.js
 curl -s "https://b12sl5x.cn/index.html?cb=$RANDOM" | grep -o 'index-[A-Za-z0-9_-]*\.js'
 ```
 
-两边一致才算部署完成。查部署状态：
+两边一致才算部署完成。查构建状态：
 
 ```bash
-gh run list --limit 3 --workflow "Deploy to GitHub Pages"
+gh api repos/0908Joker/joker-ads/pages/builds/latest --jq '{status, error: .error.message}'
+gh api -X POST repos/0908Joker/joker-ads/pages/builds    # 手动触发
+```
+
+当前 Pages 配置：
+
+```bash
+gh api repos/0908Joker/joker-ads/pages --jq '{build_type, source, https_enforced, cert: .https_certificate.state}'
+# {"build_type":"legacy","source":{"branch":"gh-pages","path":"/"},"https_enforced":true,"cert":"approved"}
 ```
 
 如果任务长时间 `queued` 且 `gh run view <id>` 看不到 JOBS，多半是 GitHub 侧故障，查 <https://www.githubstatus.com/api/v2/summary.json>。

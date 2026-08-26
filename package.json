@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "crawl": "cd scripts && node crawl.mjs && node crawl-phase2.mjs && node finalize.mjs",
     "sync:api": "cd scripts && node sync-api-session.mjs && node sync-live-api.mjs",
-    "audit:gate": "cd scripts && node audit-gate.mjs"
+    "audit:gate": "cd scripts && node audit-gate.mjs",
+    "publish": "npm run build && node scripts/publish-pages.mjs"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",
