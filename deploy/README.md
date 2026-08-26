@@ -8,10 +8,10 @@
 
 | 组件 | 域名 | 托管在哪 | 怎么发布 |
 |------|------|----------|----------|
-| 前端站点 | `b12sl5x.cn` | **GitHub Pages** | push `main` → Actions 自动构建部署 |
+| 前端站点 | `b12sl5x.cn` | **GitHub Pages**（迁移中，见下文） | push `main` → Actions 自动构建部署 |
 | 接口 / 支付 | `al-ads.com` | **自有服务器** `107.149.129.35` | ssh 上去改，手动 reload |
 
-也就是说：**前端目前仍然依赖 GitHub**，服务器只承载后端服务。想彻底脱离 GitHub 需要做前端迁移（见文末）。
+也就是说：**前端目前仍然依赖 GitHub**，服务器只承载后端服务。迁移已在进行，服务器端就绪，等 DNS 切换。
 
 验证方法：
 
@@ -163,16 +163,52 @@ gh run list --limit 3 --workflow "Deploy to GitHub Pages"
 
 ---
 
-## 如果要把前端也迁到服务器
+## 前端迁移到服务器（进行中）
 
-目前**没做**。真要脱离 GitHub，需要这四步：
+服务器端**已经搭好并验证通过**，只差 DNS 和证书。
 
-1. 在服务器上建 `b12sl5x.cn` 的 vhost，根目录放 `dist/`
-2. 把 `b12sl5x.cn` 的 DNS 从 GitHub Pages 的四个 IP 改指到 `107.149.129.35`
-3. 给 `b12sl5x.cn` 申请 SSL 证书（服务器上现有证书只覆盖 `seduoduo.cc` / `seduoduo.cn` / `shibopay.net`，没有这个域名）
-4. 发布方式改成 `rsync dist/` 上传
+已完成：
 
-DNS 和证书这两步有生效窗口，切换期间站点可能短暂不可用，要挑时间做。
+- 站点根目录 `/www/wwwroot/b12sl5x.cn`，`dist/` 已上传
+- vhost `/www/server/panel/vhost/nginx/b12sl5x.cn.conf`（仓库副本：`deploy/b12sl5x.cn.conf`）
+- SPA 深链回退、资源长缓存、`index.html` 禁缓存、gzip
+- 同源挂载了 `/api-proxy/`、`/m3u8-proxy`、`/pay-bff/`
+
+绕过 DNS 直接验证：
+
+```bash
+curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/ | grep -o '<title>.*</title>'
+curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/pay-bff/health
+```
+
+### 剩余步骤
+
+1. **改 DNS**：把 `b12sl5x.cn` 的 A 记录从 GitHub Pages 那四个 IP（`185.199.108-111.153`）改成 `107.149.129.35`，必须**灰云 / 仅 DNS**，开代理会挡掉证书验证。
+2. **签证书**（DNS 生效后执行）：
+
+```bash
+certbot certonly --webroot -w /www/wwwroot/b12sl5x.cn \
+  -d b12sl5x.cn -d www.b12sl5x.cn --agree-tos -m <邮箱> -n
+```
+
+3. **开 HTTPS**：在 vhost 里加 `listen 443 ssl`、证书路径和 HTTP 跳转（可参照 `seduoduo.cc.conf` 的 SSL 段），然后 `nginx -t && nginx -s reload`。
+
+### 更新站点内容
+
+```bash
+npm run build
+scp -P 32356 -i ~/.ssh/cr7_local_workstation_ed25519 -r dist/* \
+  root@107.149.129.35:/www/wwwroot/b12sl5x.cn/
+```
+
+`dist/` 有近 700 个小文件，scp 逐个传要十几分钟。文件多时改用打包传输更快：
+
+```bash
+tar czf - -C dist . | ssh -p 32356 -i ~/.ssh/cr7_local_workstation_ed25519 \
+  root@107.149.129.35 "tar xzf - -C /www/wwwroot/b12sl5x.cn"
+```
+
+传完记得 `chown -R www:www /www/wwwroot/b12sl5x.cn`。
 
 ---
 
