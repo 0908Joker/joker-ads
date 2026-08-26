@@ -31,6 +31,9 @@ const snap = await page.evaluate(async () => {
     ['userInfo', () => api.getUserInfo?.()],
     ['actionStats', () => api.getActionStats?.()],
     ['homeComic', () => api.getHomeComic?.()],
+    ['homeComicSuper', () => api.getHomeComic_super?.()],
+    ['circleVoting', () => api.getAllCircleVoting?.({ page: 1, pageSize: 10 })],
+    ['circleModule', () => api.moduleCHJ?.({ page: 1, pageSize: 10, type: 'basic', index: 0, compositeSort: 4 })],
   ]
   for (const [key, fn] of calls) {
     if (!fn()) continue
@@ -74,6 +77,29 @@ const snap = await page.evaluate(async () => {
     out.shortByTab['短剧'] = { error: String(e) }
   }
 
+  // Featured per-category via getSecondCategoriesData → categories/{id}
+  const cats = out.appModule?.categories || []
+  if (Array.isArray(cats) && cats.length && api.getSecondCategoriesData) {
+    out.featuredByCat = {}
+    for (const c of cats) {
+      if (!c?.id || !c?.name) continue
+      try {
+        const r = await api.getSecondCategoriesData(c.id, {
+          page: 1,
+          pageSize: 20,
+          timeType: 1,
+          compositeSort: 1,
+          inPool: true,
+        })
+        const data = r?.data ?? r
+        if (data?.errorCode && data.errorCode !== 0) continue
+        out.featuredByCat[c.name] = data
+      } catch (e) {
+        out.featuredByCat[c.name] = { error: String(e) }
+      }
+    }
+  }
+
   return out
 })
 
@@ -100,6 +126,12 @@ if (snap.shortByTab) {
     if (isGoodSnapshot(data)) payload.shortByTab[name] = data
   }
   if (payload.shortByTab['抖阴']) payload.short = payload.shortByTab['抖阴']
+}
+if (snap.featuredByCat) {
+  payload.featuredByCat = { ...(existing.featuredByCat || {}) }
+  for (const [name, data] of Object.entries(snap.featuredByCat)) {
+    if (isGoodSnapshot(data)) payload.featuredByCat[name] = data
+  }
 }
 
 fs.writeFileSync(OUT, JSON.stringify(payload, null, 2))

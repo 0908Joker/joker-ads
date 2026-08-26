@@ -128,6 +128,16 @@ function withAdSlot(list) {
   return out
 }
 
+function cachedFeaturedForTab(tab) {
+  const byCat = liveApi.featuredByCat || {}
+  if (byCat[tab] && !byCat[tab].error) {
+    const list = normalizeFeaturedPayload(byCat[tab])
+    if (list.length) return list
+  }
+  if (tab === '推荐') return fallbackVideos
+  return []
+}
+
 function compositeSortForSubTab(sub) {
   if (sub === '最新') return 2
   if (sub === '最热') return 4
@@ -167,9 +177,12 @@ async function loadVideos() {
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
+    if (!list.length) list = cachedFeaturedForTab(tab)
+
     videos.value = list.length ? withAdSlot(list) : withAdSlot(fallbackVideos)
   } catch {
-    videos.value = withAdSlot(fallbackVideos)
+    const cached = cachedFeaturedForTab(tab)
+    videos.value = withAdSlot(cached.length ? cached : fallbackVideos)
   }
 }
 

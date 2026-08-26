@@ -117,11 +117,95 @@ export function normalizeComic(item) {
   const title = item.name || item.title || ''
   if (!title) return null
   return {
+    id: item.id || '',
     title,
-    type: item.categoryName || item.tags?.[0] || item.type || '韩漫',
+    type: item.categoryName || item.tags?.[0]?.name || item.tags?.[0] || item.type || '韩漫',
     status: item.schedule || (item.updateStatus === 1 ? '完结' : '连载'),
     cover: mediaUrl(item.coverURL || item.horizontalCoverUrl || item.cover),
     coverLocal: item.coverLocal || '',
+  }
+}
+
+export function mapComicSectionTitle(flagName) {
+  if (flagName === '最近更新') return '更新预告'
+  if (flagName === '连载中') return '韩漫'
+  if (flagName === '已完结') return '同人'
+  return flagName || '漫画'
+}
+
+export function normalizeCircleVoting(item, fallback = {}) {
+  if (!item) return null
+  const title = item.title || item.name || item.content || fallback.title || ''
+  if (!title) return null
+  const proRaw = item.agreeRate ?? item.proRate ?? item.pro ?? fallback.pro
+  const conRaw = item.opposeRate ?? item.conRate ?? item.con ?? fallback.con
+  const toPct = (v) => {
+    if (v == null || v === '') return ''
+    if (typeof v === 'string' && v.includes('%')) return v
+    const n = Number(v)
+    if (!Number.isFinite(n)) return String(v)
+    return n <= 1 ? `${(n * 100).toFixed(2)}%` : `${n.toFixed(2)}%`
+  }
+  return {
+    title,
+    participants: item.joinCnt ?? item.participants ?? item.peopleCnt ?? fallback.participants ?? 0,
+    pro: toPct(proRaw) || fallback.pro || '50%',
+    con: toPct(conRaw) || fallback.con || '50%',
+    issue: item.issue || item.period || item.期数 || fallback.issue || '',
+    cover: mediaUrl(item.coverURL || item.cover || item.bgUrl || ''),
+    id: item.id || item.circleId || '',
+  }
+}
+
+export function normalizeCircleGroup(item, index = 0) {
+  if (!item) return null
+  const name = item.name || item.title || item.tagName || ''
+  if (!name) return null
+  const count = item.circlesCnt ?? item.postCnt ?? item.count ?? item.newsCnt
+  return {
+    id: item.id || item.tagId || item.cateId || `circle-${index}`,
+    name,
+    count: typeof count === 'string' && /帖子/.test(count)
+      ? count
+      : `${formatCount(count ?? 0)}个帖子`,
+    cover: mediaUrl(item.coverURL || item.avatarURL || item.iconURL || item.cover || ''),
+  }
+}
+
+export function normalizeCirclePost(item) {
+  if (!item) return null
+  const title = item.title || item.content || item.name || item.desc || ''
+  if (!title || title.length < 2) return null
+  const user =
+    item.user?.username ||
+    item.user?.nickName ||
+    item.username ||
+    item.nickName ||
+    item.publisherName ||
+    '小红书用户'
+  const tags = item.tags || item.circleTags || []
+  const tag =
+    item.tagName ||
+    item.circleName ||
+    (Array.isArray(tags) ? (typeof tags[0] === 'string' ? tags[0] : tags[0]?.name) : '') ||
+    ''
+  return {
+    id: item.id || item.newsId || item.circleId || '',
+    user: user.startsWith('@') ? user.slice(1) : user,
+    time: item.releaseDateLabel || item.time || item.createdAt || item.releaseDate || '',
+    title,
+    tag: tag ? (String(tag).startsWith('#') ? tag : `#${tag}`) : '',
+    pinned: !!(item.isTop || item.pinned || item.top),
+    likes: item.likedCnt ?? item.likes ?? item.likeCnt ?? 0,
+    comments: item.commentCnt ?? item.comments ?? 0,
+    views: formatCount(item.playCnt ?? item.viewCnt ?? item.hot ?? item.views ?? 0),
+    images: (() => {
+      const raw = item.imgUrls || item.images || (item.coverURL ? [item.coverURL] : [])
+      return (Array.isArray(raw) ? raw : [])
+        .filter(Boolean)
+        .map((p) => mediaUrl(p))
+        .slice(0, 3)
+    })(),
   }
 }
 

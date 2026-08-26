@@ -26,7 +26,7 @@
     <section class="groups">
       <header class="sec-head"><h3>热门圈子</h3><span>更多 ></span></header>
       <div class="group-grid">
-        <div v-for="g in groups" :key="g.name" class="group-item">
+        <div v-for="g in groups" :key="g.id || g.name" class="group-item">
           <img v-if="g.cover" class="group-item__bg" :src="g.cover" alt="" />
           <strong>{{ g.name }}</strong>
           <span>{{ g.count }}</span>
@@ -35,7 +35,7 @@
     </section>
 
     <section class="posts">
-      <article v-for="(p, i) in posts" :key="i" class="post">
+      <article v-for="(p, i) in posts" :key="p.id || i" class="post">
         <div class="post-head">
           <div class="post-avatar">小红书</div>
           <div class="post-who">
@@ -52,15 +52,23 @@
         </div>
         <p class="post-stats">{{ p.likes ?? 115 }} {{ p.comments ?? 32 }} {{ p.views ?? '118697' }}</p>
       </article>
+      <p v-if="loadingMore" class="feed-status">加载中…</p>
+      <p v-else-if="finished && posts.length" class="feed-status">没有更多了</p>
     </section>
   </TabShell>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
 import tabsFallback from '../data/tabs.json'
+import { fetchCircleModule, fetchCircleVoting } from '../api/circle.js'
+import {
+  normalizeCircleGroup,
+  normalizeCirclePost,
+  normalizeCircleVoting,
+} from '../api/normalize.js'
 
 const GROUP_COVERS = [
   '/circle/img-01.png',
@@ -73,31 +81,145 @@ const GROUP_COVERS = [
   '/circle/img-08.png',
   '/circle/img-09.png',
 ]
-const POST_IMGS = [
-  '/circle/img-10.jpg',
-  '/circle/img-11.jpg',
-  '/circle/img-12.jpg',
-]
+const POST_IMGS = ['/circle/img-10.jpg', '/circle/img-11.jpg', '/circle/img-12.jpg']
 
-const topic = {
+const fallbackTopic = {
   ...tabsFallback.circle.topic,
   cover: '/circle/img-00.png',
 }
+const topic = ref({ ...fallbackTopic })
+const liveGroups = ref([])
+const livePosts = ref([])
+const page = ref(1)
+const loadingMore = ref(false)
+const finished = ref(false)
 
-const groups = computed(() => {
+const fallbackGroups = (() => {
   const g = [...tabsFallback.circle.groups]
   if (!g.some((x) => x.name === '巨乳')) g.push({ name: '巨乳', count: '3138个帖子' })
-  return g.slice(0, 9).map((item, i) => ({ ...item, cover: GROUP_COVERS[i] }))
+  return g.slice(0, 9).map((item, i) => ({
+    ...item,
+    id: `fb-g-${i}`,
+    cover: GROUP_COVERS[i],
+  }))
+})()
+
+const fallbackPosts = tabsFallback.circle.posts.map((p, i) => ({
+  ...p,
+  id: `fb-p-${i}`,
+  images: [POST_IMGS[i] || POST_IMGS[0]],
+}))
+
+const groups = computed(() => {
+  if (liveGroups.value.length) return liveGroups.value.slice(0, 9)
+  return fallbackGroups
 })
 
-const posts = computed(() =>
-  tabsFallback.circle.posts.map((p, i) => ({
-    ...p,
-    images: POST_IMGS.slice(i, i + (p.pinned ? 1 : 1)).filter(Boolean).length
-      ? [POST_IMGS[i] || POST_IMGS[0]]
-      : [],
-  })),
-)
+const posts = computed(() => (livePosts.value.length ? livePosts.value : fallbackPosts))
+
+function unpackModule(data) {
+  if (!data) return { circles: [], tags: [], news: [] }
+  const root = Array.isArray(data) ? data[0] : data?.data?.[0] || data
+  const circles = root?.circles || root?.circleList || []
+  const tags = root?.circleTags || root?.tags || []
+  const news = root?.news || root?.newsList || root?.posts || []
+  return { circles: Array.isArray(circles) ? circles : [], tags: Array.isArray(tags) ? tags : [], news: Array.isArray(news) ? news : [] }
+}
+
+function toPosts(circles, news, pageNum) {
+  const fromNews = news.map(normalizeCirclePost).filter(Boolean)
+  if (fromNews.length) return fromNews
+  // Origin home feed is the circles list itself when no news array is present.
+  return circles
+    .map((c, i) => {
+      const g = normalizeCircleGroup(c, i)
+      if (!g) return null
+      return {
+        id: g.id,
+        user: g.name,
+        time: '',
+        title: `${g.name} · ${g.count}`,
+        tag: `#${g.name}`,
+        pinned: pageNum === 1 && i === 0,
+        likes: 0,
+        comments: 0,
+        views: g.count.replace(/个帖子/, '') || '0',
+        images: g.cover ? [g.cover] : [],
+      }
+    })
+    .filter(Boolean)
+}
+
+async function loadVoting() {
+  try {
+    const raw = await fetchCircleVoting({ page: 1, pageSize: 10 })
+    const data = raw.data ?? raw
+    const list = data?.circleVotings || data?.list || (Array.isArray(data) ? data : [])
+    const first = normalizeCircleVoting(list[0], fallbackTopic)
+    if (first) topic.value = { ...first, cover: first.cover || '/circle/img-00.png' }
+  } catch {
+    topic.value = { ...fallbackTopic }
+  }
+}
+
+async function loadModule(reset = false) {
+  if (loadingMore.value) return
+  if (!reset && finished.value) return
+  loadingMore.value = true
+  try {
+    const nextPage = reset ? 1 : page.value
+    const raw = await fetchCircleModule({
+      page: nextPage,
+      pageSize: 10,
+      type: 'basic',
+      index: 0,
+      compositeSort: 4,
+    })
+    const { circles, tags, news } = unpackModule(raw.data ?? raw)
+    if (reset) {
+      const groupSrc = tags.length ? tags : circles
+      liveGroups.value = groupSrc
+        .map((item, i) => {
+          const g = normalizeCircleGroup(item, i)
+          if (!g) return null
+          return { ...g, cover: g.cover || GROUP_COVERS[i % GROUP_COVERS.length] }
+        })
+        .filter(Boolean)
+      livePosts.value = toPosts(circles, news, 1)
+      page.value = 2
+    } else {
+      const more = toPosts(circles, news, nextPage)
+      const seen = new Set(livePosts.value.map((p) => p.id))
+      livePosts.value = [...livePosts.value, ...more.filter((p) => p.id && !seen.has(p.id))]
+      page.value = nextPage + 1
+    }
+    if (circles.length < 10 && news.length < 10) finished.value = true
+  } catch {
+    if (reset) {
+      liveGroups.value = []
+      livePosts.value = []
+    }
+    finished.value = true
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+function onWindowScroll() {
+  const el = document.documentElement
+  if (el.scrollHeight - el.scrollTop - el.clientHeight > 400) return
+  loadModule(false)
+}
+
+onMounted(() => {
+  loadVoting()
+  loadModule(true)
+  window.addEventListener('scroll', onWindowScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onWindowScroll)
+})
 </script>
 
 <style scoped>
@@ -155,4 +277,5 @@ const posts = computed(() =>
 .post-imgs { display: grid; gap: 0.08rem; grid-template-columns: 1fr; margin-top: 0.16rem; }
 .post-imgs img { border-radius: 0.12rem; display: block; height: 2.4rem; object-fit: cover; width: 100%; }
 .post-stats { color: rgba(255,255,255,.45); font-size: 0.26rem; margin-top: 0.12rem; }
+.feed-status { color: rgba(255,255,255,.45); font-size: 0.26rem; padding: 0.2rem 0 0.4rem; text-align: center; }
 </style>
