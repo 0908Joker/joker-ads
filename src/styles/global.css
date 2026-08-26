@@ -62,6 +62,7 @@ html[data-shell='desktop'] .popup-wrap {
 }
 
 html[data-shell='desktop'] .float-banner {
+  left: 50%;
   max-width: 460px;
   right: auto;
   transform: translateX(-50%);

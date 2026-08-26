@@ -7,14 +7,24 @@
           <path d="M8 7V5h8v2"/>
         </svg>
       </span>
-      <SearchBar class="dark-head__search" :words="['学生', '强奸', '自慰', '妈妈']" />
+      <SearchBar class="dark-head__search" :words="['学生', '强奸', '自慰', '妈妈']" to="/searchPage" />
       <span class="dark-head__hist">⏱</span>
-      <span class="dark-head__plus">＋</span>
     </header>
 
-    <section class="poster">
+    <section class="poster" @click="goRecharge">
       <img src="/dark/poster.png" alt="" class="poster__img" />
+      <div class="poster__vip">开通VIP解锁暗网专区</div>
     </section>
+
+    <div class="sub-tabs">
+      <button
+        v-for="s in subTabs"
+        :key="s"
+        class="sub-tab"
+        :class="{ 'is-active': subTab === s }"
+        @click="subTab = s"
+      >{{ s }}</button>
+    </div>
 
     <div class="tag-cloud">
       <button
@@ -26,7 +36,7 @@
       >{{ tag }}</button>
     </div>
 
-    <section v-if="results.length" class="results">
+    <section class="results">
       <article
         v-for="(v, i) in results"
         :key="v.id || i"
@@ -40,23 +50,28 @@
           <h3>{{ v.title }}</h3>
         </div>
       </article>
+      <p v-if="!results.length && !loading" class="feed-status">选择标签或切换排序浏览内容</p>
+      <p v-if="loading" class="feed-status">加载中…</p>
     </section>
   </TabShell>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
-import { fetchTagVideosByName } from '../api/videos.js'
+import { fetchRecommend, fetchTagVideosByName } from '../api/videos.js'
 import { normalizeFeaturedPayload } from '../api/normalize.js'
 
 const tags = tabsFallback.dark.tags.slice(0, 8)
+const subTabs = ['推荐', '最新', '最热']
 const activeTag = ref('')
+const subTab = ref('推荐')
 const results = ref([])
+const loading = ref(false)
 const router = useRouter()
 
 function openVideo(v) {
@@ -64,15 +79,48 @@ function openVideo(v) {
   router.push(`/play/${v.id}`)
 }
 
-async function onTag(tag) {
-  activeTag.value = tag
+function goRecharge() {
+  router.push('/recharge?type=vip')
+}
+
+function sortList(list) {
+  if (subTab.value !== '最热') return list
+  return [...list].sort((a, b) => {
+    const av = Number(String(a.views || '0').replace(/[^\d.]/g, '')) || 0
+    const bv = Number(String(b.views || '0').replace(/[^\d.]/g, '')) || 0
+    return bv - av
+  })
+}
+
+async function loadFeed() {
+  loading.value = true
   try {
-    const raw = await fetchTagVideosByName({ page: 1, pageSize: 12, name: tag })
-    results.value = normalizeFeaturedPayload(raw.data ?? raw)
+    if (activeTag.value) {
+      const raw = await fetchTagVideosByName({ page: 1, pageSize: 16, name: activeTag.value })
+      results.value = normalizeFeaturedPayload(raw.data ?? raw)
+    } else {
+      const page = subTab.value === '最新' ? 2 : subTab.value === '最热' ? 3 : 1
+      const sort = subTab.value === '最新' ? 'latest' : subTab.value === '最热' ? 'hot' : 'recommend'
+      const raw = await fetchRecommend({ page, pageSize: 16, sort })
+      results.value = sortList(normalizeFeaturedPayload(raw.data ?? raw))
+    }
   } catch {
     results.value = []
+  } finally {
+    loading.value = false
   }
 }
+
+async function onTag(tag) {
+  activeTag.value = activeTag.value === tag ? '' : tag
+  await loadFeed()
+}
+
+watch(subTab, () => {
+  if (!activeTag.value) loadFeed()
+})
+
+loadFeed()
 </script>
 
 <style scoped>
@@ -84,8 +132,7 @@ async function onTag(tag) {
   padding: 0.12rem 0.2rem;
 }
 .dark-head__tee,
-.dark-head__hist,
-.dark-head__plus {
+.dark-head__hist {
   align-items: center;
   color: #fff;
   display: flex;
@@ -105,19 +152,52 @@ async function onTag(tag) {
 .dark-head :deep(.search-bar__word) {
   color: #999;
 }
-.poster { padding: 0.16rem 0.28rem 0.08rem; }
+.poster {
+  cursor: pointer;
+  padding: 0.16rem 0.28rem 0.08rem;
+  position: relative;
+}
 .poster__img {
   border: 3px solid #ff2d55;
   border-radius: 0.16rem;
   display: block;
   width: 100%;
 }
+.poster__vip {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 0.8rem;
+  bottom: 0.28rem;
+  color: #ffd24a;
+  font-size: 0.28rem;
+  left: 50%;
+  padding: 0.12rem 0.28rem;
+  position: absolute;
+  transform: translateX(-50%);
+}
+.sub-tabs {
+  display: flex;
+  gap: 0.16rem;
+  padding: 0.12rem 0.32rem;
+}
+.sub-tab {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.28rem;
+  padding: 0.1rem 0.24rem;
+}
+.sub-tab.is-active {
+  background: #ff2d55;
+  color: #fff;
+  font-weight: 600;
+}
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
   gap: 0.16rem;
   justify-content: center;
-  padding: 0.16rem 0.32rem 0.48rem;
+  padding: 0.08rem 0.32rem 0.24rem;
 }
 .dark-tag {
   background: rgba(255,255,255,.06);
@@ -135,4 +215,5 @@ async function onTag(tag) {
 .result-row__cover { background: #222; border-radius: 0.1rem; height: 1.2rem; object-fit: cover; width: 2rem; }
 .result-row p { color: rgba(255,255,255,.45); font-size: 0.24rem; }
 .result-row h3 { font-size: 0.3rem; }
+.feed-status { color: rgba(255,255,255,.45); font-size: 0.26rem; padding: 0.24rem 0; text-align: center; }
 </style>

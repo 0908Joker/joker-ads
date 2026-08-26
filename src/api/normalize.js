@@ -135,24 +135,32 @@ export function mapComicSectionTitle(flagName) {
 
 export function normalizeCircleVoting(item, fallback = {}) {
   if (!item) return null
-  const title = item.title || item.name || item.content || fallback.title || ''
+  const title =
+    item.circleVotingTitle || item.title || item.name || item.content || fallback.title || ''
   if (!title) return null
+  const aff = Number(item.affirmativeVotes ?? item.agreeCnt ?? 0)
+  const neg = Number(item.negativeVotes ?? item.opposeCnt ?? 0)
+  const total = aff + neg
   const proRaw = item.agreeRate ?? item.proRate ?? item.pro ?? fallback.pro
   const conRaw = item.opposeRate ?? item.conRate ?? item.con ?? fallback.con
   const toPct = (v) => {
     if (v == null || v === '') return ''
     if (typeof v === 'string' && v.includes('%')) return v
     const n = Number(v)
-    if (!Number.isFinite(n)) return String(v)
+    if (!Number.isFinite(n)) return ''
     return n <= 1 ? `${(n * 100).toFixed(2)}%` : `${n.toFixed(2)}%`
   }
+  const proFromVotes = total > 0 ? `${((aff / total) * 100).toFixed(2)}%` : ''
+  const conFromVotes = total > 0 ? `${((neg / total) * 100).toFixed(2)}%` : ''
   return {
     title,
-    participants: item.joinCnt ?? item.participants ?? item.peopleCnt ?? fallback.participants ?? 0,
-    pro: toPct(proRaw) || fallback.pro || '50%',
-    con: toPct(conRaw) || fallback.con || '50%',
-    issue: item.issue || item.period || item.期数 || fallback.issue || '',
-    cover: mediaUrl(item.coverURL || item.cover || item.bgUrl || ''),
+    participants:
+      total ||
+      (item.joinCnt ?? item.participants ?? item.peopleCnt ?? fallback.participants ?? 0),
+    pro: proFromVotes || toPct(proRaw) || fallback.pro || '50%',
+    con: conFromVotes || toPct(conRaw) || fallback.con || '50%',
+    issue: item.issueNumber || item.issue || item.period || item.期数 || fallback.issue || '',
+    cover: mediaUrl(item.backgroundURL || item.coverURL || item.cover || item.bgUrl || ''),
     id: item.id || item.circleId || '',
   }
 }
@@ -161,27 +169,27 @@ export function normalizeCircleGroup(item, index = 0) {
   if (!item) return null
   const name = item.name || item.title || item.tagName || ''
   if (!name) return null
-  const count = item.circlesCnt ?? item.postCnt ?? item.count ?? item.newsCnt
+  const count = item.circleCnt ?? item.circlesCnt ?? item.postCnt ?? item.count ?? item.newsCnt
   return {
     id: item.id || item.tagId || item.cateId || `circle-${index}`,
     name,
     count: typeof count === 'string' && /帖子/.test(count)
       ? count
       : `${formatCount(count ?? 0)}个帖子`,
-    cover: mediaUrl(item.coverURL || item.avatarURL || item.iconURL || item.cover || ''),
+    cover: mediaUrl(item.coverUrl || item.coverURL || item.avatarURL || item.iconURL || item.cover || ''),
   }
 }
 
 export function normalizeCirclePost(item) {
   if (!item) return null
-  const title = item.title || item.content || item.name || item.desc || ''
+  const title = item.title || item.circleContent?.[0]?.content || item.content || item.name || item.desc || ''
   if (!title || title.length < 2) return null
   const user =
+    item.publisherName ||
     item.user?.username ||
     item.user?.nickName ||
     item.username ||
     item.nickName ||
-    item.publisherName ||
     '小红书用户'
   const tags = item.tags || item.circleTags || []
   const tag =
@@ -189,18 +197,24 @@ export function normalizeCirclePost(item) {
     item.circleName ||
     (Array.isArray(tags) ? (typeof tags[0] === 'string' ? tags[0] : tags[0]?.name) : '') ||
     ''
+  const release = item.releaseDate || item.createdAt || ''
+  const timeLabel =
+    item.releaseDateLabel ||
+    item.time ||
+    (release ? String(release).slice(0, 10) : '')
   return {
     id: item.id || item.newsId || item.circleId || '',
     user: user.startsWith('@') ? user.slice(1) : user,
-    time: item.releaseDateLabel || item.time || item.createdAt || item.releaseDate || '',
-    title,
+    time: timeLabel,
+    title: String(title).startsWith('web/') ? item.title || '' : title,
     tag: tag ? (String(tag).startsWith('#') ? tag : `#${tag}`) : '',
-    pinned: !!(item.isTop || item.pinned || item.top),
+    pinned: !!(item.bPinToTop || item.bPinToTopForPlatform || item.isTop || item.pinned || item.top),
     likes: item.likedCnt ?? item.likes ?? item.likeCnt ?? 0,
-    comments: item.commentCnt ?? item.comments ?? 0,
+    comments: item.totoalCommentCnt ?? item.commentCnt ?? item.comments ?? 0,
     views: formatCount(item.playCnt ?? item.viewCnt ?? item.hot ?? item.views ?? 0),
     images: (() => {
-      const raw = item.imgUrls || item.images || (item.coverURL ? [item.coverURL] : [])
+      const coverRaw = item.coverUrl || item.coverURL
+      const raw = item.imgUrls || item.images || (coverRaw ? (Array.isArray(coverRaw) ? coverRaw : [coverRaw]) : [])
       return (Array.isArray(raw) ? raw : [])
         .filter(Boolean)
         .map((p) => mediaUrl(p))

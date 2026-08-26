@@ -25,12 +25,12 @@
       <article class="pay-card pay-card--vip">
         <strong>vip会员中心</strong>
         <p>限时特惠权限等你开启</p>
-        <button>立即开通</button>
+        <button @click="goRecharge('vip')">立即开通</button>
       </article>
       <article class="pay-card pay-card--gold">
         <strong>钻石充值</strong>
         <p>充值越高赠送越多</p>
-        <button>立即充值</button>
+        <button @click="goRecharge('gold')">立即充值</button>
       </article>
     </div>
 
@@ -129,9 +129,13 @@ function openApp(app) {
   const target = app.signUrl || app.url
   if (target?.startsWith('http')) openAdSign(target)
 }
+function goRecharge(type) {
+  router.push(type === 'gold' ? '/recharge?type=gold' : '/recharge?type=vip')
+}
 function onService(name) {
   if (name === '我的视频') router.push('/videosPage')
   else if (name === '下载管理') router.push('/appcenter')
+  else if (name === '充值记录' || name === '购买记录') router.push('/recharge')
 }
 async function onSignin() {
   try { await fetchUserSignin() } catch {}

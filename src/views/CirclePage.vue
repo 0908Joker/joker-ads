@@ -123,31 +123,17 @@ function unpackModule(data) {
   const circles = root?.circles || root?.circleList || []
   const tags = root?.circleTags || root?.tags || []
   const news = root?.news || root?.newsList || root?.posts || []
-  return { circles: Array.isArray(circles) ? circles : [], tags: Array.isArray(tags) ? tags : [], news: Array.isArray(news) ? news : [] }
+  return {
+    circles: Array.isArray(circles) ? circles : [],
+    tags: Array.isArray(tags) ? tags : [],
+    news: Array.isArray(news) ? news : [],
+  }
 }
 
 function toPosts(circles, news, pageNum) {
   const fromNews = news.map(normalizeCirclePost).filter(Boolean)
   if (fromNews.length) return fromNews
-  // Origin home feed is the circles list itself when no news array is present.
-  return circles
-    .map((c, i) => {
-      const g = normalizeCircleGroup(c, i)
-      if (!g) return null
-      return {
-        id: g.id,
-        user: g.name,
-        time: '',
-        title: `${g.name} · ${g.count}`,
-        tag: `#${g.name}`,
-        pinned: pageNum === 1 && i === 0,
-        likes: 0,
-        comments: 0,
-        views: g.count.replace(/个帖子/, '') || '0',
-        images: g.cover ? [g.cover] : [],
-      }
-    })
-    .filter(Boolean)
+  return circles.map(normalizeCirclePost).filter(Boolean)
 }
 
 async function loadVoting() {

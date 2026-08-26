@@ -22,7 +22,7 @@
       <div>
         <p>您还不是会员</p>
       </div>
-      <button>开通会员</button>
+      <button @click="goRecharge">开通会员</button>
     </div>
     <div ref="filtersEl" class="filters">
       <button
@@ -75,6 +75,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
@@ -90,6 +91,7 @@ import { normalizeComic, mapComicSectionTitle } from '../api/normalize.js'
 
 const tabList = tabsFallback.anime.tabs
 const filters = tabsFallback.anime.filters
+const router = useRouter()
 const active = ref('漫画')
 const activeFilter = ref('全部')
 const bakedSections = (baked.sections || []).map((s) => ({
@@ -160,12 +162,18 @@ const preview = computed(() => {
 })
 
 const sections = computed(() => {
-  const rest = liveSections.value.filter((s) => s.title !== '更新预告')
-  if (rest.length) return rest
+  const previewIds = new Set(preview.value.map((c) => c.id || c.title))
+  const rest = liveSections.value
+    .filter((s) => s.title !== '更新预告')
+    .map((sec) => ({
+      ...sec,
+      items: (sec.items || []).filter((c) => !previewIds.has(c.id || c.title)),
+    }))
+  if (rest.some((s) => s.items?.length)) return rest
   const list = comics.value
   return [
     { title: '韩漫', items: list.slice(0, 10) },
-    { title: '同人', items: list.slice(2, 8) },
+    { title: '同人', items: list.slice(10, 18) },
   ]
 })
 
@@ -174,6 +182,10 @@ const filteredSections = computed(() =>
     .map((sec) => ({ ...sec, items: dedupeComics((sec.items || []).filter(matchFilter)) }))
     .filter((sec) => sec.items.length > 0),
 )
+
+function goRecharge() {
+  router.push('/recharge?type=vip')
+}
 
 function onFilterTool() {
   filtersEl.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })

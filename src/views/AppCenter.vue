@@ -88,6 +88,10 @@ function onAppClick(app) {
     window.open(target, '_blank')
     return
   }
+  if (target?.startsWith('/')) {
+    router.push(target)
+    return
+  }
   const internal = app.internalRoute || config.internalRoutes?.[app.name]
   if (internal) router.push(internal)
 }

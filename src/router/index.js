@@ -7,6 +7,8 @@ import CirclePage from '../views/CirclePage.vue'
 import AnimePage from '../views/AnimePage.vue'
 import MinePage from '../views/MinePage.vue'
 import PlayPage from '../views/PlayPage.vue'
+import RechargePage from '../views/RechargePage.vue'
+import SearchPage from '../views/SearchPage.vue'
 
 const routes = [
   { path: '/', redirect: '/appcenter' },
@@ -18,6 +20,9 @@ const routes = [
   { path: '/vipPage', component: AnimePage },
   { path: '/my', component: MinePage },
   { path: '/play/:id', component: PlayPage },
+  { path: '/recharge', component: RechargePage },
+  { path: '/recharge/vipRecharge', redirect: '/recharge?type=vip' },
+  { path: '/searchPage', component: SearchPage },
   // 兼容旧路由
   { path: '/featured', redirect: '/videosPage' },
   { path: '/douyin', redirect: '/short' },

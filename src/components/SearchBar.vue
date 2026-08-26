@@ -1,5 +1,5 @@
 <template>
-  <header class="search-bar">
+  <header class="search-bar" :class="{ 'search-bar--tap': to }" @click="onClick">
     <span class="search-bar__icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="6.5" />
@@ -14,10 +14,19 @@
 </template>
 
 <script setup>
-defineProps({
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
   words: { type: Array, default: () => ['美女', '巨乳', '奶子', '帅哥'] },
   trailing: { type: String, default: '' },
+  to: { type: String, default: '' },
 })
+
+const router = useRouter()
+
+function onClick() {
+  if (props.to) router.push(props.to)
+}
 </script>
 
 <style scoped>
@@ -29,6 +38,9 @@ defineProps({
   gap: 0.16rem;
   margin: 0.2rem 0.32rem;
   padding: 0.14rem 0.24rem;
+}
+.search-bar--tap {
+  cursor: pointer;
 }
 .search-bar__icon {
   align-items: center;

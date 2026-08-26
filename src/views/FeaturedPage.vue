@@ -7,7 +7,7 @@
           <path d="M8 7V5h8v2" />
         </svg>
       </span>
-      <SearchBar class="feat-head__search" />
+      <SearchBar class="feat-head__search" to="/searchPage" />
       <span class="feat-head__hist">⏱</span>
       <span class="feat-head__plus">＋</span>
     </header>
@@ -87,8 +87,9 @@ import {
   fetchCategoryVideos,
   fetchVideoFilter,
   fetchTagVideosByName,
+  fetchAlgoRecommendList,
 } from '../api/videos.js'
-import { normalizeFeaturedPayload } from '../api/normalize.js'
+import { normalizeFeaturedPayload, normalizeAlgoFeaturedPayload } from '../api/normalize.js'
 import { cleanFeedList } from '../composables/useApiFeed.js'
 
 const FALLBACK_TABS = [
@@ -144,19 +145,35 @@ function compositeSortForSubTab(sub) {
   return 1
 }
 
+function tabPageOffset(tab) {
+  const idx = CATEGORY_TABS.indexOf(tab)
+  return idx >= 0 ? idx + 1 : 1
+}
+
+function subTabPageBump(sub) {
+  if (sub === '最新') return 1
+  if (sub === '最热') return 2
+  return 0
+}
+
+function sortFeaturedList(list, sub) {
+  if (sub !== '最热' || list.length < 2) return list
+  return [...list].sort((a, b) => {
+    const av = Number(String(a.views || '0').replace(/[^\d.]/g, '')) || 0
+    const bv = Number(String(b.views || '0').replace(/[^\d.]/g, '')) || 0
+    return bv - av
+  })
+}
+
 async function loadVideos() {
   const tab = activeTab.value
   const cat = (videoCategories.categories || []).find((c) => c.name === tab)
   const compositeSort = compositeSortForSubTab(subTab.value)
+  const page = tabPageOffset(tab) + subTabPageBump(subTab.value)
   let list = []
 
   try {
-    if (tab === '推荐' && subTab.value === '推荐') {
-      const raw = await fetchRecommend({ page: 1, pageSize: 20, sort: 'recommend' })
-      list = normalizeFeaturedPayload(raw.data ?? raw)
-    }
-
-    if (!list.length && cat?.id) {
+    if (cat?.id) {
       const raw = await fetchCategoryVideos(cat.id, {
         page: 1,
         pageSize: 20,
@@ -167,22 +184,38 @@ async function loadVideos() {
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
+    if (!list.length && cat?.id) {
+      const raw = await fetchAlgoRecommendList({
+        categoryId: cat.id,
+        page: 1,
+        pageSize: 20,
+        compositeSort,
+      })
+      list = normalizeAlgoFeaturedPayload(raw.data ?? raw)
+    }
+
     if (!list.length && cat?.tags) {
       const raw = await fetchVideoFilter({ page: 1, pageSize: 20, tagId: cat.tags })
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
-    if (!list.length && cat?.name) {
+    if (!list.length && cat?.name && tab !== '推荐') {
       const raw = await fetchTagVideosByName({ page: 1, pageSize: 20, name: cat.name })
       list = normalizeFeaturedPayload(raw.data ?? raw)
     }
 
+    if (!list.length) {
+      const sort =
+        subTab.value === '最新' ? 'latest' : subTab.value === '最热' ? 'hot' : 'recommend'
+      const raw = await fetchRecommend({ page, pageSize: 20, sort })
+      list = sortFeaturedList(normalizeFeaturedPayload(raw.data ?? raw), subTab.value)
+    }
+
     if (!list.length) list = cachedFeaturedForTab(tab)
 
-    videos.value = list.length ? withAdSlot(list) : withAdSlot(fallbackVideos)
+    videos.value = withAdSlot(list.length ? list : cachedFeaturedForTab(tab))
   } catch {
-    const cached = cachedFeaturedForTab(tab)
-    videos.value = withAdSlot(cached.length ? cached : fallbackVideos)
+    videos.value = withAdSlot(cachedFeaturedForTab(tab))
   }
 }
 

@@ -114,13 +114,13 @@ function selectMode(id) {
 }
 
 .hero__tab.is-active {
-  color: #222;
+  color: #fff;
   font-size: 0.48rem;
   font-weight: 600;
 }
 
 .hero__tab.is-active::after {
-  background: #222;
+  background: #f81942;
   border-radius: 26.64rem;
   bottom: 0;
   content: '';
