@@ -61,9 +61,11 @@ function iconText(name) {
 </script>
 
 <style scoped>
+/* minmax(0,…) — plain 1fr floors at min-content, so long names such as
+   网红现场直播 widened their column and pushed the sixth one off screen. */
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.21333rem 0.10667rem;
   margin: 0 0.25641rem;
   padding: 0.32rem 0 0.53333rem;
@@ -79,13 +81,14 @@ function iconText(name) {
 }
 
 .app-card__cover {
+  aspect-ratio: 1;
   background: #2a2a2a;
-  border-radius: 0.32rem;
-  box-shadow: rgba(0, 0, 0, 0.18) 0 0.21333rem 0.48rem;
-  height: 1.41333rem;
+  border-radius: 0.26667rem;
+  box-shadow: rgba(0, 0, 0, 0.18) 0 0.16rem 0.37333rem;
   margin: 0 auto;
+  max-width: 1.2rem;
   overflow: hidden;
-  width: 1.41333rem;
+  width: 100%;
 }
 
 .cover-img {
@@ -109,11 +112,11 @@ function iconText(name) {
 .app-card__name {
   color: rgba(255, 255, 255, 0.72);
   display: block;
-  font-size: 0.29333rem;
+  font-size: 0.25333rem;
   line-height: 1.3;
   margin-top: 0.10667rem;
   overflow: hidden;
-  padding: 0 0.05333rem;
+  padding: 0 0.02667rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

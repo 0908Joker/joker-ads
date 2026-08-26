@@ -4,6 +4,17 @@
     <div class="hero__glow hero__glow--left" />
     <div class="hero__glow hero__glow--right" />
 
+    <div class="hero__brand">
+      <span class="brand">
+        <svg class="brand__mark" viewBox="0 0 14 18" aria-hidden="true">
+          <path d="M2.6 2.4 5.4 5.2" />
+          <path d="M1.8 7.4 4.6 10.2" />
+          <path d="M2.8 15 6.6 11.9" />
+        </svg>
+        <span class="brand__name">得污</span>
+      </span>
+    </div>
+
     <nav class="hero__tabs">
       <button
         v-for="cat in categories"
@@ -89,6 +100,37 @@ function selectMode(id) {
 
 .hero__glow--left { left: -1.49333rem; }
 .hero__glow--right { right: -1.76rem; }
+
+.hero__brand {
+  padding: 0.24rem 0.32rem 0.04rem;
+  position: relative;
+  z-index: 1;
+}
+
+.brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.14rem;
+}
+
+/* 氵 from 污, drawn as three strokes so the mark is native to the name. */
+.brand__mark {
+  fill: none;
+  height: 0.5rem;
+  stroke: #ffd24a;
+  stroke-linecap: round;
+  stroke-width: 3;
+  width: 0.38rem;
+}
+
+.brand__name {
+  color: #fff;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04rem;
+  line-height: 1;
+  text-shadow: 0 0.02rem 0.08rem rgba(0, 0, 0, 0.28);
+}
 
 .hero__tabs {
   align-items: center;

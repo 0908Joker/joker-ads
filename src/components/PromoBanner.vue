@@ -41,7 +41,11 @@ function onClick(e) {
 </script>
 
 <style scoped>
+/* Creative is 636x200; a fixed height crushed it to ~8.4:1 and cover cropped
+   away both lines of copy, so the slot follows the artwork's ratio instead. */
 .promo-banner {
+  aspect-ratio: 636 / 200;
+  border-radius: 0.24rem;
   display: block;
   margin: 0.21333rem 0.32rem 0;
   overflow: hidden;
@@ -50,27 +54,20 @@ function onClick(e) {
   z-index: 1;
 }
 
-.promo-banner__img {
-  border-radius: 0.24rem;
-  display: block;
-  height: 1.06667rem;
-  object-fit: cover;
-  width: 100%;
-}
-
+.promo-banner__img,
 :deep(.promo-banner__img) {
-  border-radius: 0.24rem;
-  height: 1.06667rem;
+  display: block;
+  height: 100%;
+  object-fit: cover;
   width: 100%;
 }
 
 .promo-banner__fallback {
   align-items: center;
   background: linear-gradient(90deg, #ff6b8a, #ff2d55 50%, #c0392b);
-  border-radius: 0.24rem;
   display: flex;
   gap: 0.16rem;
-  height: 1.06667rem;
+  height: 100%;
   justify-content: center;
 }
 

@@ -136,7 +136,7 @@ const row2 = computed(() => ROW2_NAMES.map(resolveApp))
 const recommend = computed(() => REC_NAMES.map(resolveApp))
 
 const avatarText = computed(() => {
-  const n = String(user.value.name || '小红书').trim()
+  const n = String(user.value.name || '得污').trim()
   return n.slice(0, 1) || '小'
 })
 

@@ -190,7 +190,7 @@ export function normalizeCirclePost(item) {
     item.user?.nickName ||
     item.username ||
     item.nickName ||
-    '小红书用户'
+    '得污用户'
   const tags = item.tags || item.circleTags || []
   const tag =
     item.tagName ||

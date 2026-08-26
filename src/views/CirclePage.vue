@@ -37,7 +37,7 @@
     <section class="posts">
       <article v-for="(p, i) in posts" :key="p.id || i" class="post">
         <div class="post-head">
-          <div class="post-avatar">小红书</div>
+          <div class="post-avatar">{{ (p.user || '得污').slice(0, 1) }}</div>
           <div class="post-who">
             <strong>{{ p.user }}</strong>
             <span>{{ p.time }}</span>
@@ -249,7 +249,8 @@ onBeforeUnmount(() => {
 .post { border-bottom: 1px solid rgba(255,255,255,.06); margin-bottom: 0.28rem; padding-bottom: 0.28rem; }
 .post-head { align-items: center; display: flex; gap: 0.12rem; }
 .post-avatar {
-  align-items: center; background: #f81942; border-radius: 50%; display: flex; font-size: 0.18rem;
+  align-items: center; background: #f81942; border-radius: 50%; display: flex;
+  flex-shrink: 0; font-size: 0.34rem; font-weight: 700;
   height: 0.8rem; justify-content: center; width: 0.8rem;
 }
 .post-who { flex: 1; min-width: 0; }
