@@ -17,6 +17,7 @@
 
 <script setup>
 import CebImg from './CebImg.vue'
+import { resolveAdTarget, trackAdSign } from '../api/ad.js'
 
 const props = defineProps({
   tag: { type: String, default: '限时' },
@@ -27,11 +28,15 @@ const props = defineProps({
   image: { type: String, default: '' },
 })
 
-const href = props.signUrl || props.url
+const href = resolveAdTarget(props)
 const localSrc = props.image || ''
 
 function onClick(e) {
-  if (!href) e.preventDefault()
+  if (!href) {
+    e.preventDefault()
+    return
+  }
+  trackAdSign(props.signUrl)
 }
 </script>
 

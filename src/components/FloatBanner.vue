@@ -12,6 +12,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { openAd } from '../api/ad.js'
 
 const props = defineProps({
   title: { type: String, default: 'PG电子大放水' },
@@ -24,8 +25,7 @@ const props = defineProps({
 const visible = ref(true)
 
 function open() {
-  const target = props.signUrl || props.url
-  if (target?.startsWith('http')) window.open(target, '_blank')
+  openAd({ url: props.url, signUrl: props.signUrl })
 }
 </script>
 

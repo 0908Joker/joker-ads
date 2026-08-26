@@ -10,9 +10,10 @@
             v-for="(ad, i) in gridAds"
             :key="`${ad.name}-${i}`"
             class="grid-ad"
-            :href="ad.signUrl || ad.url || undefined"
+            :href="resolveAdTarget(ad) || undefined"
             target="_blank"
             rel="noopener noreferrer"
+            @click="trackAdSign(ad.signUrl)"
           >
             <CebImg class="grid-ad__img" :path="ad.coverUrl" />
           </a>
@@ -47,6 +48,7 @@
 import { computed, onMounted, ref } from 'vue'
 import CebImg from './CebImg.vue'
 import { decryptMedia } from '../api/media.js'
+import { resolveAdTarget, trackAdSign } from '../api/ad.js'
 import popupData from '../data/popups.json'
 import config from '../data/config.json'
 
@@ -91,7 +93,7 @@ async function showAt(i) {
   }
   mode.value = 'image'
   const ad = afterAds.value[i]
-  currentHref.value = ad.signUrl || ad.url || ''
+  currentHref.value = resolveAdTarget(ad)
   try {
     currentSrc.value = await decryptMedia(ad.coverUrl || ad.image)
     visible.value = Boolean(currentSrc.value)
@@ -122,7 +124,11 @@ function close() {
 }
 
 function onAdClick(e) {
-  if (!currentHref.value) e.preventDefault()
+  if (!currentHref.value) {
+    e.preventDefault()
+    return
+  }
+  trackAdSign(afterAds.value[index.value]?.signUrl)
 }
 
 onMounted(() => {

@@ -29,6 +29,7 @@ import PromoBanner from '../components/PromoBanner.vue'
 import AppGrid from '../components/AppGrid.vue'
 import TabBar from '../components/TabBar.vue'
 import FloatBanner from '../components/FloatBanner.vue'
+import { openAd, resolveAdTarget } from '../api/ad.js'
 
 const props = defineProps({
   initialTab: { type: String, default: 'apps' },
@@ -83,12 +84,9 @@ function onModeChange(mode) {
 }
 
 function onAppClick(app) {
-  const target = app.signUrl || app.url
-  if (target?.startsWith('http')) {
-    window.open(target, '_blank')
-    return
-  }
-  if (target?.startsWith('/')) {
+  if (openAd(app)) return
+  const target = resolveAdTarget(app)
+  if (target.startsWith('/')) {
     router.push(target)
     return
   }

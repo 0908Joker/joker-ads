@@ -227,8 +227,30 @@ export function normalizeUser(data, fallback = {}) {
   const u = data?.userInfo || data?.user || data || {}
   return {
     id: u.uid || u.id || fallback.id || '',
-    name: u.nickName || u.name || fallback.name || '游客',
-    bio: u.introduction || u.bio || fallback.bio || '这家伙很懒，什么也没有留下…',
+    name: u.nickName || u.username || u.name || fallback.name || '游客',
+    bio: u.introduction || u.introduce || u.bio || fallback.bio || '这家伙很懒，什么也没有留下…',
+  }
+}
+
+/** Wallet / VIP / invite fields the mine sub-pages render. */
+export function normalizeAccount(data) {
+  const u = data?.userInfo || data?.user || data || {}
+  const vipUntil = u.vipEffectiveTime || ''
+  const isVip = vipUntil ? new Date(vipUntil).getTime() > Date.now() : !!u.vip
+  return {
+    uid: u.uid || u.id || '',
+    gold: Number(u.gold ?? 0),
+    diamond: Number(u.diamond ?? 0),
+    points: Number(u.points ?? 0),
+    isVip,
+    vipName: u.vipName || (isVip ? 'VIP' : '普通用户'),
+    vipUntil: vipUntil ? String(vipUntil).slice(0, 10) : '',
+    watchTickets: Number(u.watchTicketCount ?? 0),
+    downloadTickets: Number(u.downloadTicketCount ?? 0),
+    inviteCode: u.selfInviteCode || '',
+    inviteCount: Number(u.inviteCnt ?? 0),
+    downloadUrl: u.officialDownloadUrl || u.downloadUrl || '',
+    customerUrl: (Array.isArray(u.customerUrls) ? u.customerUrls[0] : u.customerUrls) || '',
   }
 }
 

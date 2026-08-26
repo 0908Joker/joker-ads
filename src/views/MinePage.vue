@@ -96,7 +96,7 @@ import tabsFallback from '../data/tabs.json'
 import config from '../data/config.json'
 import { fetchUserInfo, fetchUserSignin, fetchActionStats } from '../api/users.js'
 import { normalizeUser, normalizeStats } from '../api/normalize.js'
-import { openAdSign } from '../api/ad.js'
+import { openAd } from '../api/ad.js'
 
 const router = useRouter()
 const user = ref({ ...tabsFallback.mine.user })
@@ -126,8 +126,7 @@ const avatarText = computed(() => {
 })
 
 function openApp(app) {
-  const target = app.signUrl || app.url
-  if (target?.startsWith('http')) openAdSign(target)
+  openAd(app)
 }
 function goRecharge(type) {
   router.push(type === 'gold' ? '/recharge?type=gold' : '/recharge?type=vip')
