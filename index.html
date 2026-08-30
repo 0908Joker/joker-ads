@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#111" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="referrer" content="no-referrer" />
+    <title>得污</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script>
+      (function () {
+        var SHELL_MAX = 460
+        var DESKTOP_REM = 48
+        var MOBILE_RE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i
+
+        function isDesktopBrowser() {
+          return !MOBILE_RE.test(navigator.userAgent)
+        }
+
+        function setRootFontSize() {
+          var width = document.documentElement.clientWidth || window.innerWidth
+          var desktop = isDesktopBrowser()
+
+          if (desktop) {
+            document.documentElement.style.fontSize = DESKTOP_REM + 'px'
+            document.documentElement.dataset.shell = width > SHELL_MAX ? 'desktop' : 'fluid'
+          } else {
+            document.documentElement.style.fontSize = width / 10 + 'px'
+            document.documentElement.dataset.shell = 'fluid'
+          }
+        }
+
+        setRootFontSize()
+        window.addEventListener('resize', setRootFontSize)
+        window.addEventListener('orientationchange', setRootFontSize)
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-4PmF7teP.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D9hkD60p.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
