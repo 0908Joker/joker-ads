@@ -76,7 +76,8 @@ onMounted(async () => {
 
 <style scoped>
 .wallet {
-  background: #1a1a1a;
+  background: var(--dw-surface);
+  border: 1px solid rgba(0, 212, 255, 0.1);
   border-radius: 0.16rem;
   margin-bottom: 0.32rem;
   padding: 0.28rem;
@@ -89,7 +90,7 @@ onMounted(async () => {
   padding-bottom: 0.24rem;
 }
 .wallet__vip strong {
-  color: #ffd24a;
+  color: var(--dw-cyan-soft);
   font-size: 0.34rem;
 }
 .wallet__vip p {
@@ -98,11 +99,12 @@ onMounted(async () => {
   margin-top: 0.06rem;
 }
 .wallet__vip button {
-  background: #f81942;
+  background: var(--dw-cyan);
   border: none;
   border-radius: 0.8rem;
-  color: #fff;
+  color: #061018;
   font-size: 0.28rem;
+  font-weight: 700;
   padding: 0.12rem 0.32rem;
 }
 .wallet__grid {
@@ -134,7 +136,7 @@ onMounted(async () => {
   grid-template-columns: repeat(2, 1fr);
 }
 .welfare {
-  background: #1a1a1a;
+  background: var(--dw-surface);
   border: none;
   border-radius: 0.16rem;
   color: #fff;

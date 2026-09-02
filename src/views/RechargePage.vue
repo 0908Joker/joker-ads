@@ -36,11 +36,11 @@
       <h3>支付方式</h3>
       <button
         v-for="p in payChannels"
-        :key="p.id"
+        :key="p.key"
         class="pay-type"
-        :class="{ 'is-active': payChannel === p.id, 'is-disabled': !channelOk(p) }"
+        :class="{ 'is-active': payChannel === p.key, 'is-disabled': !channelOk(p) }"
         :disabled="!channelOk(p)"
-        @click="payChannel = p.id"
+        @click="payChannel = p.key"
       >
         {{ p.name }}
         <span class="pay-type__range">¥{{ p.min }}-{{ p.max }}</span>
@@ -71,6 +71,7 @@
           </p>
         </div>
         <p v-if="pollStatus === 'paid'" class="pay-modal__ok">支付成功，正在返回…</p>
+        <p v-else-if="pollHint" class="pay-modal__wait">{{ pollHint }}</p>
         <p v-else-if="pollStatus === 'pending'" class="pay-modal__wait">请使用手机扫码完成支付</p>
         <div class="pay-modal__actions">
           <button class="pay-modal__btn" @click="openPayUrl">新窗口打开</button>
@@ -86,6 +87,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchVipPackages, fetchGoldPackages } from '../api/recharge.js'
 import { createNajinOrder, queryNajinOrder, NAJIN_PRODUCTS } from '../api/najin.js'
+import { showToast } from '../composables/useToast.js'
 
 const FALLBACK_VIP = [
   { id: 'vip-7', name: '7天VIP', price: 30, tip: '限时特惠' },
@@ -114,17 +116,20 @@ const submitting = ref(false)
 const error = ref('')
 const payModal = ref(null)
 const pollStatus = ref('pending')
+const pollHint = ref('')
 let pollTimer = null
+let pollFailToasted = false
 
 const payChannels = [
-  { id: 'ali', ...NAJIN_PRODUCTS.ali },
-  { id: 'wx', ...NAJIN_PRODUCTS.wx },
+  { key: 'ali', ...NAJIN_PRODUCTS.ali },
+  { key: 'wx', ...NAJIN_PRODUCTS.wx },
 ]
 
 const pageTitle = computed(() => (activeTab.value === 'gold' ? '钻石充值' : 'VIP会员中心'))
-const activeChannel = computed(() => payChannels.find((p) => p.id === payChannel.value))
+const activeChannel = computed(() => payChannels.find((p) => p.key === payChannel.value))
 
 function channelOk(channel) {
+  if (!channel) return false
   const price = Number(packages.value[selected.value]?.price || 0)
   return price >= channel.min && price <= channel.max
 }
@@ -171,7 +176,7 @@ function ensurePayChannel() {
   const price = Number(packages.value[selected.value]?.price || 0)
   if (channelOk(activeChannel.value)) return
   const alt = payChannels.find((c) => price >= c.min && price <= c.max)
-  if (alt) payChannel.value = alt.id
+  if (alt) payChannel.value = alt.key
 }
 
 function stopPoll() {
@@ -194,6 +199,7 @@ async function checkPaid() {
     const res = await queryNajinOrder(payModal.value.mchOrderNo)
     if (res.paid) {
       pollStatus.value = 'paid'
+      pollHint.value = ''
       stopPoll()
       setTimeout(() => {
         closePayModal()
@@ -201,32 +207,44 @@ async function checkPaid() {
       }, 1200)
     } else {
       pollStatus.value = 'pending'
-      error.value = '尚未检测到支付成功，请完成扫码后再试'
+      pollHint.value = '尚未检测到支付成功，请完成扫码后再试'
+      showToast(pollHint.value)
     }
   } catch (e) {
-    error.value = e?.message || '查询失败'
+    const msg = e?.message || '查询失败'
+    pollHint.value = msg
+    error.value = msg
+    showToast(msg)
   }
 }
 
 function startPoll(mchOrderNo) {
   stopPoll()
+  pollFailToasted = false
   pollTimer = setInterval(async () => {
     try {
       const res = await queryNajinOrder(mchOrderNo)
       if (res.paid) {
         pollStatus.value = 'paid'
+        pollHint.value = ''
         stopPoll()
         setTimeout(() => {
           closePayModal()
           router.push('/my')
         }, 1200)
       }
-    } catch {}
+    } catch {
+      if (!pollFailToasted) {
+        pollFailToasted = true
+        pollHint.value = '支付状态查询异常，可点「我已支付」重试'
+        showToast(pollHint.value)
+      }
+    }
   }, 4000)
 }
 
 function openPayUrl() {
-  const target = payModal.value?.frameUrl || payModal.value?.payUrl
+  const target = payModal.value?.payUrl || payModal.value?.frameUrl || payModal.value?.payDeeplink
   if (target) window.open(target, '_blank')
 }
 
@@ -250,14 +268,21 @@ async function submit() {
     })
     // Only https can render inside the frame; an http checkout is mixed content.
     const framable = /^https:/i.test(res.payPageUrl || '') ? res.payPageUrl : ''
+    if (res.payDeeplink && /^[a-z][a-z0-9+.-]*:/i.test(res.payDeeplink) && !/^https?:/i.test(res.payDeeplink)) {
+      try {
+        window.location.href = res.payDeeplink
+      } catch {}
+    }
     payModal.value = {
       payUrl: res.payUrl,
+      payDeeplink: res.payDeeplink || '',
       frameUrl: framable,
       mchOrderNo: res.mchOrderNo,
       amount: res.amount,
       channelName: channel.name,
     }
     pollStatus.value = 'pending'
+    pollHint.value = ''
     startPoll(res.mchOrderNo)
     submitting.value = false
   } catch (e) {
@@ -268,13 +293,18 @@ async function submit() {
 
 watch(activeTab, () => loadPackages())
 watch(selected, () => ensurePayChannel())
-onMounted(() => loadPackages())
+onMounted(() => {
+  loadPackages()
+  if (String(route.query.paid || '') === '1') {
+    showToast('正在确认支付，请稍后点「我已支付」核对')
+  }
+})
 onBeforeUnmount(() => stopPoll())
 </script>
 
 <style scoped>
 .recharge {
-  background: #111;
+  background: radial-gradient(ellipse 100% 28% at 50% 0%, rgba(0,212,255,0.07), transparent 60%), var(--dw-bg);
   color: #fff;
   min-height: 100vh;
   padding: 0 0.32rem 0.8rem;
@@ -286,17 +316,20 @@ onBeforeUnmount(() => stopPoll())
   padding: 0.24rem 0 0.32rem;
 }
 .recharge__back {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 0.56rem;
-  line-height: 1;
-  padding: 0 0.12rem;
+  background: var(--dw-cyan-dim);
+  border: 1px solid var(--dw-line);
+  border-radius: 50%;
+  color: var(--dw-cyan-soft);
+  font-size: 0.48rem;
+  height: 0.72rem;
+  line-height: 0.64rem;
+  padding: 0;
+  width: 0.72rem;
 }
-.recharge__head h1 { font-size: 0.4rem; }
+.recharge__head h1 { font-size: 0.36rem; font-weight: 600; letter-spacing: 0.04em; }
 .recharge__tabs { display: flex; gap: 0.16rem; margin-bottom: 0.24rem; }
 .recharge__tab {
-  background: #2a2a2a;
+  background: var(--dw-surface-2);
   border: none;
   border-radius: 0.8rem;
   color: rgba(255, 255, 255, 0.65);
@@ -304,7 +337,7 @@ onBeforeUnmount(() => stopPoll())
   font-size: 0.3rem;
   padding: 0.16rem;
 }
-.recharge__tab.is-active { background: #f81942; color: #fff; font-weight: 600; }
+.recharge__tab.is-active { background: var(--dw-cyan); color: #061018; font-weight: 700; }
 .recharge__hint { color: rgba(255, 255, 255, 0.55); font-size: 0.26rem; margin-bottom: 0.16rem; }
 .recharge__hint--err { color: #ff8a8a; }
 .pkg-grid {
@@ -314,7 +347,7 @@ onBeforeUnmount(() => stopPoll())
   margin-bottom: 0.32rem;
 }
 .pkg {
-  background: #1a1a1a;
+  background: var(--dw-surface);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.16rem;
   color: inherit;
@@ -324,14 +357,14 @@ onBeforeUnmount(() => stopPoll())
   padding: 0.24rem 0.16rem;
   text-align: center;
 }
-.pkg.is-active { border-color: #f81942; box-shadow: 0 0 0 1px #f81942 inset; }
+.pkg.is-active { border-color: var(--dw-cyan); box-shadow: 0 0 0 1px var(--dw-cyan) inset; }
 .pkg strong { font-size: 0.28rem; }
-.pkg__price { color: #ffd24a; font-size: 0.34rem; font-weight: 700; }
+.pkg__price { color: var(--dw-cyan-soft); font-size: 0.34rem; font-weight: 700; }
 .pkg__tip { color: rgba(255, 255, 255, 0.45); font-size: 0.22rem; }
 .pay-types h3 { font-size: 0.32rem; margin-bottom: 0.12rem; }
 .pay-types { margin-bottom: 0.32rem; }
 .pay-type {
-  background: #2a2a2a;
+  background: var(--dw-surface-2);
   border: 1px solid transparent;
   border-radius: 0.12rem;
   color: #fff;
@@ -342,16 +375,16 @@ onBeforeUnmount(() => stopPoll())
   padding: 0.14rem 0.24rem;
   text-align: left;
 }
-.pay-type.is-active { border-color: #f81942; color: #f81942; }
+.pay-type.is-active { border-color: var(--dw-cyan); color: var(--dw-cyan); }
 .pay-type.is-disabled { opacity: 0.35; }
 .pay-type__range { color: rgba(255,255,255,.45); font-size: 0.22rem; margin-top: 0.04rem; }
 .recharge__submit {
-  background: #f81942;
+  background: var(--dw-cyan);
   border: none;
   border-radius: 0.8rem;
-  color: #fff;
+  color: #061018;
   font-size: 0.34rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0.24rem;
   width: 100%;
 }
@@ -373,7 +406,8 @@ onBeforeUnmount(() => stopPoll())
   z-index: 1000;
 }
 .pay-modal__box {
-  background: #1a1a1a;
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-line);
   border-radius: 0.2rem;
   max-width: 420px;
   padding: 0.28rem;
@@ -429,7 +463,7 @@ onBeforeUnmount(() => stopPoll())
   margin-top: 0.2rem;
 }
 .pay-modal__btn {
-  background: #2a2a2a;
+  background: var(--dw-surface-2);
   border: none;
   border-radius: 0.8rem;
   color: #fff;
@@ -437,5 +471,5 @@ onBeforeUnmount(() => stopPoll())
   font-size: 0.28rem;
   padding: 0.16rem;
 }
-.pay-modal__btn--primary { background: #f81942; }
+.pay-modal__btn--primary { background: var(--dw-cyan); color: #061018; font-weight: 700; }
 </style>

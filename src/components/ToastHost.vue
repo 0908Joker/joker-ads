@@ -21,8 +21,10 @@ import { toasts } from '../composables/useToast.js'
   z-index: 2000;
 }
 .toast {
-  background: rgba(0, 0, 0, 0.86);
+  background: rgba(12, 16, 24, 0.94);
+  border: 1px solid rgba(0, 212, 255, 0.28);
   border-radius: 0.12rem;
+  box-shadow: 0 0.12rem 0.4rem rgba(0, 0, 0, 0.45);
   color: #fff;
   font-size: 0.28rem;
   max-width: 6rem;

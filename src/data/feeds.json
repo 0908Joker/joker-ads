@@ -152,59 +152,6 @@
       }
     ]
   },
-  "anime": {
-    "comics": [
-      {
-        "title": "全部主题A漫角色扮演特殊PLAY其他单本",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "07",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "韩漫",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "继母与继姐",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "分类",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "最近观看",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      },
-      {
-        "title": "更多>",
-        "type": "韩漫",
-        "status": "连载",
-        "cover": "",
-        "coverLocal": ""
-      }
-    ]
-  },
   "mine": {
     "user": {
       "id": "1000147575211",

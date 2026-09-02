@@ -16,11 +16,10 @@ import session from '../src/data/api-session.json' with { type: 'json' }
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = path.join(ROOT, 'src/data/video-pool.json')
 const PROXY = process.env.API_PROXY || 'https://al-ads.com/api-proxy'
-const MAX_PAGES = Number(process.env.MAX_PAGES || 80)
-// 14 category tabs x 3 sub-tabs x 24 cards, plus headroom, so every tab+sub-tab
-// combination gets its own slice without the baked file bloating the bundle.
-const POOL_MAX = Number(process.env.POOL_MAX || 1200)
-const STOP_AFTER_EMPTY = 4
+const MAX_PAGES = Number(process.env.MAX_PAGES || 250)
+// Bigger pool → more distinct tab slices; publish still code-splits video-pool chunk.
+const POOL_MAX = Number(process.env.POOL_MAX || 4000)
+const STOP_AFTER_EMPTY = 6
 
 const base = { Accept: 'application/json', t: '3', k: '3', token: session.token }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))

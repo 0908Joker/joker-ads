@@ -1,0 +1,14 @@
+[Unit]
+Description=Ads King Admin BFF (得污广告后台)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ads-king/admin
+EnvironmentFile=-/etc/ads-king/admin.env
+ExecStart=/usr/bin/node /opt/ads-king/admin/server.mjs
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

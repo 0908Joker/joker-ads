@@ -29,6 +29,7 @@ export function normalizeVideo(item) {
   if (!item) return null
   const title = item.name || item.title || ''
   if (!title || title.length < 4) return null
+  if (!item.id) return null
   return {
     id: item.id,
     title,
@@ -49,12 +50,19 @@ export function normalizeVideoDetail(data) {
   if (!data) return null
   const v = data.video || {}
   const tags = v.videoTags || v.tags || []
+  const playCandidates = [
+    data.url,
+    data.previewUrl,
+    ...shortPlayCandidates({}, v),
+  ].filter((u, i, arr) => u && arr.indexOf(u) === i)
+  const playUrl = playCandidates[0] || ''
   return {
     id: v.id,
     title: v.name || v.title || '',
-    // Full stream when entitled, otherwise the trial playlist; both are m3u8.
-    playUrl: data.url || data.previewUrl || '',
-    isPreview: !data.url && !!data.previewUrl,
+    // Detail: signed API HLS first; then CDN playURL / raw mp4.
+    playUrl,
+    playCandidates,
+    isPreview: !data.url && !!(data.previewUrl || playUrl),
     needBuy: !!data.buyVideo,
     trialSeconds: Number(data.trialPreviewSeconds) || 0,
     cover: v.coverURL || v.verticalCoverURL || '',
@@ -89,6 +97,28 @@ export function normalizeAlgoFeaturedPayload(data) {
   return videos.map(normalizeVideo).filter(Boolean)
 }
 
+/** Candidate streams for a short/detail row, best-first.
+ * CDN `playURL` m3u8 is the reliable short-feed primary; signed `row.url` is
+ * often missing `?s=` and returns「播放链接失效」. Never emit `web/files/*.mp4`.
+ */
+export function shortPlayCandidates(row, video = {}) {
+  const out = []
+  const push = (u) => {
+    if (!u || out.includes(u)) return
+    out.push(u)
+  }
+  const cdnHls = mediaUrl(video.playURL || row?.playURL || '')
+  if (cdnHls && /\.m3u8(\?|$)/i.test(cdnHls)) push(cdnHls)
+  push(row?.url || '')
+  push(row?.previewUrl || '')
+  // Skip origin mp4PlayURL — web/files and unsigned mp4s 404; HLS above is enough.
+  return out
+}
+
+export function shortPlayUrl(row, video = {}) {
+  return shortPlayCandidates(row, video)[0] || ''
+}
+
 export function normalizeShortPayload(data) {
   const list = data?.videoInfo || data?.videos || data?.list || []
   return list
@@ -99,6 +129,8 @@ export function normalizeShortPayload(data) {
       const u = v.user || row.user || {}
       n.user = u.username ? `@${u.username}` : n.user
       n.avatar = mediaUrl(u.avatarURL || n.avatar)
+      n.playCandidates = shortPlayCandidates(row, v)
+      n.videoUrl = n.playCandidates[0] || ''
       const tags = row.tags || v.videoTags || v.tags || []
       n.hashtags = (Array.isArray(tags) ? tags : [])
         .map((t) => (typeof t === 'string' ? t : t?.name || t?.tag || ''))
@@ -110,27 +142,6 @@ export function normalizeShortPayload(data) {
       return n
     })
     .filter(Boolean)
-}
-
-export function normalizeComic(item) {
-  if (!item) return null
-  const title = item.name || item.title || ''
-  if (!title) return null
-  return {
-    id: item.id || '',
-    title,
-    type: item.categoryName || item.tags?.[0]?.name || item.tags?.[0] || item.type || '韩漫',
-    status: item.schedule || (item.updateStatus === 1 ? '完结' : '连载'),
-    cover: mediaUrl(item.coverURL || item.horizontalCoverUrl || item.cover),
-    coverLocal: item.coverLocal || '',
-  }
-}
-
-export function mapComicSectionTitle(flagName) {
-  if (flagName === '最近更新') return '更新预告'
-  if (flagName === '连载中') return '韩漫'
-  if (flagName === '已完结') return '同人'
-  return flagName || '漫画'
 }
 
 export function normalizeUser(data, fallback = {}) {

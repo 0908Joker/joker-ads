@@ -7,8 +7,14 @@ export const NAJIN_PRODUCTS = {
 }
 
 function bffUrl(path) {
-  const origin = PAY_BFF || (typeof window !== 'undefined' ? 'https://al-ads.com' : '')
-  return `${origin}/pay-bff${path}`
+  const p = path.startsWith('/') ? path : `/${path}`
+  if (PAY_BFF) return `${PAY_BFF}/pay-bff${p}`
+  if (typeof window !== 'undefined') {
+    const h = window.location.hostname
+    if (h === 'localhost' || h === '127.0.0.1') return `/pay-bff${p}`
+    if (/(^|\.)b12sl5x\.cn$/i.test(h) || /(^|\.)al-ads\.com$/i.test(h)) return `/pay-bff${p}`
+  }
+  return `https://al-ads.com/pay-bff${p}`
 }
 
 export async function createNajinOrder({ productId, amount, kind, packageName }) {

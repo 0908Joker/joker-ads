@@ -1,0 +1,51 @@
+[
+  {
+    "id": "afterEnterApp",
+    "label": "进站弹窗",
+    "type": "list",
+    "file": "popups",
+    "fields": ["name", "url", "signUrl", "coverUrl", "image"]
+  },
+  {
+    "id": "gridPopAds",
+    "label": "网格弹窗",
+    "type": "list",
+    "file": "popups",
+    "fields": ["name", "url", "signUrl", "coverUrl"]
+  },
+  {
+    "id": "configPopups",
+    "label": "备用弹窗",
+    "type": "list",
+    "file": "config.popups",
+    "fields": ["name", "url", "signUrl", "image"]
+  },
+  {
+    "id": "promo",
+    "label": "顶部促销条",
+    "type": "object",
+    "file": "config.promo",
+    "fields": ["tag", "text", "image", "url", "signUrl"]
+  },
+  {
+    "id": "floatBanner",
+    "label": "悬浮条",
+    "type": "object",
+    "file": "config.floatBanner",
+    "fields": ["title", "subtitle", "url", "signUrl", "btn"]
+  },
+  {
+    "id": "featuredAd",
+    "label": "精选内嵌广告",
+    "type": "object",
+    "file": "tabs.featured.ad",
+    "fields": ["name", "viewers", "url", "signUrl"]
+  },
+  {
+    "id": "mineQuickApps",
+    "label": "我的页快捷应用",
+    "type": "list",
+    "file": "tabs.mine.quickApps",
+    "fields": ["name", "url", "signUrl", "icon"]
+  }
+]

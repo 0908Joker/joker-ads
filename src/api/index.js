@@ -1,6 +1,5 @@
 export { pickApiBase, apiFetch, getActiveBase, PID } from './client.js'
 export * from './ad.js'
 export * from './videos.js'
-export * from './comics.js'
 export * from './users.js'
 export * from './navs.js'

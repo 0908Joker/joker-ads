@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>得污广告后台</title>
+  <link rel="icon" type="image/png" href="/brand/logo.png" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <div id="login-screen">
+    <div class="login-box">
+      <img class="login-logo" src="/brand/logo.png" alt="得污" />
+      <h2>得污广告后台</h2>
+      <input id="login-user" placeholder="账号" autocomplete="username" />
+      <input id="login-pass" type="password" placeholder="密码" autocomplete="current-password" />
+      <input id="login-totp" placeholder="动态验证码（如已开启 2FA）" style="display:none" />
+      <div id="login-err" class="err"></div>
+      <button class="btn-login" id="login-btn">登录</button>
+    </div>
+  </div>
+
+  <div id="admin-screen">
+    <header id="topbar">
+      <div class="topbar-left">
+        <img class="topbar-logo" src="/brand/logo.png" alt="得污" />
+        <div class="topbar-title">得污广告后台</div>
+      </div>
+      <div class="topbar-right">
+        <span id="version-badge" class="badge badge-gray">v-</span>
+        <span id="user-badge">-</span>
+        <button class="btn btn-primary btn-sm" id="publish-btn">发布到前台</button>
+        <button class="btn btn-gray btn-sm" id="preview-btn">预览站点</button>
+        <button class="btn-logout" id="logout-btn">退出</button>
+      </div>
+    </header>
+    <div id="body-wrap">
+      <nav id="sidebar"></nav>
+      <main id="main"></main>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+  <div id="toast" class="toast"></div>
+  <script type="module" src="/admin.js"></script>
+</body>
+</html>

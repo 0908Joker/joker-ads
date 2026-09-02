@@ -17,6 +17,18 @@ export default defineConfig({
     host: true,
     fs: { strict: false },
     proxy: {
+      '/data': {
+        target: 'http://127.0.0.1:8790',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:8790',
+        changeOrigin: true,
+      },
+      '/api/public': {
+        target: 'http://127.0.0.1:8790',
+        changeOrigin: true,
+      },
       '/api-proxy': {
         target: API_TARGETS[0],
         changeOrigin: true,

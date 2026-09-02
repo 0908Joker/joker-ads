@@ -5,14 +5,6 @@ const RES_BASE = (session.resBase || 'https://d17e80montytxe.cloudfront.net').re
 const IMG_KEY = '82758dd12749c777ef579f1839ceea6a'
 const cache = new Map()
 
-/** Map baked comic paths onto public/comics/* filenames when present. */
-export function localComicCover(path) {
-  const clean = String(path || '').split('@')[0].replace(/^\/+/, '')
-  const m = clean.match(/^comics\/oldDriver\/([^/]+)\/(cover_[^/?#]+)$/i)
-  if (m) return `/comics/comics_oldDriver_${m[1]}_${m[2]}`
-  return ''
-}
-
 export function mediaUrl(path) {
   if (!path) return ''
   const clean = String(path).split('@')[0]
@@ -43,7 +35,12 @@ function decryptToDataUrl(u8) {
     mode: CryptoJS.mode.ECB,
     padding: CryptoJS.pad.Pkcs7,
   })
-  const text = CryptoJS.enc.Utf8.stringify(dec)
+  let text = ''
+  try {
+    text = CryptoJS.enc.Utf8.stringify(dec)
+  } catch {
+    text = CryptoJS.enc.Latin1.stringify(dec)
+  }
   return text.startsWith('data:image/') ? text : ''
 }
 
@@ -51,8 +48,6 @@ export async function decryptMedia(path) {
   if (!path) return ''
   if (/^(data:|blob:)/i.test(path)) return path
   if (path.startsWith('/') && !isEncryptedMedia(path)) return path
-  const localComic = localComicCover(path)
-  if (localComic) return localComic
   if (!isEncryptedMedia(path) && /\.(gif|png|jpe?g|webp)(\?|$)/i.test(path)) return mediaUrl(path)
 
   const url = mediaUrl(path)

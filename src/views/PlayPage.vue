@@ -27,25 +27,25 @@
       <p v-if="detail.isPreview || detail.needBuy" class="play__notice">
         当前为试看片源，完整版需在原站购买
       </p>
-      <div v-if="detail.tags.length" class="play__tags">
+      <div v-if="detail.tags?.length" class="play__tags">
         <span v-for="t in detail.tags" :key="t">#{{ t }}</span>
       </div>
     </section>
 
-    <section v-if="detail?.others?.length" class="play__more">
+    <section v-if="related.length" class="play__more">
       <h2>相关推荐</h2>
-      <article
-        v-for="v in detail.others"
-        :key="v.id"
-        class="more-row"
-        @click="openVideo(v.id)"
-      >
-        <CebImg class="more-row__cover" :path="v.cover" />
-        <div class="more-row__body">
+      <div class="more-grid">
+        <article
+          v-for="v in related"
+          :key="v.id"
+          class="more-card"
+          @click="openVideo(v.id)"
+        >
+          <CebImg class="more-card__cover" :path="v.coverLocal || v.cover" />
           <h3>{{ v.title }}</h3>
-          <p>{{ v.views }} · {{ v.duration }}</p>
-        </div>
-      </article>
+          <p>{{ v.views }}<template v-if="v.duration"> · {{ v.duration }}</template></p>
+        </article>
+      </div>
     </section>
   </div>
 </template>
@@ -54,18 +54,22 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CebImg from '../components/CebImg.vue'
-import { fetchVideoDetail } from '../api/videos.js'
+import { fetchRecommend, fetchVideoDetail } from '../api/videos.js'
 import { proxyMediaUrl } from '../api/client.js'
-import { normalizeVideoDetail } from '../api/normalize.js'
+import { normalizeFeaturedPayload, normalizeVideoDetail } from '../api/normalize.js'
 import { decryptMedia } from '../api/media.js'
+
+const RELATED_LIMIT = 12
 
 const route = useRoute()
 const router = useRouter()
 const videoEl = ref(null)
 const detail = ref(null)
+const related = ref([])
 const poster = ref('')
 const status = ref('加载中…')
 let hls = null
+let loadSeq = 0
 
 function goBack() {
   if (window.history.length > 1) router.back()
@@ -76,36 +80,108 @@ function openVideo(id) {
   if (id) router.push(`/play/${id}`)
 }
 
+function excludeCurrent(list, currentId) {
+  return (list || []).filter((v) => v?.id && String(v.id) !== String(currentId))
+}
+
+async function loadRelated(currentId, fromDetail = []) {
+  const seed = excludeCurrent(fromDetail, currentId).slice(0, RELATED_LIMIT)
+  if (seed.length >= RELATED_LIMIT) {
+    related.value = seed
+    return
+  }
+
+  let extras = []
+  try {
+    const raw = await fetchRecommend({ page: '1', pageSize: String(RELATED_LIMIT + 4), sort: 'recommend' })
+    extras = normalizeFeaturedPayload(raw.data ?? raw)
+  } catch {
+    extras = []
+  }
+
+  const merged = [...seed]
+  for (const v of excludeCurrent(extras, currentId)) {
+    if (merged.length >= RELATED_LIMIT) break
+    if (merged.some((m) => m.id === v.id)) continue
+    merged.push(v)
+  }
+
+  if (merged.length < RELATED_LIMIT) {
+    try {
+      const mod = await import('../data/video-pool.json')
+      const pool = normalizeFeaturedPayload(mod.default || mod)
+      for (const v of excludeCurrent(pool, currentId)) {
+        if (merged.length >= RELATED_LIMIT) break
+        if (merged.some((m) => m.id === v.id)) continue
+        merged.push(v)
+      }
+    } catch {}
+  }
+  related.value = merged
+}
+
 function onVideoError() {
   if (!status.value) status.value = '视频加载失败，请稍后重试'
 }
 
 function destroyPlayer() {
   if (hls) {
-    hls.destroy()
+    try {
+      hls.destroy()
+    } catch {}
     hls = null
+  }
+  const el = videoEl.value
+  if (el) {
+    try {
+      el.pause()
+    } catch {}
+    el.removeAttribute('src')
+    try {
+      el.load()
+    } catch {}
   }
 }
 
 async function attachStream(url) {
   const el = videoEl.value
-  if (!el || !url) return
+  if (!el || !url) throw new Error('no media')
   destroyPlayer()
 
   const isHls = /\.m3u8(\?|$)/i.test(url)
   if (!isHls) {
-    el.src = url
+    await new Promise((resolve, reject) => {
+      const onOk = () => {
+        cleanup()
+        resolve()
+      }
+      const onErr = () => {
+        cleanup()
+        reject(new Error('mp4 error'))
+      }
+      const cleanup = () => {
+        el.removeEventListener('loadeddata', onOk)
+        el.removeEventListener('error', onErr)
+      }
+      el.addEventListener('loadeddata', onOk, { once: true })
+      el.addEventListener('error', onErr, { once: true })
+      el.src = url
+      el.load()
+    })
     return
   }
   // Prefer hls.js wherever MSE exists: Chromium reports "maybe" for the HLS
   // MIME type but cannot actually play it, so canPlayType must not decide first.
   const { default: Hls } = await import('hls.js')
   if (Hls.isSupported()) {
-    hls = new Hls({ enableWorker: true })
-    hls.loadSource(url)
-    hls.attachMedia(el)
-    hls.on(Hls.Events.ERROR, (_e, data) => {
-      if (data.fatal) status.value = '视频加载失败，请稍后重试'
+    await new Promise((resolve, reject) => {
+      hls = new Hls({ enableWorker: true })
+      hls.loadSource(url)
+      hls.attachMedia(el)
+      hls.on(Hls.Events.MANIFEST_PARSED, () => resolve())
+      hls.on(Hls.Events.ERROR, (_e, data) => {
+        if (data.fatal) reject(new Error('hls fatal'))
+      })
     })
     return
   }
@@ -113,30 +189,84 @@ async function attachStream(url) {
     el.src = url
     return
   }
-  status.value = '当前浏览器不支持该视频格式'
+  throw new Error('unsupported')
+}
+
+async function attachCandidates(urls) {
+  const list = (urls || []).filter(Boolean)
+  for (const raw of list) {
+    try {
+      await attachStream(proxyMediaUrl(raw))
+      try {
+        await videoEl.value?.play()
+      } catch {}
+      return true
+    } catch {
+      destroyPlayer()
+      if (videoEl.value) {
+        videoEl.value.removeAttribute('src')
+        try {
+          videoEl.value.load()
+        } catch {}
+      }
+    }
+  }
+  return false
 }
 
 async function load() {
   const id = route.params.id
-  if (!id) return
+  const seq = ++loadSeq
+  if (!id) {
+    status.value = '加载失败，请稍后重试'
+    return
+  }
   status.value = '加载中…'
   detail.value = null
+  related.value = []
   poster.value = ''
+  destroyPlayer()
   try {
     const raw = await fetchVideoDetail(id)
+    if (seq !== loadSeq) return
     const d = normalizeVideoDetail(raw.data ?? raw)
     if (!d || !d.playUrl) {
-      status.value = '未获取到播放地址'
+      if (d) detail.value = d
+      status.value = d?.needBuy ? '需购买后观看，暂无试看' : '未获取到播放地址'
+      await loadRelated(id, d?.others || [])
       return
     }
     detail.value = d
     status.value = ''
     decryptMedia(d.cover)
-      .then((src) => (poster.value = src))
+      .then((src) => {
+        if (seq === loadSeq) poster.value = src
+      })
       .catch(() => {})
-    await attachStream(proxyMediaUrl(d.playUrl))
+    const ok = await Promise.all([
+      attachCandidates(d.playCandidates?.length ? d.playCandidates : [d.playUrl]),
+      loadRelated(id, d.others || []),
+    ])
+    if (seq !== loadSeq) return
+    if (!ok[0]) status.value = '视频加载失败，请稍后重试'
   } catch (e) {
-    status.value = '加载失败，请稍后重试'
+    if (seq !== loadSeq) return
+    const msg = String(e?.message || e || '')
+    // Gone from origin — don't advertise「下架」; jump to a live related card.
+    if (/不存在|已下架|下架/.test(msg)) {
+      status.value = '加载中…'
+      await loadRelated(id, [])
+      if (seq !== loadSeq) return
+      const next = related.value.find((v) => v?.id && String(v.id) !== String(id))
+      if (next?.id) {
+        router.replace(`/play/${next.id}`)
+        return
+      }
+      status.value = '加载失败，请稍后重试'
+      return
+    }
+    status.value = msg && msg.length < 40 ? msg : '加载失败，请稍后重试'
+    await loadRelated(id, [])
   }
 }
 
@@ -147,7 +277,7 @@ onBeforeUnmount(destroyPlayer)
 
 <style scoped>
 .play {
-  background: #111;
+  background: var(--dw-bg);
   min-height: 100vh;
   padding-bottom: 0.4rem;
 }
@@ -158,12 +288,15 @@ onBeforeUnmount(destroyPlayer)
   padding: 0.16rem 0.24rem;
 }
 .play__back {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 0.56rem;
-  line-height: 1;
-  padding: 0 0.12rem;
+  background: var(--dw-cyan-dim);
+  border: 1px solid var(--dw-line);
+  border-radius: 50%;
+  color: var(--dw-cyan-soft);
+  font-size: 0.48rem;
+  height: 0.72rem;
+  line-height: 0.64rem;
+  padding: 0;
+  width: 0.72rem;
 }
 .play__bar-title {
   color: #fff;
@@ -206,9 +339,10 @@ onBeforeUnmount(destroyPlayer)
   margin-top: 0.12rem;
 }
 .play__notice {
-  background: rgba(248, 25, 66, 0.12);
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.22);
   border-radius: 0.1rem;
-  color: #ff6b8a;
+  color: var(--dw-cyan-soft);
   font-size: 0.26rem;
   margin-top: 0.16rem;
   padding: 0.12rem 0.16rem;
@@ -220,48 +354,51 @@ onBeforeUnmount(destroyPlayer)
   margin-top: 0.16rem;
 }
 .play__tags span {
-  background: rgb(44, 44, 47);
+  background: var(--dw-surface-2);
+  border: 1px solid rgba(0, 212, 255, 0.12);
   border-radius: 0.8rem;
-  color: rgb(153, 153, 153);
+  color: var(--dw-muted);
   font-size: 0.24rem;
   padding: 0.08rem 0.18rem;
 }
 .play__more {
-  padding: 0.1rem 0.32rem 0.4rem;
+  padding: 0.1rem 0.24rem 0.48rem;
 }
 .play__more h2 {
   color: #fff;
   font-size: 0.3rem;
   margin-bottom: 0.16rem;
+  padding: 0 0.08rem;
 }
-.more-row {
-  display: flex;
-  gap: 0.2rem;
-  margin-bottom: 0.2rem;
+.more-grid {
+  display: grid;
+  gap: 0.2rem 0.16rem;
+  grid-template-columns: 1fr 1fr;
 }
-.more-row__cover {
-  border-radius: 0.1rem;
-  flex-shrink: 0;
-  height: 1.4rem;
-  overflow: hidden;
-  width: 2.2rem;
-}
-.more-row__body {
-  flex: 1;
+.more-card {
   min-width: 0;
 }
-.more-row__body h3 {
+.more-card__cover {
+  aspect-ratio: 16 / 10;
+  background: var(--dw-surface);
+  border-radius: 0.1rem;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+}
+.more-card h3 {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   color: #fff;
   display: -webkit-box;
-  font-size: 0.28rem;
+  font-size: 0.26rem;
   line-height: 1.35;
+  margin-top: 0.1rem;
   overflow: hidden;
 }
-.more-row__body p {
+.more-card p {
   color: rgba(255, 255, 255, 0.45);
-  font-size: 0.24rem;
-  margin-top: 0.08rem;
+  font-size: 0.22rem;
+  margin-top: 0.06rem;
 }
 </style>

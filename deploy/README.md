@@ -4,21 +4,21 @@
 
 ## 架构现状
 
-前端和后端**分在两个地方**，这一点容易搞混：
-
 | 组件 | 域名 | 托管在哪 | 怎么发布 |
 |------|------|----------|----------|
-| 前端站点 | `b12sl5x.cn` | **GitHub Pages**（`gh-pages` 分支，迁移中） | `npm run publish` |
-| 接口 / 支付 | `al-ads.com` | **自有服务器** `107.149.129.35` | ssh 上去改，手动 reload |
+| 前端站点 | `b12sl5x.cn` | **自有服务器** `107.149.129.35`（`/www/wwwroot/b12sl5x.cn`） | `npm run publish` |
+| 接口 / 支付 | `al-ads.com`（也可同源走站点代理） | **同一台 VPS** | ssh 上去改，手动 reload |
+| 代码仓库 | GitHub `0908Joker/joker-ads` | 仅仓库 / 可选备用 Pages | `npm run publish:pages` |
 
-也就是说：**前端目前仍然依赖 GitHub**，服务器只承载后端服务。迁移已在进行，服务器端就绪，等 DNS 切换。
+**生产以 VPS 为准。** GitHub Pages 只是备用，不再作为主发布路径。
 
 验证方法：
 
 ```bash
-curl -sI https://b12sl5x.cn/ | grep -i server   # Server: GitHub.com
-nslookup b12sl5x.cn                             # 185.199.108-111.153（GitHub Pages）
-nslookup al-ads.com                             # 107.149.129.35（自有服务器）
+# 绕过 DNS，直接验服务器上的站点
+curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/ | grep -o 'index-[^"]*\.js'
+nslookup b12sl5x.cn          # 应指向 107.149.129.35（DNS 切过去之后）
+nslookup al-ads.com          # 107.149.129.35
 ```
 
 ---
@@ -158,55 +158,41 @@ node scripts/sync-video-pool.mjs
 
 池子会打成独立 chunk 异步加载，别把它 `import` 进主包——1200 条约 316 KB，直接内联会让首屏包翻倍。
 
-### 发布
-
-Pages 的来源是 **`gh-pages` 分支**（`build_type=legacy`），**不是** Actions 工作流。所以：
+### 发布（主路径 = VPS）
 
 > **推 `main` 不会部署任何东西**，必须跑发布命令。
 
 ```bash
-npm run publish     # 构建 + 推 gh-pages + 触发 Pages 重建
+npm run publish          # 构建 + 传到 VPS /www/wwwroot/b12sl5x.cn
+npm run publish:pages    # 可选：同步一份到 GitHub Pages 备用
 ```
 
-为什么这么改：2026-08-26 GitHub Actions 发生 major outage，部署任务排队一个多小时没有 runner 接手，而 Pages 组件本身是正常的。分支部署走 GitHub 自己的 Pages 构建器，不依赖 Actions runner，所以能绕过这类故障。
-
-`.github/workflows/` 里的 `pages.yml` 现在是**空转**的，留着以备将来切回 Actions 模式。
-
-确认线上拿到新版本（比对构建产物文件名）：
+确认服务器拿到新版本：
 
 ```bash
 ls dist/assets/index-*.js
-curl -s "https://b12sl5x.cn/index.html?cb=$RANDOM" | grep -o 'index-[A-Za-z0-9_-]*\.js'
+curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/ | grep -o 'index-[A-Za-z0-9_-]*\.js'
 ```
 
-两边一致才算部署完成。查构建状态：
-
-```bash
-gh api repos/0908Joker/joker-ads/pages/builds/latest --jq '{status, error: .error.message}'
-gh api -X POST repos/0908Joker/joker-ads/pages/builds    # 手动触发
-```
-
-当前 Pages 配置：
-
-```bash
-gh api repos/0908Joker/joker-ads/pages --jq '{build_type, source, https_enforced, cert: .https_certificate.state}'
-# {"build_type":"legacy","source":{"branch":"gh-pages","path":"/"},"https_enforced":true,"cert":"approved"}
-```
-
-如果任务长时间 `queued` 且 `gh run view <id>` 看不到 JOBS，多半是 GitHub 侧故障，查 <https://www.githubstatus.com/api/v2/summary.json>。
+两边文件名一致才算部署完成。
 
 ---
 
-## 前端迁移到服务器（进行中）
+## DNS 切到服务器（公网要走 VPS 必须做）
 
-服务器端**已经搭好并验证通过**，只差 DNS 和证书。
+服务器站点与 nginx **已就绪**，最新 `dist` 已上传。公网 `b12sl5x.cn` 若仍解析到 GitHub Pages（`185.199.108-111.153`），浏览器就不会打到这台机。
 
-已完成：
+Nameserver 当前是 `ns1/ns2.julydns.com`（不是 Cloudflare）。
 
-- 站点根目录 `/www/wwwroot/b12sl5x.cn`，`dist/` 已上传
-- vhost `/www/server/panel/vhost/nginx/b12sl5x.cn.conf`（仓库副本：`deploy/b12sl5x.cn.conf`）
-- SPA 深链回退、资源长缓存、`index.html` 禁缓存、gzip
-- 同源挂载了 `/api-proxy/`、`/m3u8-proxy`、`/pay-bff/`
+1. **改 DNS**：根域名 `@`（以及 `www`）只留一条 **A → `107.149.129.35`**，删掉 GitHub 那四条 A。
+2. **签证书**（DNS 生效后在服务器执行）：
+
+```bash
+certbot certonly --webroot -w /www/wwwroot/b12sl5x.cn \
+  -d b12sl5x.cn -d www.b12sl5x.cn --agree-tos -m <邮箱> -n
+```
+
+3. **开 HTTPS**：在 vhost 里加 `listen 443 ssl`、证书路径和 HTTP→HTTPS 跳转（可参照 `seduoduo.cc.conf`），然后 `nginx -t && nginx -s reload`。
 
 绕过 DNS 直接验证：
 
@@ -215,34 +201,45 @@ curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/ | grep -o '<title>.*</title
 curl -s -H "Host: b12sl5x.cn" http://107.149.129.35/pay-bff/health
 ```
 
-### 剩余步骤
+---
 
-1. **改 DNS**：把 `b12sl5x.cn` 的 A 记录从 GitHub Pages 那四个 IP（`185.199.108-111.153`）改成 `107.149.129.35`，必须**灰云 / 仅 DNS**，开代理会挡掉证书验证。
-2. **签证书**（DNS 生效后执行）：
+## 广告后台 admin.b12sl5x.cn
+
+| 组件 | 路径 / 端口 |
+|------|-------------|
+| Admin BFF | `/opt/ads-king/admin` · `127.0.0.1:8790` · systemd `ads-king-admin` |
+| 运行时 JSON | `/opt/ads-king/site-data/live/{config,popups,tabs,meta}.json` |
+| 素材上传 | `/opt/ads-king/uploads/{popups,icons,promo}/` |
+| 前台读取 | `https://b12sl5x.cn/data/*.json`（nginx alias，无需 rebuild） |
+
+### 部署
+
+```bash
+npm run seed:site-data      # 本地：从 src/data 初始化 admin/data
+node scripts/deploy-admin.mjs
+npm run publish             # 前台 dist（与后台独立）
+```
+
+### DNS
+
+`admin.b12sl5x.cn` A → `107.149.129.35`（与主站相同）。签证书：
 
 ```bash
 certbot certonly --webroot -w /www/wwwroot/b12sl5x.cn \
-  -d b12sl5x.cn -d www.b12sl5x.cn --agree-tos -m <邮箱> -n
+  -d admin.b12sl5x.cn --agree-tos -m <邮箱> -n
 ```
 
-3. **开 HTTPS**：在 vhost 里加 `listen 443 ssl`、证书路径和 HTTP 跳转（可参照 `seduoduo.cc.conf` 的 SSL 段），然后 `nginx -t && nginx -s reload`。
+然后在 `deploy/admin.b12sl5x.cn.conf` 加上 443 ssl 段并 reload nginx。
 
-### 更新站点内容
+### 默认账号
 
-```bash
-npm run build
-scp -P 32356 -i ~/.ssh/cr7_local_workstation_ed25519 -r dist/* \
-  root@107.149.129.35:/www/wwwroot/b12sl5x.cn/
-```
+见 `/etc/ads-king/admin.env`（首次部署从 `deploy/ads-king-admin.env.example` 复制）。**登录后必须改密码。**
 
-`dist/` 有近 700 个小文件，scp 逐个传要十几分钟。文件多时改用打包传输更快：
+### 工作流
 
-```bash
-tar czf - -C dist . | ssh -p 32356 -i ~/.ssh/cr7_local_workstation_ed25519 \
-  root@107.149.129.35 "tar xzf - -C /www/wwwroot/b12sl5x.cn"
-```
-
-传完记得 `chown -R www:www /www/wwwroot/b12sl5x.cn`。
+1. 登录后台编辑各广告位（保存 = 写 draft）
+2. 点「发布到前台」→ 复制 draft → live
+3. 用户刷新 `b12sl5x.cn` 即看到更新
 
 ---
 

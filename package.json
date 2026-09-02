@@ -10,7 +10,12 @@
     "crawl": "cd scripts && node crawl.mjs && node crawl-phase2.mjs && node finalize.mjs",
     "sync:api": "cd scripts && node sync-api-session.mjs && node sync-live-api.mjs",
     "audit:gate": "cd scripts && node audit-gate.mjs",
-    "publish": "npm run build && node scripts/publish-pages.mjs"
+    "publish": "npm run build && node scripts/publish-vps.mjs",
+    "publish:pages": "npm run build && node scripts/publish-pages.mjs",
+    "admin:install": "cd admin && npm install",
+    "admin:dev": "cd admin && npm run dev",
+    "admin:start": "cd admin && npm start",
+    "seed:site-data": "node scripts/seed-site-data.mjs"
   },
   "dependencies": {
     "crypto-js": "^4.2.0",

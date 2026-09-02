@@ -37,7 +37,7 @@ import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import CebImg from '../components/CebImg.vue'
 import tabsFallback from '../data/tabs.json'
-import { fetchTagVideosByName } from '../api/videos.js'
+import { fetchTagVideosByName, fetchRecommend } from '../api/videos.js'
 import { normalizeFeaturedPayload } from '../api/normalize.js'
 
 const router = useRouter()
@@ -45,10 +45,49 @@ const keyword = ref('')
 const results = ref([])
 const loading = ref(false)
 const tried = ref(false)
+let loadToken = 0
 const hotWords = tabsFallback.featured?.chips?.slice(0, 8) || ['巨乳翘臀', '网红尤物', '约炮偷情']
 
 function openVideo(v) {
   if (v?.id) router.push(`/play/${v.id}`)
+}
+
+function matchKeyword(list, q) {
+  const needle = q.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+  if (!needle) return []
+  return (list || [])
+    .filter((v) => {
+      if (!v?.id) return false
+      const hay = String(v.title || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+      return hay.includes(needle)
+    })
+    .slice(0, 20)
+}
+
+async function searchPool(q) {
+  try {
+    const mod = await import('../data/video-pool.json')
+    const raw = mod.default || mod
+    return matchKeyword(normalizeFeaturedPayload(raw), q)
+  } catch {
+    return []
+  }
+}
+
+async function searchRecommend(q) {
+  try {
+    const raw = await fetchRecommend({ page: 1, pageSize: 40, sort: 'recommend' })
+    return matchKeyword(normalizeFeaturedPayload(raw.data ?? raw), q)
+  } catch {
+    return []
+  }
+}
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ])
 }
 
 async function run(q) {
@@ -59,15 +98,32 @@ async function run(q) {
 async function search() {
   const q = keyword.value.trim()
   if (!q) return
+  const token = ++loadToken
   loading.value = true
   tried.value = true
   try {
-    const raw = await fetchTagVideosByName({ page: 1, pageSize: 20, name: q })
-    results.value = normalizeFeaturedPayload(raw.data ?? raw)
+    // Origin tag API often empty/slow; race a short timeout then fall back to pool.
+    let list = []
+    try {
+      const raw = await withTimeout(
+        fetchTagVideosByName({ page: 1, pageSize: 20, name: q }),
+        2500,
+      )
+      if (token !== loadToken) return
+      list = normalizeFeaturedPayload(raw.data ?? raw).filter((v) => v?.id)
+    } catch {
+      list = []
+    }
+    if (!list.length) list = await searchPool(q)
+    if (token !== loadToken) return
+    if (!list.length) list = await searchRecommend(q)
+    if (token !== loadToken) return
+    results.value = list
   } catch {
+    if (token !== loadToken) return
     results.value = []
   } finally {
-    loading.value = false
+    if (token === loadToken) loading.value = false
   }
 }
 </script>
@@ -80,18 +136,21 @@ async function search() {
   padding: 0.2rem 0.32rem;
 }
 .search-head__back {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 0.56rem;
-  line-height: 1;
+  background: var(--dw-cyan-dim);
+  border: 1px solid var(--dw-line);
+  border-radius: 50%;
+  color: var(--dw-cyan-soft);
+  font-size: 0.48rem;
+  height: 0.72rem;
+  line-height: 0.64rem;
+  width: 0.72rem;
 }
 .search-head__input {
   flex: 1;
 }
 .search-head__input input {
-  background: rgba(255, 255, 255, 0.08);
-  border: none;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.14);
   border-radius: 0.8rem;
   color: #fff;
   font-size: 0.3rem;
@@ -99,11 +158,12 @@ async function search() {
   width: 100%;
 }
 .search-head__go {
-  background: #f81942;
+  background: var(--dw-cyan);
   border: none;
   border-radius: 0.8rem;
-  color: #fff;
+  color: #061018;
   font-size: 0.28rem;
+  font-weight: 700;
   padding: 0.14rem 0.24rem;
 }
 .chips {
@@ -113,7 +173,7 @@ async function search() {
   padding: 0 0.32rem 0.24rem;
 }
 .chip {
-  background: #2a2a2a;
+  background: var(--dw-surface-2);
   border: none;
   border-radius: 0.8rem;
   color: rgba(255, 255, 255, 0.75);

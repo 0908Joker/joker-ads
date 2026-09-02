@@ -70,6 +70,7 @@ import { useRouter } from 'vue-router'
 import TabShell from '../components/TabShell.vue'
 import SearchBar from '../components/SearchBar.vue'
 import CebImg from '../components/CebImg.vue'
+import { useSiteConfig } from '../composables/useSiteConfig.js'
 import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
 import videoCategories from '../data/video-categories.json'
@@ -83,8 +84,9 @@ const CATEGORY_TABS =
   (videoCategories.categories || []).map((c) => c.name).filter(Boolean).length
     ? (videoCategories.categories || []).map((c) => c.name).filter(Boolean)
     : FALLBACK_TABS
-const subTabs = tabsFallback.featured.subTabs
-const PAGE_SIZE = 24
+const siteConfig = useSiteConfig()
+const subTabs = computed(() => siteConfig.tabs?.featured?.subTabs || tabsFallback.featured.subTabs)
+const PAGE_SIZE = 36
 
 /**
  * The origin answers 0 videos for every `categories/{id}` and `tag/videos/name`
@@ -100,17 +102,18 @@ const seed = normalizeFeaturedPayload(liveApi.featured)
 function poolSlice(tab, sub) {
   const source = pool.value.length ? pool.value : seed
   if (!source.length) return []
-  if (source.length <= PAGE_SIZE) return source
   const tabIndex = Math.max(0, CATEGORY_TABS.indexOf(tab))
-  const subIndex = Math.max(0, subTabs.indexOf(sub))
-  const start = ((tabIndex * subTabs.length + subIndex) * PAGE_SIZE) % source.length
+  const subIndex = Math.max(0, subTabs.value.indexOf(sub))
+  // Always slice (even when source < PAGE_SIZE) so tabs stay distinct.
+  const start = ((tabIndex * Math.max(1, subTabs.value.length) + subIndex) * PAGE_SIZE) % source.length
   const slice = source.slice(start, start + PAGE_SIZE)
-  return slice.length === PAGE_SIZE
-    ? slice
-    : [...slice, ...source.slice(0, PAGE_SIZE - slice.length)]
+  if (slice.length === PAGE_SIZE || source.length <= PAGE_SIZE) {
+    return slice.length ? slice : source
+  }
+  return [...slice, ...source.slice(0, PAGE_SIZE - slice.length)]
 }
 
-const sqAd = tabsFallback.featured.ad || {}
+const sqAd = computed(() => siteConfig.tabs?.featured?.ad || tabsFallback.featured.ad || {})
 
 const router = useRouter()
 const activeTab = ref('推荐')
@@ -123,8 +126,8 @@ function openVideo(v) {
 }
 
 const adCard = computed(() => ({
-  name: sqAd.name || '真实直播偷拍迷奸',
-  viewers: sqAd.viewers || '6864人 正在看',
+  name: sqAd.value.name || '真实直播偷拍迷奸',
+  viewers: sqAd.value.viewers || '6864人 正在看',
 }))
 
 function withAdSlot(list) {
@@ -193,7 +196,8 @@ watch([activeTab, subTab], () => loadVideos(), { immediate: true })
 onMounted(async () => {
   try {
     const mod = await import('../data/video-pool.json')
-    pool.value = normalizeFeaturedPayload({ videos: mod.default.videos })
+    const raw = mod.default || mod
+    pool.value = normalizeFeaturedPayload(raw)
     loadVideos()
   } catch {
     // Seed data already covers the tabs.
@@ -204,18 +208,22 @@ onMounted(async () => {
 <style scoped>
 .feat-head {
   align-items: center;
+  background: linear-gradient(180deg, #0c1016 0%, transparent);
   display: flex;
   gap: 0.12rem;
-  padding: 0.12rem 0.2rem 0;
+  padding: 0.18rem 0.24rem 0.1rem;
 }
 .feat-head__tee,
 .feat-head__hist,
 .feat-head__plus {
   align-items: center;
-  color: #fff;
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-hair);
+  border-radius: 50%;
+  color: var(--dw-muted);
   display: flex;
   flex-shrink: 0;
-  font-size: 0.4rem;
+  font-size: 0.3rem;
   height: 0.64rem;
   justify-content: center;
   width: 0.64rem;
@@ -226,29 +234,35 @@ onMounted(async () => {
   margin: 0;
 }
 .cat-tabs {
-  display: flex; gap: 0.28rem; overflow-x: auto; padding: 0.08rem 0.32rem 0.16rem; white-space: nowrap;
+  display: flex; gap: 0.24rem; overflow-x: auto; padding: 0.1rem var(--dw-pad-x) 0.16rem; white-space: nowrap;
 }
 .cat-tab {
-  background: none; border: none; color: rgba(255,255,255,.7); font-size: 0.36rem; padding: 0.08rem 0.2rem; border-radius: 0.8rem;
+  background: none; border: none; color: var(--dw-faint); font-size: 0.34rem; padding: 0.1rem 0.18rem; border-radius: 999px;
   position: relative;
 }
-.cat-tab.is-active { background: #fff; color: #111; font-weight: 600; }
-.sub-tabs { align-items: center; display: flex; gap: 0.32rem; padding: 0.12rem 0.32rem 0.2rem; }
-.sub-tab {
-  background: rgb(44, 44, 47); border: none; border-radius: 0.8rem; color: rgba(255,255,255,.55);
-  font-size: 0.3rem; padding: 0.08rem 0.22rem;
+.cat-tab.is-active {
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-hair);
+  color: var(--dw-text);
+  font-weight: 600;
 }
-.sub-tab.is-active { background: #f81942; color: #fff; font-weight: 600; }
-.more { color: rgba(255,255,255,.45); font-size: 0.28rem; margin-left: auto; }
+.sub-tabs { align-items: center; display: flex; gap: 0.24rem; padding: 0.08rem var(--dw-pad-x) 0.2rem; }
+.sub-tab {
+  background: var(--dw-surface-2); border: none; border-radius: 999px; color: var(--dw-muted);
+  font-size: 0.28rem; padding: 0.1rem 0.22rem;
+}
+.sub-tab.is-active { background: var(--dw-cyan); color: var(--dw-ink-on-cyan); font-weight: 700; }
+.more { color: var(--dw-faint); font-size: 0.26rem; margin-left: auto; }
 .video-list {
   display: grid;
   gap: 0.2rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 0 0.30769rem 0.32rem;
+  padding: 0 var(--dw-pad-x) 0.4rem;
 }
 .video-row {
-  background: #1a1a1a;
-  border-radius: 0.12rem;
+  background: var(--dw-surface);
+  border: 1px solid var(--dw-hair);
+  border-radius: var(--dw-radius);
   min-width: 0;
   overflow: hidden;
 }
@@ -285,7 +299,7 @@ onMounted(async () => {
   border-radius: 0.1rem; flex-shrink: 0; height: 1.58974rem; overflow: hidden; width: 2.41026rem;
 }
 .video-row__cover--ad {
-  align-items: center; background: linear-gradient(135deg,#3a2030,#1a1a1a); color: #ff6b8a;
+  align-items: center; background: linear-gradient(135deg,#3a2030,#1a1a1a); color: var(--dw-notice);
   display: flex; font-size: 0.26rem; justify-content: center;
 }
 .video-row__body { flex: 1; min-width: 0; }

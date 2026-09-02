@@ -2,7 +2,6 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import AppCenter from '../views/AppCenter.vue'
 import FeaturedPage from '../views/FeaturedPage.vue'
 import DouyinPage from '../views/DouyinPage.vue'
-import AnimePage from '../views/AnimePage.vue'
 import MinePage from '../views/MinePage.vue'
 import PlayPage from '../views/PlayPage.vue'
 import RechargePage from '../views/RechargePage.vue'
@@ -17,9 +16,9 @@ const routes = [
   { path: '/appcenter', name: 'appcenter', component: AppCenter },
   { path: '/videosPage', component: FeaturedPage },
   { path: '/short', component: DouyinPage },
-  { path: '/vipPage', component: AnimePage },
   { path: '/my', component: MinePage },
   { path: '/play/:id', component: PlayPage },
+  { path: '/play', redirect: '/videosPage' },
   { path: '/recharge', component: RechargePage },
   { path: '/recharge/vipRecharge', redirect: '/recharge?type=vip' },
   { path: '/searchPage', component: SearchPage },
@@ -30,9 +29,8 @@ const routes = [
   // 兼容旧路由
   { path: '/featured', redirect: '/videosPage' },
   { path: '/douyin', redirect: '/short' },
-  { path: '/anime', redirect: '/vipPage' },
   { path: '/mine', redirect: '/my' },
-  // 暗网/圈子已下线，连同任何未知路径一起回首页，避免空白
+  // 暗网/圈子/二次元已下线，连同任何未知路径一起回首页，避免空白
   { path: '/:pathMatch(.*)*', redirect: '/appcenter' },
 ]
 

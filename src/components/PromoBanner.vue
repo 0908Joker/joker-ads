@@ -45,9 +45,10 @@ function onClick(e) {
    away both lines of copy, so the slot follows the artwork's ratio instead. */
 .promo-banner {
   aspect-ratio: 636 / 200;
-  border-radius: 0.24rem;
+  border: 1px solid var(--dw-hair);
+  border-radius: var(--dw-radius-lg);
   display: block;
-  margin: 0.21333rem 0.32rem 0;
+  margin: 0.2rem var(--dw-pad-x) 0;
   overflow: hidden;
   position: relative;
   text-decoration: none;
@@ -64,7 +65,8 @@ function onClick(e) {
 
 .promo-banner__fallback {
   align-items: center;
-  background: linear-gradient(90deg, #ff6b8a, #ff2d55 50%, #c0392b);
+  background: linear-gradient(90deg, #0e1620, #123040 45%, #0a1824);
+  border: 1px solid var(--dw-line);
   display: flex;
   gap: 0.16rem;
   height: 100%;
@@ -72,15 +74,16 @@ function onClick(e) {
 }
 
 .promo-banner__tag {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--dw-cyan);
   border-radius: 0.08rem;
-  color: #fff;
+  color: #061018;
   font-size: 0.24rem;
+  font-weight: 700;
   padding: 0.04rem 0.12rem;
 }
 
 .promo-banner__text {
-  color: #fff;
+  color: var(--dw-text);
   font-size: 0.42667rem;
   font-weight: 700;
   letter-spacing: 0.04rem;

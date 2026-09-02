@@ -33,17 +33,18 @@ onMounted(async () => {
 
 <style scoped>
 .empty {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--dw-muted);
   font-size: 0.28rem;
   padding: 1.6rem 0;
   text-align: center;
 }
 .service {
-  background: #2a2a2a;
+  background: var(--dw-cyan);
   border: none;
   border-radius: 0.8rem;
-  color: #fff;
+  color: #061018;
   font-size: 0.3rem;
+  font-weight: 700;
   padding: 0.24rem;
   width: 100%;
 }

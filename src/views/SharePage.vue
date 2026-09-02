@@ -58,7 +58,7 @@ onMounted(async () => {
 
 <style scoped>
 .invite {
-  background: linear-gradient(135deg, #f81942, #8a1029);
+  background: linear-gradient(145deg, rgba(0,212,255,0.2), rgba(0,80,110,0.35)), var(--dw-surface); border: 1px solid var(--dw-line);
   border-radius: 0.16rem;
   margin-bottom: 0.24rem;
   padding: 0.36rem 0.28rem;
@@ -75,12 +75,12 @@ onMounted(async () => {
   margin: 0.12rem 0 0.2rem;
 }
 .invite__copy {
-  background: #fff;
+  background: var(--dw-cyan);
   border: none;
   border-radius: 0.8rem;
-  color: #f81942;
+  color: #061018;
   font-size: 0.28rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 0.16rem;
   padding: 0.14rem 0.4rem;
 }
@@ -90,7 +90,7 @@ onMounted(async () => {
   opacity: 0.85;
 }
 .link {
-  background: #1a1a1a;
+  background: var(--dw-surface);
   border-radius: 0.16rem;
   margin-bottom: 0.24rem;
   padding: 0.24rem;
@@ -105,7 +105,7 @@ onMounted(async () => {
   word-break: break-all;
 }
 .link__copy {
-  background: #2a2a2a;
+  background: var(--dw-surface-2);
   border: none;
   border-radius: 0.8rem;
   color: #fff;

@@ -1,0 +1,11 @@
+import fs from 'fs'
+const s = fs.readFileSync('D:/Projects/Personal/1-1 ads king/crawled/_audit-19-nav-deep.json', 'utf8')
+const i = s.indexOf('search-box')
+console.log('--- snippet ---')
+console.log(s.slice(Math.max(0, i - 100), i + 500))
+const tos = [...s.matchAll(/to:"(\/[^"]*search[^"]*)"/g)].map((m) => m[1])
+console.log('search tos', [...new Set(tos)])
+const paths = [...s.matchAll(/path:"(\/[^"]*(?:search|history)[^"]*)"/g)].map((m) => m[1])
+console.log('paths', [...new Set(paths)].slice(0, 40))
+const push = [...s.matchAll(/\$router\.push\(\{path:"(\/[^"]*(?:search|history)[^"]*)"/g)].map((m) => m[1])
+console.log('pushes', [...new Set(push)])

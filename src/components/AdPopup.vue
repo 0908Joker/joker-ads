@@ -19,11 +19,6 @@
           </a>
         </div>
       </div>
-      <button class="popup-close" aria-label="关闭" @click.stop="close">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#333" stroke-width="2.5">
-          <path d="M6 6l12 12M18 6L6 18"/>
-        </svg>
-      </button>
     </div>
     <div v-else-if="currentSrc" class="popup-wrap">
       <a
@@ -35,12 +30,12 @@
       >
         <img :src="currentSrc" alt="" class="popup-img" />
       </a>
-      <button class="popup-close" aria-label="关闭" @click.stop="close">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#333" stroke-width="2.5">
-          <path d="M6 6l12 12M18 6L6 18"/>
-        </svg>
-      </button>
     </div>
+    <button class="popup-close" aria-label="关闭" @click.stop="close">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#333" stroke-width="2.5">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
   </div>
 </template>
 
@@ -49,21 +44,25 @@ import { computed, onMounted, ref } from 'vue'
 import CebImg from './CebImg.vue'
 import { decryptMedia } from '../api/media.js'
 import { resolveAdTarget, trackAdSign } from '../api/ad.js'
-import popupData from '../data/popups.json'
-import config from '../data/config.json'
+import { useSiteConfig } from '../composables/useSiteConfig.js'
+import popupFallback from '../data/popups.json'
 
 // Survive remount when leaving /play (App v-if); avoid endless re-queue.
 let sessionQueueDone = false
 let sessionIndex = 0
+let showGen = 0
 
 const props = defineProps({
   popups: { type: Array, default: () => [] },
 })
 
+const siteConfig = useSiteConfig()
+const popupData = computed(() => siteConfig.popups?.afterEnterApp ? siteConfig.popups : popupFallback)
+
 const afterAds = computed(() => {
-  const fromFile = popupData.afterEnterApp || []
+  const fromFile = popupData.value.afterEnterApp || []
   if (fromFile.length) return fromFile
-  return (props.popups.length ? props.popups : config.popups || []).map((p) => ({
+  return (props.popups.length ? props.popups : siteConfig.config.popups || []).map((p) => ({
     name: p.name,
     url: p.url,
     signUrl: p.signUrl,
@@ -71,7 +70,7 @@ const afterAds = computed(() => {
   }))
 })
 
-const gridAds = computed(() => popupData.gridPopAds || [])
+const gridAds = computed(() => popupData.value.gridPopAds || [])
 
 const index = ref(sessionIndex)
 const mode = ref('image')
@@ -82,6 +81,7 @@ const currentHref = ref('')
 const queueLen = computed(() => afterAds.value.length + (gridAds.value.length ? 1 : 0))
 
 async function showAt(i) {
+  const gen = ++showGen
   if (i >= afterAds.value.length) {
     if (gridAds.value.length) {
       mode.value = 'grid'
@@ -95,10 +95,13 @@ async function showAt(i) {
   const ad = afterAds.value[i]
   currentHref.value = resolveAdTarget(ad)
   try {
-    currentSrc.value = await decryptMedia(ad.coverUrl || ad.image)
-    visible.value = Boolean(currentSrc.value)
-    if (!currentSrc.value) showAt(i + 1)
+    const src = await decryptMedia(ad.coverUrl || ad.image)
+    if (gen !== showGen) return
+    currentSrc.value = src
+    visible.value = Boolean(src)
+    if (!src) showAt(i + 1)
   } catch {
+    if (gen !== showGen) return
     showAt(i + 1)
   }
 }
@@ -113,6 +116,7 @@ function markDone() {
 }
 
 function close() {
+  showGen += 1
   visible.value = false
   index.value += 1
   sessionIndex = index.value
@@ -147,6 +151,8 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.78);
   bottom: 0;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
   justify-content: center;
   left: 0;
   position: fixed;
@@ -176,7 +182,7 @@ onMounted(() => {
   width: 100%;
 }
 .grid-panel {
-  background: #16161a;
+  background: #10141c;
   border-radius: 0.36rem;
   isolation: isolate;
   overflow: hidden;
@@ -185,7 +191,7 @@ onMounted(() => {
   width: 100%;
 }
 .grid-panel::before {
-  background: linear-gradient(180deg, #ff5aa8 0%, #7ecbff 48%, #4ecbff 100%);
+  background: linear-gradient(180deg, #00d4ff 0%, #1a8fb0 48%, #0a3040 100%);
   border-radius: 0.4rem;
   content: '';
   inset: -0.06rem;
@@ -241,7 +247,7 @@ onMounted(() => {
   flex-shrink: 0;
   height: 32px;
   justify-content: center;
-  margin-top: 12px;
+  margin: 0;
   width: 32px;
 }
 </style>

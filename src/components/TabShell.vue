@@ -9,18 +9,22 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import TabBar from './TabBar.vue'
-import config from '../data/config.json'
-import tabs from '../data/tabs.json'
+import { useSiteConfig } from '../composables/useSiteConfig.js'
+import tabsFallback from '../data/tabs.json'
 
 defineProps({ active: { type: String, default: 'apps' } })
 
 const router = useRouter()
-const tabbar = config.tabbar
-
-const routeMap = tabs.routes
+const siteConfig = useSiteConfig()
+const tabbar = computed(() => siteConfig.config.tabbar || [])
+const routeMap = computed(() => {
+  const live = siteConfig.tabs?.routes
+  if (live && Object.keys(live).length) return live
+  return tabsFallback.routes
+})
 
 function onChange(id) {
-  const path = routeMap[id] || '/appcenter'
+  const path = routeMap.value[id] || tabsFallback.routes?.[id] || '/appcenter'
   if (router.currentRoute.value.path !== path) router.push(path)
 }
 </script>
@@ -28,6 +32,6 @@ function onChange(id) {
 <style scoped>
 .tab-shell {
   min-height: 100vh;
-  padding-bottom: calc(1.53846rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--dw-tabbar-h) + env(safe-area-inset-bottom));
 }
 </style>

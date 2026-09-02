@@ -1,5 +1,8 @@
 node_modules/
 dist/
+admin/data/*.sqlite
+admin/data/*.sqlite-*
+admin/uploads/
 crawled/apps-with-icons.json
 crawled/dom-apps.json
 *.log
@@ -48,3 +51,13 @@ scripts/save-circle-imgs.mjs
 scripts/setup-cloudflare-worker.mjs
 scripts/test-filter-clone.mjs
 wrangler.toml
+
+# One-off audit dumps (keep repo lean; not site source)
+crawled/_*/
+crawled/_*.json
+crawled/_*.png
+crawled/_*.html
+crawled/audit-*/
+crawled/audit-*.json
+crawled/audit-*.png
+crawled/p1-*.json

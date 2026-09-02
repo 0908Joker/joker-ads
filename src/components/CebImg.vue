@@ -22,14 +22,17 @@ const props = defineProps({
 })
 
 const src = ref('')
+let loadGen = 0
 
 async function load() {
+  const gen = ++loadGen
   src.value = ''
   if (!props.path) return
   try {
-    src.value = await decryptMedia(props.path)
+    const next = await decryptMedia(props.path)
+    if (gen === loadGen) src.value = next || ''
   } catch {
-    src.value = ''
+    if (gen === loadGen) src.value = ''
   }
 }
 

@@ -37,7 +37,10 @@ function useProxy() {
   if (typeof window === 'undefined') return false
   if (proxyOrigin()) return true
   const h = window.location.hostname
-  return h === 'localhost' || h === '127.0.0.1'
+  // Same-origin nginx also mounts /api-proxy on production hosts.
+  if (h === 'localhost' || h === '127.0.0.1') return true
+  if (/(^|\.)b12sl5x\.cn$/i.test(h) || /(^|\.)al-ads\.com$/i.test(h)) return true
+  return false
 }
 
 function requestPath(path) {
@@ -153,12 +156,16 @@ export async function apiFetch(path, options = {}, retry = true) {
   if (json.sid) apiSid = json.sid
   if (json.errorCode && json.errorCode !== 0) {
     if (retry && isSidError(json.message)) {
+      apiSid = null
       await refreshApiSid()
       return apiFetch(path, options, false)
     }
     throw new Error(json.message || `API error ${json.errorCode}`)
   }
   const unwrapped = unwrapApiPayload(json)
+  if (typeof json.data === 'string' && unwrapped == null) {
+    throw new Error(json.message || 'API decrypt failed')
+  }
   return { ...json, data: unwrapped ?? json.data, _live: true, _decrypted: unwrapped != null }
 }
 

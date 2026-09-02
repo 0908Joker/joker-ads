@@ -8,11 +8,12 @@
     >
       <div class="app-card__cover">
         <img
-          v-if="app.icon"
+          v-if="app.icon && !failed[index]"
           :src="app.icon"
           :alt="app.name"
           class="cover-img cover-img--real"
           loading="lazy"
+          @error="failed[index] = true"
         />
         <div v-else class="cover-img" :style="{ background: iconColor(app.name, index) }">
           <span class="cover-text">{{ iconText(app.name) }}</span>
@@ -24,21 +25,21 @@
 </template>
 
 <script setup>
+import { reactive } from 'vue'
+
 defineProps({
   apps: { type: Array, required: true },
 })
 
 defineEmits(['open'])
 
+const failed = reactive({})
+
 const palette = [
-  ['#ff2d55', '#ed2248'],
-  ['#6c5ce7', '#a29bfe'],
-  ['#00b894', '#55efc4'],
-  ['#fdcb6e', '#e17055'],
-  ['#0984e3', '#74b9ff'],
-  ['#e84393', '#fd79a8'],
-  ['#2d3436', '#636e72'],
-  ['#d63031', '#fab1a0'],
+  ['#122028', '#0a141c'],
+  ['#183040', '#0e1c28'],
+  ['#1a2834', '#101820'],
+  ['#142430', '#0c1820'],
 ]
 
 function hash(str) {
@@ -49,7 +50,7 @@ function hash(str) {
 
 function iconColor(name, index) {
   const [a, b] = palette[(hash(name) + index) % palette.length]
-  return `linear-gradient(135deg, ${a}, ${b})`
+  return `linear-gradient(145deg, ${a}, ${b})`
 }
 
 function iconText(name) {
@@ -61,14 +62,12 @@ function iconText(name) {
 </script>
 
 <style scoped>
-/* minmax(0,…) — plain 1fr floors at min-content, so long names such as
-   网红现场直播 widened their column and pushed the sixth one off screen. */
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.21333rem 0.10667rem;
-  margin: 0 0.25641rem;
-  padding: 0.32rem 0 0.53333rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.28rem 0.14rem;
+  margin: 0 var(--dw-pad-x);
+  padding: 0.28rem 0 0.48rem;
   width: auto;
 }
 
@@ -76,23 +75,32 @@ function iconText(name) {
   background: transparent;
   border: none;
   color: inherit;
+  min-width: 0;
   padding: 0;
   text-align: center;
 }
 
 .app-card__cover {
   aspect-ratio: 1;
-  background: #2a2a2a;
-  border-radius: 0.26667rem;
-  box-shadow: rgba(0, 0, 0, 0.18) 0 0.16rem 0.37333rem;
+  background: var(--dw-surface-2);
+  border: 1px solid var(--dw-hair);
+  border-radius: 0.28rem;
+  box-shadow: 0 0.1rem 0.28rem rgba(0, 0, 0, 0.28);
   margin: 0 auto;
-  max-width: 1.2rem;
+  max-width: 1.28rem;
   overflow: hidden;
+  transition: transform 0.2s var(--dw-ease), border-color 0.2s var(--dw-ease);
   width: 100%;
+}
+
+.app-card:active .app-card__cover {
+  border-color: var(--dw-line);
+  transform: scale(0.96);
 }
 
 .cover-img {
   align-items: center;
+  color: var(--dw-cyan-soft);
   display: flex;
   height: 100%;
   justify-content: center;
@@ -104,19 +112,19 @@ function iconText(name) {
 }
 
 .cover-text {
-  font-size: 0.32rem;
+  font-size: 0.3rem;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
 }
 
 .app-card__name {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--dw-muted);
   display: block;
-  font-size: 0.25333rem;
+  font-size: 0.24rem;
   line-height: 1.3;
-  margin-top: 0.10667rem;
+  margin-top: 0.12rem;
   overflow: hidden;
-  padding: 0 0.02667rem;
+  padding: 0 0.02rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

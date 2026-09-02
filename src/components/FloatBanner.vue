@@ -32,26 +32,29 @@ function open() {
 <style scoped>
 .float-banner {
   align-items: center;
-  background: linear-gradient(90deg, #1a1a1a, #2a2018);
-  border-radius: 0.16rem;
-  bottom: calc(1.53846rem + env(safe-area-inset-bottom) + 0.16rem);
+  background: rgba(17, 21, 27, 0.96);
+  border: 1px solid var(--dw-hair);
+  border-radius: var(--dw-radius-lg);
+  bottom: calc(var(--dw-tabbar-h) + env(safe-area-inset-bottom) + 0.2rem);
+  box-shadow: 0 0.18rem 0.48rem rgba(0, 0, 0, 0.45);
   display: flex;
   gap: 0.16rem;
-  left: 0.2rem;
-  padding: 0.16rem 0.24rem;
+  left: 0.24rem;
+  padding: 0.16rem 0.2rem;
   position: fixed;
-  right: 0.2rem;
+  right: 0.24rem;
   width: auto;
   z-index: 90;
+  backdrop-filter: blur(10px);
 }
 
 .float-banner__icon {
   align-items: center;
-  background: linear-gradient(135deg, #f39c12, #e67e22);
-  border-radius: 0.12rem;
-  color: #fff;
+  background: var(--dw-cyan);
+  border-radius: var(--dw-radius-sm);
+  color: var(--dw-ink-on-cyan);
   display: flex;
-  font-size: 0.28rem;
+  font-size: 0.26rem;
   font-weight: 800;
   height: 0.64rem;
   justify-content: center;
@@ -64,33 +67,41 @@ function open() {
   flex-direction: column;
   font-size: 0.24rem;
   line-height: 1.3;
+  min-width: 0;
 }
 
 .float-banner__text strong {
-  color: #fff;
+  color: var(--dw-text);
   font-size: 0.28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .float-banner__text span {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--dw-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .float-banner__btn {
-  background: linear-gradient(180deg, #ffd700, #f39c12);
+  background: var(--dw-cyan);
   border: none;
-  border-radius: 0.8rem;
-  color: #333;
-  font-size: 0.28rem;
+  border-radius: 999px;
+  color: var(--dw-ink-on-cyan);
+  flex-shrink: 0;
+  font-size: 0.26rem;
   font-weight: 700;
-  padding: 0.12rem 0.32rem;
+  padding: 0.12rem 0.28rem;
 }
 
 .float-banner__close {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--dw-faint);
   font-size: 0.36rem;
   line-height: 1;
-  padding: 0 0.08rem;
+  padding: 0 0.04rem;
 }
 </style>

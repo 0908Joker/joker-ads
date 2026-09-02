@@ -1,18 +1,12 @@
 <template>
   <header class="hero">
-    <div class="hero__overlay" />
-    <div class="hero__glow hero__glow--left" />
-    <div class="hero__glow hero__glow--right" />
-
+    <div class="hero__wash" aria-hidden="true" />
     <div class="hero__brand">
-      <span class="brand">
-        <svg class="brand__mark" viewBox="0 0 14 18" aria-hidden="true">
-          <path d="M2.6 2.4 5.4 5.2" />
-          <path d="M1.8 7.4 4.6 10.2" />
-          <path d="M2.8 15 6.6 11.9" />
-        </svg>
-        <span class="brand__name">得污</span>
-      </span>
+      <img class="brand-logo" src="/brand/logo.png" alt="得污" width="160" height="160" />
+      <div class="brand-copy">
+        <strong>得污</strong>
+        <span>成人版</span>
+      </div>
     </div>
 
     <nav class="hero__tabs">
@@ -35,11 +29,13 @@
         :class="{ 'is-active': activeMode === mode.id }"
         @click="selectMode(mode.id)"
       >
-        <span>{{ mode.label }}</span>
-        <span v-if="mode.emoji" class="mode-switch__emoji">{{ mode.emoji }}</span>
-        <span v-else-if="mode.icon" class="mode-switch__icon">{{ mode.icon }}</span>
+        {{ mode.label }}
       </button>
     </div>
+
+    <svg class="hero__wave" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 8 V4.2 Q25 0.4 50 3.2 T100 2.4 V8 Z" fill="currentColor" />
+    </svg>
   </header>
 </template>
 
@@ -69,148 +65,152 @@ function selectMode(id) {
 
 <style scoped>
 .hero {
-  background: linear-gradient(rgba(255, 45, 85, 0.96), rgba(237, 34, 72, 0.92) 62%, rgba(17, 17, 17, 0));
+  background: linear-gradient(180deg, #0c1016 0%, #090b0e 72%);
   overflow: hidden;
-  padding-bottom: 0.37333rem;
+  padding: 0.28rem 0 0.52rem;
   position: sticky;
   top: 0;
   z-index: 20;
 }
 
-.hero__overlay {
+.hero__wash {
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.18), transparent 18%),
-    radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.16), transparent 16%);
+    radial-gradient(ellipse 70% 90% at 8% -10%, rgba(0, 200, 232, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 70% at 92% 0%, rgba(0, 120, 150, 0.08), transparent 50%);
   inset: 0;
-  opacity: 0.55;
   pointer-events: none;
   position: absolute;
 }
-
-.hero__glow {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
-  filter: blur(0.26667rem);
-  height: 4.8rem;
-  pointer-events: none;
-  position: absolute;
-  top: -1.12rem;
-  width: 4.8rem;
-}
-
-.hero__glow--left { left: -1.49333rem; }
-.hero__glow--right { right: -1.76rem; }
 
 .hero__brand {
-  padding: 0.24rem 0.32rem 0.04rem;
+  align-items: center;
+  display: flex;
+  gap: 0.22rem;
+  padding: 0 0.36rem 0.12rem;
   position: relative;
   z-index: 1;
+  animation: brand-in 0.55s var(--dw-ease) both;
 }
 
-.brand {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.14rem;
+@keyframes brand-in {
+  from { opacity: 0; transform: translateY(-0.12rem); }
+  to { opacity: 1; transform: none; }
 }
 
-/* 氵 from 污, drawn as three strokes so the mark is native to the name. */
-.brand__mark {
-  fill: none;
-  height: 0.5rem;
-  stroke: #ffd24a;
-  stroke-linecap: round;
-  stroke-width: 3;
-  width: 0.38rem;
+.brand-logo {
+  border-radius: 0.26rem;
+  box-shadow:
+    0 0 0 1px rgba(0, 200, 232, 0.2),
+    0 0.1rem 0.32rem rgba(0, 0, 0, 0.4);
+  display: block;
+  height: 1.04rem;
+  object-fit: cover;
+  width: 1.04rem;
 }
 
-.brand__name {
-  color: #fff;
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.04rem;
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
   line-height: 1;
-  text-shadow: 0 0.02rem 0.08rem rgba(0, 0, 0, 0.28);
+}
+
+.brand-copy strong {
+  color: #f5f7fa;
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.brand-copy span {
+  align-self: flex-start;
+  background: var(--dw-cyan);
+  border-radius: 0.05rem;
+  color: var(--dw-ink-on-cyan);
+  font-size: 0.2rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.05rem 0.12rem;
 }
 
 .hero__tabs {
-  align-items: center;
   display: flex;
-  gap: 0.53333rem;
+  gap: 0.4rem;
   overflow-x: auto;
-  padding: 0.32rem 0.32rem 0;
+  padding: 0.22rem 0.36rem 0.04rem;
   position: relative;
+  scrollbar-width: none;
   white-space: nowrap;
   z-index: 1;
-  scrollbar-width: none;
 }
 
 .hero__tab {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.94);
-  font-size: 0.45333rem;
-  line-height: 0.74667rem;
-  padding: 0 0 0.26667rem;
-  position: relative;
+  color: var(--dw-faint);
   flex-shrink: 0;
+  font-size: 0.36rem;
+  font-weight: 500;
+  padding: 0.12rem 0 0.22rem;
+  position: relative;
+  transition: color 0.2s var(--dw-ease);
 }
 
 .hero__tab.is-active {
-  color: #fff;
-  font-size: 0.48rem;
-  font-weight: 600;
+  color: var(--dw-text);
+  font-size: 0.4rem;
+  font-weight: 700;
 }
 
 .hero__tab.is-active::after {
-  background: #f81942;
-  border-radius: 26.64rem;
-  bottom: 0;
+  background: var(--dw-cyan);
+  border-radius: 99px;
+  bottom: 0.04rem;
   content: '';
-  height: 0.10667rem;
-  left: 50%;
+  height: 0.06rem;
+  left: 18%;
   position: absolute;
-  transform: translateX(-50%);
-  width: 0.53333rem;
+  right: 18%;
 }
 
 .mode-switch {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 0.58667rem;
-  box-shadow: rgba(0, 0, 0, 0.18) 0 0.37333rem 0.74667rem;
+  background: rgba(15, 18, 24, 0.88);
+  border: 1px solid var(--dw-hair);
+  border-radius: 999px;
   display: flex;
-  gap: 0.10667rem;
-  margin: 0.26667rem 0.32rem 0;
-  padding: 0.10667rem;
+  margin: 0.22rem 0.36rem 0;
+  padding: 0.08rem;
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(10px);
 }
 
 .mode-switch__item {
-  align-items: center;
   background: transparent;
   border: none;
-  border-radius: 0.48rem;
-  color: #222;
-  display: flex;
+  border-radius: 999px;
+  color: var(--dw-muted);
   flex: 1;
-  font-size: 0.48rem;
+  font-size: 0.34rem;
   font-weight: 500;
-  gap: 0.16rem;
-  height: 0.96rem;
-  justify-content: center;
+  height: 0.84rem;
+  transition: background 0.22s var(--dw-ease), color 0.22s var(--dw-ease);
 }
 
 .mode-switch__item.is-active {
-  background: linear-gradient(#323232, #1f1f1f);
-  box-shadow: rgba(255, 255, 255, 0.9) 0 0 0 0.05333rem inset;
-  color: #fff;
+  background: var(--dw-cyan);
+  color: var(--dw-ink-on-cyan);
+  font-weight: 700;
 }
 
-.mode-switch__emoji,
-.mode-switch__icon {
-  color: #f81942;
-  font-size: 0.42667rem;
-  line-height: 1;
+.hero__wave {
+  bottom: -1px;
+  color: var(--dw-bg);
+  height: 0.28rem;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 2;
 }
 </style>

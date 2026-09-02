@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资源站后台管理</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--red:#e63946;--bg:#0d0d0f;--bg2:#111114;--bg3:#18181c;--border:#1e1e22;--border2:#2a2a2e;--text:#e6e6e8;--muted:#777;--green:#2a9d8f;--blue:#7ab3e0;}
+  body{font-family:"Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--text);background:#1a1a1e;border:1px solid var(--border2);border-radius:8px;padding:9px 12px;width:100%;outline:none;transition:border .15s;}
+  input:focus,select:focus,textarea:focus{border-color:var(--red);}
+  select option{background:#1a1a1e;}
+  textarea{resize:vertical;min-height:78px;}
+  button{font-family:inherit;}
+  a{color:inherit;text-decoration:none;}
+  ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:#2a2a2e;border-radius:3px;}
+  #login-screen{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px;}
+  .login-box{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:42px 38px;width:370px;box-shadow:0 24px 64px rgba(0,0,0,.5);}
+  .login-logo{width:54px;height:54px;background:var(--red);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;margin:0 auto 18px;}
+  .login-box h2{text-align:center;font-size:20px;font-weight:800;margin-bottom:26px;}
+  .login-box input{margin-bottom:12px;}
+  .err{color:#ff7a7a;font-size:13px;min-height:20px;}
+  .btn-login{width:100%;padding:12px;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;}
+  #admin-screen{display:none;min-height:100vh;flex-direction:column;}
+  #topbar{background:var(--bg2);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:100;}
+  .topbar-left{display:flex;align-items:center;gap:14px;}
+  .topbar-logo{width:32px;height:32px;background:var(--red);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;}
+  .topbar-title{font-weight:800;font-size:16px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+  #user-badge{background:#1a1a1e;border:1px solid var(--border);border-radius:20px;padding:5px 12px;color:var(--red);font-weight:700;}
+  .ghost-link,.btn-logout{padding:6px 12px;background:transparent;border:1px solid #333;border-radius:6px;color:var(--muted);cursor:pointer;font-size:13px;}
+  .ghost-link:hover,.btn-logout:hover{border-color:var(--red);color:var(--red);}
+  #body-wrap{display:flex;flex:1;}
+  #sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;flex-shrink:0;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:14px;color:var(--muted);border-left:3px solid transparent;transition:all .15s;user-select:none;}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+  .nav-item.active{color:var(--red);background:rgba(230,57,70,.07);border-left-color:var(--red);}
+  .nav-dot{width:8px;height:8px;border-radius:999px;background:currentColor;opacity:.85;}
+  #main{flex:1;padding:28px;overflow-x:auto;}
+  .page{display:none;} .page.active{display:block;}
+  .page-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;}
+  .page-title{font-size:20px;font-weight:800;}
+  .page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px 24px;margin-bottom:20px;}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+  .metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;border-top:3px solid var(--c);}
+  .metric-label{font-size:12px;color:#666;margin-bottom:10px;}
+  .metric-val{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:10px 14px;color:#666;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;}
+  td{padding:11px 14px;border-bottom:1px solid #16161a;vertical-align:middle;color:#ccc;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;white-space:nowrap;}
+  .badge-red{background:rgba(230,57,70,.15);color:var(--red);}
+  .badge-green{background:rgba(42,157,143,.15);color:var(--green);}
+  .badge-gray{background:#1e1e22;color:#777;}
+  .badge-blue{background:#162235;color:var(--blue);}
+  .btn{padding:8px 16px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;white-space:nowrap;}
+  .btn-primary{background:var(--red);color:#fff;} .btn-primary:hover{background:#c1121f;}
+  .btn-blue{background:#1e3a5f;color:var(--blue);} .btn-blue:hover{background:#254b78;}
+  .btn-danger{background:#3d1a1a;color:#e88;} .btn-danger:hover{background:#4d2020;}
+  .btn-gray{background:#1e1e22;color:#aaa;border:1px solid var(--border);} .btn-gray:hover{background:#252528;}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .action-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{margin-bottom:14px;}
+  .form-label{font-size:12px;color:#777;margin-bottom:6px;display:block;}
+  .form-help{font-size:12px;color:#555;margin-top:6px;line-height:1.6;}
+  .form-check{display:flex;align-items:center;gap:8px;font-size:14px;color:#aaa;}
+  .form-check input[type=checkbox]{width:auto;}
+  .upload-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+  .upload-row input[type=file]{padding:7px;}
+  .drop-zone{border:1px dashed #3a3a42;border-radius:12px;background:#151519;min-height:138px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;cursor:pointer;transition:all .15s;outline:none;}
+  .drop-zone:hover,.drop-zone.dragover,.drop-zone:focus{border-color:var(--red);background:rgba(230,57,70,.06);}
+  .drop-zone input[type=file]{display:none;}
+  .drop-zone-icon{width:32px;height:32px;margin:0 auto 9px;border:1px solid rgba(230,57,70,.42);border-radius:8px;position:relative;}
+  .drop-zone-icon::before{content:"";position:absolute;left:50%;top:8px;width:8px;height:8px;border-left:2px solid var(--red);border-top:2px solid var(--red);transform:translateX(-50%) rotate(45deg);}
+  .drop-zone-icon::after{content:"";position:absolute;left:50%;top:13px;width:2px;height:11px;background:var(--red);transform:translateX(-50%);}
+  .drop-zone-title{font-size:14px;font-weight:800;color:#ddd;}
+  .drop-zone-sub{font-size:12px;color:#666;margin-top:6px;line-height:1.5;}
+  .upload-status{display:none;align-items:center;gap:10px;background:#151519;border:1px solid #222;border-radius:10px;padding:10px 12px;margin-top:10px;color:#aaa;font-size:13px;min-height:52px;}
+  .upload-status.show{display:flex;}
+  .upload-status.ok{border-color:rgba(42,157,143,.32);background:rgba(42,157,143,.06);color:#67c6b9;}
+  .upload-status.error{border-color:rgba(230,57,70,.35);background:rgba(230,57,70,.06);color:#ff9a9a;}
+  .upload-status-thumb{width:44px;height:44px;object-fit:cover;border-radius:8px;display:none;background:#111;flex-shrink:0;}
+  .upload-status-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hidden-field{display:none;}
+  .img-thumb{width:68px;height:48px;object-fit:cover;border-radius:6px;background:#111;}
+  .preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;display:none;background:#111;}
+  .link-cell{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666;font-size:12px;}
+  .notice{background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.22);border-radius:8px;padding:12px 14px;font-size:13px;color:#e99;margin-bottom:16px;line-height:1.7;}
+  .list-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;background:#1a1a1e;border-radius:8px;margin-bottom:8px;}
+  .list-title{font-weight:700;color:#ddd;}
+  .list-sub{font-size:12px;color:#666;margin-top:4px;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px 30px;width:min(760px,96vw);max-height:90vh;overflow-y:auto;box-shadow:0 30px 90px rgba(0,0,0,.5);}
+  .modal-box.narrow{width:min(430px,94vw);}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .modal-title{font-size:17px;font-weight:800;}
+  .modal-close{background:none;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .confirm-box{background:var(--bg2);border:1px solid #3a2020;border-radius:14px;padding:28px 32px;width:min(380px,94vw);text-align:center;}
+  .confirm-msg{color:#aaa;font-size:14px;margin-bottom:22px;line-height:1.7;}
+  .empty-row td{text-align:center;padding:36px;color:#444;}
+  .source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+  .source-list{display:grid;gap:9px;}
+  .source-item{display:flex;align-items:center;justify-content:space-between;background:#1a1a1e;border:1px solid #222;border-radius:8px;padding:10px 12px;font-size:13px;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#19191e;border:1px solid #303038;color:#ddd;padding:10px 14px;border-radius:8px;font-size:13px;display:none;z-index:1000;}
+  .toast.show{display:block;}
+  @media(max-width:860px){
+    #body-wrap{display:block;}
+    #sidebar{position:static;width:100%;height:auto;display:flex;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);padding:8px;}
+    .nav-item{border-left:none;border-bottom:2px solid transparent;padding:9px 12px;white-space:nowrap;}
+    .nav-item.active{border-left:none;border-bottom-color:var(--red);}
+    #main{padding:18px 14px;}
+    .form-grid{grid-template-columns:1fr;}
+    .page-header{align-items:flex-start;flex-direction:column;}
+    #topbar{height:auto;min-height:58px;align-items:flex-start;gap:10px;padding:10px 14px;}
+    .topbar-right{flex-wrap:wrap;justify-content:flex-end;}
+  }
+</style>
+</head>
+<body>
+
+<section id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Z</div>
+    <h2>后台管理登录</h2>
+    <input type="text" id="login-user" placeholder="管理员账号" autocomplete="username">
+    <input type="password" id="login-pass" placeholder="密码" autocomplete="current-password">
+    <div class="err" id="login-err"></div>
+    <button class="btn-login" type="button" onclick="login()">登录</button>
+  </div>
+</section>
+
+<section id="admin-screen">
+  <div id="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">Z</div>
+      <span class="topbar-title">资源站后台管理</span>
+    </div>
+    <div class="topbar-right">
+      <span id="user-badge">admin</span>
+      <button class="ghost-link" type="button" onclick="openPasswordModal()">修改密码</button>
+      <a href="/zh" target="_blank" class="ghost-link">查看前台</a>
+      <button class="btn-logout" type="button" onclick="logout()">退出登录</button>
+    </div>
+  </div>
+  <div id="body-wrap">
+    <nav id="sidebar">
+      <div class="nav-item active" data-page="dashboard" data-read="dashboard"><span class="nav-dot"></span>控制台</div>
+      <div class="nav-item" data-page="resources" data-read="resources"><span class="nav-dot"></span>资源管理</div>
+      <div class="nav-item" data-page="categories" data-read="categories"><span class="nav-dot"></span>分类管理</div>
+      <div class="nav-item" data-page="ads" data-read="ads"><span class="nav-dot"></span>广告管理</div>
+      <div class="nav-item" data-page="site" data-read="site"><span class="nav-dot"></span>站点设置</div>
+      <div class="nav-item" data-page="stats" data-read="stats"><span class="nav-dot"></span>统计来源</div>
+      <div class="nav-item" data-page="admins" data-read="admins"><span class="nav-dot"></span>管理员账号</div>
+      <div class="nav-item" data-page="logs" data-read="logs"><span class="nav-dot"></span>操作日志</div>
+    </nav>
+    <main id="main">
+      <section class="page active" id="page-dashboard">
+        <div class="page-header"><span class="page-title">控制台</span><span style="font-size:13px;color:#555;" id="dash-time"></span></div>
+        <div id="password-notice" class="notice" style="display:none;">当前账号仍在使用初始化密码，请尽快点击右上角“修改密码”。</div>
+        <div class="metric-grid" id="metrics"></div>
+        <div class="source-grid">
+          <div class="card">
+            <div style="font-size:15px;font-weight:700;margin-bottom:16px;">最新资源</div>
+            <table><thead><tr><th>资源名称</th><th>分类</th><th>下载量</th><th>状态</th></tr></thead><tbody id="dash-res-list"></tbody></table>
+          </div>
+          <div class="card">
+            <div style="font-size:15px;font-weight:700;margin-bottom:16px;">最近操作日志</div>
+            <table><thead><tr><th>操作人</th><th>内容</th><th>时间</th></tr></thead><tbody id="dash-log-list"></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-resources">
+        <div class="page-header">
+          <span class="page-title">资源管理</span>
+          <div class="page-actions"><button class="btn btn-primary write-resources" onclick="openResourceModal()">新增资源</button></div>
+        </div>
+        <div class="notice">前台不展示分类筛选按钮；这里的分类只用于后台管理、标签展示和统计归档。</div>
+        <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>封面</th><th>资源</th><th>分类</th><th>文件</th><th>下载量</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody id="resource-table"></tbody></table></div>
+      </section>
+
+      <section class="page" id="page-categories">
+        <div class="page-header"><span class="page-title">分类管理</span></div>
+        <div class="card" style="max-width:720px;">
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">中文分类</label><input id="cat-name-zh" placeholder="如：空降"></div>
+            <div class="form-group"><label class="form-label">英文分类</label><input id="cat-name-en" placeholder="Air-drop"></div>
+            <div class="form-group"><label class="form-label">排序</label><input id="cat-sort" type="number" value="0"></div>
+            <label class="form-check" style="align-self:center;"><input id="cat-active" type="checkbox" checked>启用分类</label>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:18px;">
+            <button class="btn btn-primary write-categories" id="cat-save-btn" onclick="saveCategory()">保存分类</button>
+            <button class="btn btn-gray" onclick="resetCategoryForm()">清空</button>
+          </div>
+          <input type="hidden" id="cat-id">
+          <div id="cat-list"></div>
+        </div>
+      </section>
+
+      <section class="page" id="page-ads">
+        <div class="page-header">
+          <span class="page-title">广告管理</span>
+          <button class="btn btn-primary write-ads" onclick="openAdModal()">新增广告位</button>
+        </div>
+        <div class="notice">支持顶部横幅、侧边栏、列表内嵌、下载按钮/下载确认弹窗广告。图片可上传，也可填写外链。</div>
+        <div id="ad-list"></div>
+      </section>
+
+      <section class="page" id="page-site">
+        <div class="page-header"><span class="page-title">站点设置</span></div>
+        <div class="card" style="max-width:920px;">
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">站点名称（中文）</label><input id="site-name-zh"></div>
+            <div class="form-group"><label class="form-label">站点名称（英文）</label><input id="site-name-en"></div>
+            <div class="form-group"><label class="form-label">站点描述（中文）</label><input id="site-desc-zh"></div>
+            <div class="form-group"><label class="form-label">站点描述（英文）</label><input id="site-desc-en"></div>
+            <div class="form-group"><label class="form-label">首页标题（中文）</label><input id="site-hero-zh"></div>
+            <div class="form-group"><label class="form-label">首页标题（英文）</label><input id="site-hero-en"></div>
+            <div class="form-group"><label class="form-label">首页副标题（中文）</label><input id="site-sub-zh"></div>
+            <div class="form-group"><label class="form-label">首页副标题（英文）</label><input id="site-sub-en"></div>
+          </div>
+          <div class="form-group"><label class="form-label">公告（中文）</label><input id="site-ann-zh"></div>
+          <div class="form-group"><label class="form-label">公告（英文）</label><input id="site-ann-en"></div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">页脚（中文）</label><input id="site-footer-zh"></div>
+            <div class="form-group"><label class="form-label">页脚（英文）</label><input id="site-footer-en"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Logo URL</label><input id="site-logo" placeholder="/uploads/logo.png"></div>
+            <div class="form-group"><label class="form-label">主题色</label><input id="site-color" type="color" style="height:38px;padding:4px;"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">上传 Logo</label>
+            <div class="upload-row"><input id="site-logo-file" type="file" accept="image/*"><button class="btn btn-blue write-site" onclick="uploadInto('site-logo-file','site-logo','logo')">上传</button></div>
+          </div>
+          <button class="btn btn-primary write-site" onclick="saveSite()">保存站点设置</button>
+        </div>
+      </section>
+
+      <section class="page" id="page-stats">
+        <div class="page-header"><span class="page-title">统计来源</span><button class="btn btn-gray" onclick="renderStats()">刷新</button></div>
+        <div class="metric-grid" id="stats-metrics"></div>
+        <div class="source-grid">
+          <div class="card"><div style="font-weight:700;margin-bottom:14px;">用户来源</div><div class="source-list" id="source-list"></div></div>
+          <div class="card"><div style="font-weight:700;margin-bottom:14px;">资源下载排行</div><div class="source-list" id="top-resource-list"></div></div>
+          <div class="card"><div style="font-weight:700;margin-bottom:14px;">设备分布</div><div class="source-list" id="device-list"></div></div>
+          <div class="card"><div style="font-weight:700;margin-bottom:14px;">最近下载</div><table><thead><tr><th>资源</th><th>来源</th><th>语言</th><th>时间</th></tr></thead><tbody id="recent-downloads"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="page" id="page-admins">
+        <div class="page-header"><span class="page-title">管理员账号</span><button class="btn btn-primary super-only" onclick="openAdminModal()">新增管理员</button></div>
+        <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>账号</th><th>昵称</th><th>角色</th><th>状态</th><th>操作</th></tr></thead><tbody id="admin-table"></tbody></table></div>
+      </section>
+
+      <section class="page" id="page-logs">
+        <div class="page-header"><span class="page-title">操作日志</span><button class="btn btn-gray super-only" onclick="confirmAction('确认清空所有操作日志？', clearLogs)">清空日志</button></div>
+        <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>操作人</th><th>操作内容</th><th>对象</th><th>IP</th><th>时间</th></tr></thead><tbody id="log-table"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+</section>
+
+<div class="modal-overlay" id="resource-modal">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title" id="resource-modal-title">新增资源</span><button class="modal-close" onclick="closeModal('resource-modal')">x</button></div>
+    <input type="hidden" id="res-id">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">中文名称 *</label><input id="res-title-zh"></div>
+      <div class="form-group"><label class="form-label">英文名称</label><input id="res-title-en"></div>
+      <div class="form-group"><label class="form-label">访问 Slug</label><input id="res-slug" placeholder="airdrop-pack-vol-1"></div>
+      <div class="form-group"><label class="form-label">分类</label><select id="res-category"></select></div>
+      <div class="form-group"><label class="form-label">文件大小</label><input id="res-size" placeholder="2.3GB"></div>
+      <div class="form-group"><label class="form-label">排序</label><input id="res-sort" type="number" value="0"></div>
+      <div class="form-group"><label class="form-label">下载次数</label><input id="res-downloads" type="number" value="0"></div>
+      <label class="form-check" style="align-self:center;"><input id="res-active" type="checkbox" checked>上架显示</label>
+    </div>
+    <input id="res-cover" class="hidden-field" type="hidden">
+    <input id="res-file" class="hidden-field" type="hidden">
+    <input id="res-external" class="hidden-field" type="hidden">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">封面图片</label>
+        <div class="drop-zone" id="res-cover-drop" tabindex="0" role="button" aria-label="上传封面图片">
+          <input id="res-cover-file" type="file" accept="image/*">
+          <div>
+            <div class="drop-zone-icon"></div>
+            <div class="drop-zone-title">拖拽封面到这里，或点击选择图片</div>
+            <div class="drop-zone-sub">推荐 640×420，支持 jpg / png / webp</div>
+          </div>
+        </div>
+        <div id="res-cover-status" class="upload-status">
+          <img id="res-cover-preview" class="upload-status-thumb" alt="">
+          <span id="res-cover-status-text" class="upload-status-name"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">资源文件 *</label>
+        <div class="drop-zone" id="res-file-drop" tabindex="0" role="button" aria-label="上传资源文件">
+          <input id="res-file-upload" type="file">
+          <div>
+            <div class="drop-zone-icon"></div>
+            <div class="drop-zone-title">拖拽资源文件到这里，或点击选择文件</div>
+            <div class="drop-zone-sub">直接上传资源包，后台自动保存文件</div>
+          </div>
+        </div>
+        <div id="res-file-status" class="upload-status">
+          <span id="res-file-status-text" class="upload-status-name"></span>
+        </div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">中文描述</label><textarea id="res-desc-zh"></textarea></div>
+      <div class="form-group"><label class="form-label">英文描述</label><textarea id="res-desc-en"></textarea></div>
+    </div>
+    <div class="form-group"><label class="form-label">标签（逗号分隔）</label><input id="res-tags" placeholder="空降,精选"></div>
+    <div class="err" id="res-err"></div>
+    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('resource-modal')">取消</button><button class="btn btn-primary" onclick="saveResource()">保存资源</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ad-modal">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title" id="ad-modal-title">新增广告位</span><button class="modal-close" onclick="closeModal('ad-modal')">x</button></div>
+    <input type="hidden" id="ad-id">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">中文名称 *</label><input id="ad-title-zh"></div>
+      <div class="form-group"><label class="form-label">英文名称</label><input id="ad-title-en"></div>
+      <div class="form-group"><label class="form-label">广告位置</label><select id="ad-slot"><option value="banner_top">顶部横幅</option><option value="sidebar">侧边栏</option><option value="card_inline">列表内嵌</option><option value="download_button">下载按钮/弹窗</option></select></div>
+      <div class="form-group"><label class="form-label">排序</label><input id="ad-sort" type="number" value="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">广告图片 URL</label><input id="ad-image" oninput="previewImage('ad-image','ad-preview')"><img id="ad-preview" class="preview"></div>
+    <div class="form-group"><label class="form-label">上传广告图</label><div class="upload-row"><input id="ad-file" type="file" accept="image/*"><button class="btn btn-blue" onclick="uploadInto('ad-file','ad-image','ad','ad-preview')">上传</button></div></div>
+    <div class="form-group"><label class="form-label">跳转链接</label><input id="ad-link" placeholder="https://..."></div>
+    <label class="form-check"><input id="ad-active" type="checkbox" checked>启用广告</label>
+    <div class="err" id="ad-err"></div>
+    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('ad-modal')">取消</button><button class="btn btn-primary" onclick="saveAd()">保存广告</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal-box narrow">
+    <div class="modal-header"><span class="modal-title" id="admin-modal-title">新增管理员</span><button class="modal-close" onclick="closeModal('admin-modal')">x</button></div>
+    <input type="hidden" id="adm-id">
+    <div class="form-group"><label class="form-label">账号 *</label><input id="adm-username"></div>
+    <div class="form-group"><label class="form-label">昵称</label><input id="adm-nickname"></div>
+    <div class="form-group"><label class="form-label">密码</label><input id="adm-password" type="password" placeholder="新增至少 10 位，编辑留空则不改"></div>
+    <div class="form-group"><label class="form-label">角色</label><select id="adm-role"><option value="operator">运营管理员</option><option value="ads">广告管理员</option><option value="readonly">只读查看员</option><option value="super">超级管理员</option></select></div>
+    <label class="form-check"><input id="adm-active" type="checkbox" checked>启用账号</label>
+    <label class="form-check" style="margin-top:10px;"><input id="adm-must-change" type="checkbox">下次登录强制改密提醒</label>
+    <div class="err" id="adm-err"></div>
+    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('admin-modal')">取消</button><button class="btn btn-primary" onclick="saveAdmin()">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="password-modal">
+  <div class="modal-box narrow">
+    <div class="modal-header"><span class="modal-title">修改密码</span><button class="modal-close" onclick="closeModal('password-modal')">x</button></div>
+    <div class="form-group"><label class="form-label">原密码</label><input id="pwd-old" type="password"></div>
+    <div class="form-group"><label class="form-label">新密码</label><input id="pwd-new" type="password" placeholder="至少 10 位"></div>
+    <div class="err" id="pwd-err"></div>
+    <div class="modal-footer"><button class="btn btn-gray" onclick="closeModal('password-modal')">取消</button><button class="btn btn-primary" onclick="changePassword()">保存密码</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <div class="modal-title" style="margin-bottom:10px;">确认操作</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div style="display:flex;gap:10px;justify-content:center;"><button class="btn btn-gray" onclick="closeModal('confirm-modal')">取消</button><button class="btn btn-danger" id="confirm-yes">确认</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const state = { user: null, page: 'dashboard', categories: [], resources: [], ads: [], admins: [] };
+
+const roles = {
+  super: '超级管理员',
+  operator: '运营管理员',
+  ads: '广告管理员',
+  readonly: '只读查看员'
+};
+
+const readScopes = {
+  super: ['dashboard','resources','categories','ads','site','stats','admins','logs'],
+  operator: ['dashboard','resources','categories','site','stats','logs'],
+  ads: ['dashboard','ads','stats','logs'],
+  readonly: ['dashboard','stats','logs']
+};
+
+const writeScopes = {
+  super: ['resources','categories','ads','site','admins','logs','upload'],
+  operator: ['resources','categories','site','upload'],
+  ads: ['ads','upload'],
+  readonly: []
+};
+
+function canRead(scope){ return readScopes[state.user?.role || 'readonly']?.includes(scope); }
+function canWrite(scope){ return writeScopes[state.user?.role || 'readonly']?.includes(scope); }
+function isSuper(){ return state.user?.role === 'super'; }
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function api(path, options = {}) {
+  const isForm = options.body instanceof FormData;
+  return fetch(path, {
+    credentials: 'same-origin',
+    headers: isForm
+      ? { 'X-Requested-With': 'XMLHttpRequest', ...(options.headers || {}) }
+      : { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', ...(options.headers || {}) },
+    ...options
+  }).then(async (res) => {
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || '请求失败');
+    return body;
+  });
+}
+
+function toast(message) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function fmt(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+function time(value) {
+  if (!value) return '-';
+  return new Date(value).toLocaleString('zh-CN');
+}
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function confirmAction(message, fn) {
+  document.getElementById('confirm-msg').textContent = message;
+  const btn = document.getElementById('confirm-yes');
+  btn.disabled = false;
+  btn.textContent = '确认';
+  document.getElementById('confirm-yes').onclick = async () => {
+    try {
+      btn.disabled = true;
+      btn.textContent = '处理中';
+      await fn();
+      closeModal('confirm-modal');
+    } catch (err) {
+      toast(err.message || '操作失败');
+      btn.disabled = false;
+      btn.textContent = '确认';
+    }
+  };
+  openModal('confirm-modal');
+}
+
+async function login() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  document.getElementById('login-err').textContent = '';
+  try {
+    const body = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    state.user = body.user;
+    enterAdmin();
+  } catch (err) {
+    document.getElementById('login-err').textContent = err.message;
+  }
+}
+
+async function logout() {
+  try {
+    await api('/api/admin/logout', { method: 'POST', body: '{}' });
+    location.reload();
+  } catch (err) {
+    toast(err.message || '退出失败，请重试');
+  }
+}
+
+async function checkSession() {
+  try {
+    const body = await api('/api/admin/me');
+    if (body.user) {
+      state.user = body.user;
+      enterAdmin();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-screen').style.display = 'none';
+    }
+  } catch {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-screen').style.display = 'none';
+  }
+}
+
+function enterAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'flex';
+  document.getElementById('user-badge').textContent = `${state.user.nickname || state.user.username} · ${roles[state.user.role] || state.user.role}`;
+  document.getElementById('password-notice').style.display = state.user.mustChangePassword ? 'block' : 'none';
+  setupNav();
+  if (state.user.mustChangePassword) {
+    openPasswordModal();
+    toast('请先修改初始化密码');
+    return;
+  }
+  showPage(canRead(state.page) ? state.page : 'dashboard');
+}
+
+function setupNav() {
+  document.querySelectorAll('.nav-item').forEach((item) => {
+    const page = item.dataset.page;
+    item.style.display = canRead(page) ? 'flex' : 'none';
+    item.onclick = () => showPage(page);
+  });
+  document.querySelectorAll('.super-only').forEach((el) => el.style.display = isSuper() ? '' : 'none');
+  document.querySelectorAll('[class*="write-"]').forEach((el) => {
+    const cls = [...el.classList].find((name) => name.startsWith('write-'));
+    if (!cls) return;
+    const scope = cls.replace('write-', '');
+    el.style.display = canWrite(scope) ? '' : 'none';
+  });
+}
+
+async function showPage(page) {
+  if (!canRead(page)) return toast('当前账号无权查看该模块');
+  state.page = page;
+  document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  const renderers = {
+    dashboard: renderDashboard,
+    resources: renderResources,
+    categories: renderCategories,
+    ads: renderAds,
+    site: renderSite,
+    stats: renderStats,
+    admins: renderAdmins,
+    logs: renderLogs
+  };
+  try {
+    await renderers[page]?.();
+  } catch (err) {
+    toast(err.message || '模块加载失败');
+  }
+}
+
+async function renderDashboard() {
+  const body = await api('/api/admin/dashboard');
+  document.getElementById('dash-time').textContent = new Date().toLocaleString('zh-CN');
+  const colors = ['#e63946','#f4a261','#2a9d8f','#e9c46a'];
+  const metrics = [
+    ['总访问量', body.stats.totalVisits, colors[0]],
+    ['今日访问', body.stats.todayVisits, colors[1]],
+    ['资源总数', body.stats.resourceCount, colors[2]],
+    ['累计下载', body.stats.totalDownloads, colors[3]]
+  ];
+  document.getElementById('metrics').innerHTML = metrics.map(([label, value, color]) => `<div class="metric-card" style="--c:${color}"><div class="metric-label">${label}</div><div class="metric-val">${fmt(value)}</div></div>`).join('');
+  document.getElementById('dash-res-list').innerHTML = body.resources.length ? body.resources.map((r) => `<tr><td>${escapeHtml(r.titleZh)}</td><td><span class="badge badge-red">${escapeHtml(r.category || '-')}</span></td><td>${fmt(r.downloads)}</td><td><span class="badge ${r.active ? 'badge-green' : 'badge-gray'}">${r.active ? '上架' : '下架'}</span></td></tr>`).join('') : '<tr class="empty-row"><td colspan="4">暂无资源</td></tr>';
+  document.getElementById('dash-log-list').innerHTML = body.logs.length ? body.logs.map((l) => `<tr><td><span class="badge badge-red">${escapeHtml(l.username)}</span></td><td>${escapeHtml(l.action)}</td><td style="color:#666;font-size:12px;">${time(l.created_at)}</td></tr>`).join('') : '<tr class="empty-row"><td colspan="3">暂无日志</td></tr>';
+}
+
+async function loadCategories() {
+  const body = await api('/api/admin/categories');
+  state.categories = body.categories || [];
+  return state.categories;
+}
+
+async function renderResources() {
+  await loadCategories();
+  const body = await api('/api/admin/resources?lang=zh');
+  state.resources = body.resources || [];
+  document.getElementById('resource-table').innerHTML = state.resources.length ? state.resources.map((r) => `<tr>
+    <td><img class="img-thumb" src="${escapeHtml(r.coverUrl || '')}" onerror="this.src='https://picsum.photos/seed/admin-${escapeHtml(r.id)}/120/90'"></td>
+    <td><div class="list-title">${escapeHtml(r.titleZh)}</div><div class="list-sub">/${escapeHtml(r.slug)}</div></td>
+    <td><span class="badge badge-red">${escapeHtml(r.category || '-')}</span></td>
+    <td><span class="badge ${r.fileUrl ? 'badge-green' : 'badge-gray'}" title="${escapeHtml(r.fileUrl || '')}">${r.fileUrl ? '已上传' : '未上传'}</span></td>
+    <td>${fmt(r.downloads)}</td>
+    <td>${Number(r.sortOrder || 0)}</td>
+    <td><span class="badge ${r.active ? 'badge-green' : 'badge-gray'}">${r.active ? '上架' : '下架'}</span></td>
+    <td><div class="action-btns">
+      <a class="btn btn-gray btn-sm" href="/r/${encodeURIComponent(r.slug)}" target="_blank">页面</a>
+      ${canWrite('resources') ? `<button class="btn btn-blue btn-sm" onclick="openResourceModal('${escapeHtml(r.id)}')">编辑</button><button class="btn btn-danger btn-sm" onclick="confirmAction('确认删除该资源？',()=>deleteResource('${escapeHtml(r.id)}'))">删除</button>` : ''}
+    </div></td>
+  </tr>`).join('') : '<tr class="empty-row"><td colspan="8">暂无资源</td></tr>';
+}
+
+function categoryOptions(selected = '') {
+  return ['<option value="">未分类</option>'].concat(state.categories.map((c) => `<option value="${escapeHtml(c.id)}" ${c.id === selected ? 'selected' : ''}>${escapeHtml(c.nameZh)}${c.nameEn ? ` / ${escapeHtml(c.nameEn)}` : ''}</option>`)).join('');
+}
+
+async function openResourceModal(resourceId = '') {
+  await loadCategories();
+  document.getElementById('res-category').innerHTML = categoryOptions();
+  document.getElementById('res-err').textContent = '';
+  resetResourceUploadUi();
+  if (!resourceId) {
+    document.getElementById('resource-modal-title').textContent = '新增资源';
+    ['res-id','res-title-zh','res-title-en','res-slug','res-size','res-cover','res-file','res-external','res-desc-zh','res-desc-en','res-tags'].forEach((key) => document.getElementById(key).value = '');
+    document.getElementById('res-sort').value = '0';
+    document.getElementById('res-downloads').value = '0';
+    document.getElementById('res-active').checked = true;
+  } else {
+    const r = state.resources.find((item) => item.id === resourceId) || (await api('/api/admin/resources?lang=zh')).resources.find((item) => item.id === resourceId);
+    document.getElementById('resource-modal-title').textContent = '编辑资源';
+    document.getElementById('res-id').value = r.id;
+    document.getElementById('res-title-zh').value = r.titleZh || '';
+    document.getElementById('res-title-en').value = r.titleEn || '';
+    document.getElementById('res-slug').value = r.slug || '';
+    document.getElementById('res-category').innerHTML = categoryOptions(r.categoryId);
+    document.getElementById('res-size').value = r.size || '';
+    document.getElementById('res-sort').value = r.sortOrder || 0;
+    document.getElementById('res-downloads').value = r.downloads || 0;
+    document.getElementById('res-cover').value = r.coverUrl || '';
+    document.getElementById('res-file').value = r.fileUrl || '';
+    document.getElementById('res-external').value = '';
+    document.getElementById('res-desc-zh').value = r.descZh || '';
+    document.getElementById('res-desc-en').value = r.descEn || '';
+    document.getElementById('res-tags').value = (r.tags || []).join(',');
+    document.getElementById('res-active').checked = !!r.active;
+    if (r.coverUrl) setResourceUploadStatus('cover', 'ok', '已上传封面图片', r.coverUrl);
+    if (r.fileUrl) {
+      setResourceUploadStatus('file', 'ok', '已上传资源文件');
+    } else if (r.externalUrl) {
+      setResourceUploadStatus('file', 'error', '历史资源使用外部链接，请重新上传资源文件');
+    }
+  }
+  openModal('resource-modal');
+}
+
+function resourcePayload() {
+  return {
+    title_zh: document.getElementById('res-title-zh').value.trim(),
+    title_en: document.getElementById('res-title-en').value.trim(),
+    slug: document.getElementById('res-slug').value.trim(),
+    category_id: document.getElementById('res-category').value,
+    size_label: document.getElementById('res-size').value.trim(),
+    sort_order: Number(document.getElementById('res-sort').value || 0),
+    downloads: Number(document.getElementById('res-downloads').value || 0),
+    cover_url: document.getElementById('res-cover').value.trim(),
+    file_url: document.getElementById('res-file').value.trim(),
+    external_url: '',
+    desc_zh: document.getElementById('res-desc-zh').value.trim(),
+    desc_en: document.getElementById('res-desc-en').value.trim(),
+    tags: document.getElementById('res-tags').value.split(',').map((x) => x.trim()).filter(Boolean),
+    active: document.getElementById('res-active').checked
+  };
+}
+
+async function saveResource() {
+  if (!canWrite('resources')) return toast('当前账号无写入权限');
+  const payload = resourcePayload();
+  if (!payload.title_zh) return document.getElementById('res-err').textContent = '请填写中文资源名称';
+  if (!payload.file_url) return document.getElementById('res-err').textContent = '请先上传资源文件';
+  const rid = document.getElementById('res-id').value;
+  try {
+    await api(rid ? `/api/admin/resources/${rid}` : '/api/admin/resources', { method: rid ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    closeModal('resource-modal');
+    toast('资源已保存');
+    renderResources();
+  } catch (err) {
+    document.getElementById('res-err').textContent = err.message;
+  }
+}
+
+async function deleteResource(id) {
+  await api(`/api/admin/resources/${id}`, { method: 'DELETE' });
+  toast('资源已删除');
+  renderResources();
+}
+
+async function renderCategories() {
+  await loadCategories();
+  document.getElementById('cat-list').innerHTML = state.categories.length ? state.categories.map((c) => `<div class="list-row">
+    <div><div class="list-title">${escapeHtml(c.nameZh)}${c.nameEn ? ` / ${escapeHtml(c.nameEn)}` : ''}</div><div class="list-sub">排序 ${Number(c.sortOrder || 0)} · ${c.active ? '启用' : '停用'}</div></div>
+    <div class="action-btns">${canWrite('categories') ? `<button class="btn btn-blue btn-sm" onclick="editCategory('${escapeHtml(c.id)}')">编辑</button><button class="btn btn-danger btn-sm" onclick="confirmAction('确认删除该分类？',()=>deleteCategory('${escapeHtml(c.id)}'))">删除</button>` : ''}</div>
+  </div>`).join('') : '<div style="color:#555;text-align:center;padding:20px;">暂无分类</div>';
+}
+
+function resetCategoryForm() {
+  ['cat-id','cat-name-zh','cat-name-en'].forEach((key) => document.getElementById(key).value = '');
+  document.getElementById('cat-sort').value = '0';
+  document.getElementById('cat-active').checked = true;
+}
+
+function editCategory(id) {
+  const c = state.categories.find((item) => item.id === id);
+  if (!c) return;
+  document.getElementById('cat-id').value = c.id;
+  document.getElementById('cat-name-zh').value = c.nameZh || '';
+  document.getElementById('cat-name-en').value = c.nameEn || '';
+  document.getElementById('cat-sort').value = c.sortOrder || 0;
+  document.getElementById('cat-active').checked = !!c.active;
+}
+
+async function saveCategory() {
+  if (!canWrite('categories')) return toast('当前账号无写入权限');
+  const payload = {
+    name_zh: document.getElementById('cat-name-zh').value.trim(),
+    name_en: document.getElementById('cat-name-en').value.trim(),
+    sort_order: Number(document.getElementById('cat-sort').value || 0),
+    active: document.getElementById('cat-active').checked
+  };
+  if (!payload.name_zh) return toast('请填写中文分类名称');
+  const cid = document.getElementById('cat-id').value;
+  try {
+    await api(cid ? `/api/admin/categories/${cid}` : '/api/admin/categories', { method: cid ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    resetCategoryForm();
+    toast('分类已保存');
+    renderCategories();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function deleteCategory(id) {
+  await api(`/api/admin/categories/${id}`, { method: 'DELETE' });
+  toast('分类已删除');
+  renderCategories();
+}
+
+async function renderAds() {
+  const body = await api('/api/admin/ads?lang=zh');
+  state.ads = body.ads || [];
+  const slotLabel = { banner_top:'顶部横幅', sidebar:'侧边栏', card_inline:'列表内嵌', download_button:'下载按钮/弹窗' };
+  document.getElementById('ad-list').innerHTML = state.ads.length ? state.ads.map((a) => `<div class="card" style="display:flex;gap:18px;align-items:flex-start;">
+    <img src="${escapeHtml(a.imageUrl || '')}" class="img-thumb" style="width:150px;height:82px;" onerror="this.src='https://picsum.photos/seed/ad-${escapeHtml(a.id)}/180/100'">
+    <div style="flex:1;min-width:0;"><div class="list-title">${escapeHtml(a.titleZh)}</div><div style="margin:6px 0;"><span class="badge badge-blue">${slotLabel[a.slot] || a.slot}</span> <span class="badge ${a.active ? 'badge-green' : 'badge-gray'}">${a.active ? '启用' : '停用'}</span></div><div class="link-cell" title="${escapeHtml(a.linkUrl)}">${escapeHtml(a.linkUrl || '-')}</div></div>
+    <div class="action-btns">${canWrite('ads') ? `<button class="btn btn-blue btn-sm" onclick="openAdModal('${escapeHtml(a.id)}')">编辑</button><button class="btn btn-danger btn-sm" onclick="confirmAction('确认删除该广告？',()=>deleteAd('${escapeHtml(a.id)}'))">删除</button>` : ''}</div>
+  </div>`).join('') : '<div class="card" style="text-align:center;color:#555;">暂无广告</div>';
+}
+
+function openAdModal(adId = '') {
+  document.getElementById('ad-err').textContent = '';
+  document.getElementById('ad-preview').style.display = 'none';
+  if (!adId) {
+    document.getElementById('ad-modal-title').textContent = '新增广告位';
+    ['ad-id','ad-title-zh','ad-title-en','ad-image','ad-link'].forEach((key) => document.getElementById(key).value = '');
+    document.getElementById('ad-slot').value = 'banner_top';
+    document.getElementById('ad-sort').value = '0';
+    document.getElementById('ad-active').checked = true;
+  } else {
+    const a = state.ads.find((item) => item.id === adId);
+    document.getElementById('ad-modal-title').textContent = '编辑广告位';
+    document.getElementById('ad-id').value = a.id;
+    document.getElementById('ad-title-zh').value = a.titleZh || '';
+    document.getElementById('ad-title-en').value = a.titleEn || '';
+    document.getElementById('ad-slot').value = a.slot || 'banner_top';
+    document.getElementById('ad-image').value = a.imageUrl || '';
+    document.getElementById('ad-link').value = a.linkUrl || '';
+    document.getElementById('ad-sort').value = a.sortOrder || 0;
+    document.getElementById('ad-active').checked = !!a.active;
+    previewImage('ad-image','ad-preview');
+  }
+  openModal('ad-modal');
+}
+
+async function saveAd() {
+  if (!canWrite('ads')) return toast('当前账号无写入权限');
+  const payload = {
+    title_zh: document.getElementById('ad-title-zh').value.trim(),
+    title_en: document.getElementById('ad-title-en').value.trim(),
+    slot: document.getElementById('ad-slot').value,
+    image_url: document.getElementById('ad-image').value.trim(),
+    link_url: document.getElementById('ad-link').value.trim(),
+    sort_order: Number(document.getElementById('ad-sort').value || 0),
+    active: document.getElementById('ad-active').checked
+  };
+  if (!payload.title_zh) return document.getElementById('ad-err').textContent = '请填写中文广告名称';
+  const aid = document.getElementById('ad-id').value;
+  try {
+    await api(aid ? `/api/admin/ads/${aid}` : '/api/admin/ads', { method: aid ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    closeModal('ad-modal');
+    toast('广告已保存');
+    renderAds();
+  } catch (err) {
+    document.getElementById('ad-err').textContent = err.message;
+  }
+}
+
+async function deleteAd(id) {
+  await api(`/api/admin/ads/${id}`, { method: 'DELETE' });
+  toast('广告已删除');
+  renderAds();
+}
+
+async function renderSite() {
+  const body = await api('/api/admin/site');
+  const s = body.site;
+  document.getElementById('site-name-zh').value = s.name_zh || '';
+  document.getElementById('site-name-en').value = s.name_en || '';
+  document.getElementById('site-desc-zh').value = s.desc_zh || '';
+  document.getElementById('site-desc-en').value = s.desc_en || '';
+  document.getElementById('site-hero-zh').value = s.hero_title_zh || '';
+  document.getElementById('site-hero-en').value = s.hero_title_en || '';
+  document.getElementById('site-sub-zh').value = s.hero_subtitle_zh || '';
+  document.getElementById('site-sub-en').value = s.hero_subtitle_en || '';
+  document.getElementById('site-ann-zh').value = s.announcement_zh || '';
+  document.getElementById('site-ann-en').value = s.announcement_en || '';
+  document.getElementById('site-footer-zh').value = s.footer_zh || '';
+  document.getElementById('site-footer-en').value = s.footer_en || '';
+  document.getElementById('site-logo').value = s.logo_url || '';
+  document.getElementById('site-color').value = s.primary_color || '#e63946';
+}
+
+async function saveSite() {
+  if (!canWrite('site')) return toast('当前账号无写入权限');
+  const payload = {
+    name_zh: document.getElementById('site-name-zh').value.trim(),
+    name_en: document.getElementById('site-name-en').value.trim(),
+    desc_zh: document.getElementById('site-desc-zh').value.trim(),
+    desc_en: document.getElementById('site-desc-en').value.trim(),
+    hero_title_zh: document.getElementById('site-hero-zh').value.trim(),
+    hero_title_en: document.getElementById('site-hero-en').value.trim(),
+    hero_subtitle_zh: document.getElementById('site-sub-zh').value.trim(),
+    hero_subtitle_en: document.getElementById('site-sub-en').value.trim(),
+    announcement_zh: document.getElementById('site-ann-zh').value.trim(),
+    announcement_en: document.getElementById('site-ann-en').value.trim(),
+    footer_zh: document.getElementById('site-footer-zh').value.trim(),
+    footer_en: document.getElementById('site-footer-en').value.trim(),
+    logo_url: document.getElementById('site-logo').value.trim(),
+    primary_color: document.getElementById('site-color').value || '#e63946'
+  };
+  try {
+    await api('/api/admin/site', { method: 'PUT', body: JSON.stringify(payload) });
+    toast('站点设置已保存');
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+async function renderStats() {
+  let body;
+  try {
+    body = await api('/api/admin/stats');
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  const metrics = [
+    ['总访问量', body.stats.totalVisits, '#e63946'],
+    ['今日访问', body.stats.todayVisits, '#f4a261'],
+    ['资源总数', body.stats.resourceCount, '#2a9d8f'],
+    ['累计下载', body.stats.totalDownloads, '#e9c46a']
+  ];
+  document.getElementById('stats-metrics').innerHTML = metrics.map(([label, value, color]) => `<div class="metric-card" style="--c:${color}"><div class="metric-label">${label}</div><div class="metric-val">${fmt(value)}</div></div>`).join('');
+  document.getElementById('source-list').innerHTML = listPairs(body.sources, 'source', 'visits');
+  document.getElementById('top-resource-list').innerHTML = body.topResources.map((r) => `<div class="source-item"><span>${escapeHtml(r.title_zh)}</span><b>${fmt(r.downloads)}</b></div>`).join('') || '<div class="source-item"><span>暂无数据</span><b>0</b></div>';
+  document.getElementById('device-list').innerHTML = listPairs(body.devices, 'device_type', 'visits');
+  document.getElementById('recent-downloads').innerHTML = body.recentDownloads.length ? body.recentDownloads.map((r) => `<tr><td>${escapeHtml(r.title_zh)}</td><td>${escapeHtml(r.source || '-')}</td><td>${escapeHtml(r.lang || '-')}</td><td>${time(r.created_at)}</td></tr>`).join('') : '<tr class="empty-row"><td colspan="4">暂无下载记录</td></tr>';
+  if (state.page === 'stats') toast('统计已刷新');
+}
+
+function listPairs(rows, nameKey, valueKey) {
+  return rows?.length ? rows.map((row) => `<div class="source-item"><span>${escapeHtml(row[nameKey] || 'direct')}</span><b>${fmt(row[valueKey])}</b></div>`).join('') : '<div class="source-item"><span>暂无数据</span><b>0</b></div>';
+}
+
+async function renderAdmins() {
+  if (!isSuper()) return;
+  const body = await api('/api/admin/admins');
+  state.admins = body.admins || [];
+  document.getElementById('admin-table').innerHTML = state.admins.map((a) => `<tr>
+    <td style="font-weight:700;color:#ddd;">${escapeHtml(a.username)}</td>
+    <td>${escapeHtml(a.nickname || '-')}</td>
+    <td><span class="badge ${a.role === 'super' ? 'badge-red' : 'badge-blue'}">${roles[a.role] || a.role}</span></td>
+    <td><span class="badge ${a.active ? 'badge-green' : 'badge-gray'}">${a.active ? '启用' : '停用'}${a.mustChangePassword ? ' · 待改密' : ''}</span></td>
+    <td><div class="action-btns"><button class="btn btn-blue btn-sm" onclick="openAdminModal('${escapeHtml(a.id)}')">编辑</button>${a.id !== state.user.id ? `<button class="btn btn-danger btn-sm" onclick="confirmAction('确认删除该管理员？',()=>deleteAdmin('${escapeHtml(a.id)}'))">删除</button>` : ''}</div></td>
+  </tr>`).join('');
+}
+
+function openAdminModal(adminId = '') {
+  document.getElementById('adm-err').textContent = '';
+  if (!adminId) {
+    document.getElementById('admin-modal-title').textContent = '新增管理员';
+    ['adm-id','adm-username','adm-nickname','adm-password'].forEach((key) => document.getElementById(key).value = '');
+    document.getElementById('adm-role').value = 'operator';
+    document.getElementById('adm-active').checked = true;
+    document.getElementById('adm-must-change').checked = false;
+  } else {
+    const a = state.admins.find((item) => item.id === adminId);
+    document.getElementById('admin-modal-title').textContent = '编辑管理员';
+    document.getElementById('adm-id').value = a.id;
+    document.getElementById('adm-username').value = a.username || '';
+    document.getElementById('adm-nickname').value = a.nickname || '';
+    document.getElementById('adm-password').value = '';
+    document.getElementById('adm-role').value = a.role || 'operator';
+    document.getElementById('adm-active').checked = !!a.active;
+    document.getElementById('adm-must-change').checked = !!a.mustChangePassword;
+  }
+  openModal('admin-modal');
+}
+
+async function saveAdmin() {
+  const payload = {
+    username: document.getElementById('adm-username').value.trim(),
+    nickname: document.getElementById('adm-nickname').value.trim(),
+    password: document.getElementById('adm-password').value,
+    role: document.getElementById('adm-role').value,
+    active: document.getElementById('adm-active').checked,
+    must_change_password: document.getElementById('adm-must-change').checked
+  };
+  const aid = document.getElementById('adm-id').value;
+  if (!payload.username) return document.getElementById('adm-err').textContent = '请填写账号';
+  try {
+    await api(aid ? `/api/admin/admins/${aid}` : '/api/admin/admins', { method: aid ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+    closeModal('admin-modal');
+    toast('管理员已保存');
+    renderAdmins();
+  } catch (err) {
+    document.getElementById('adm-err').textContent = err.message;
+  }
+}
+
+async function deleteAdmin(id) {
+  await api(`/api/admin/admins/${id}`, { method: 'DELETE' });
+  toast('管理员已删除');
+  renderAdmins();
+}
+
+async function renderLogs() {
+  const body = await api('/api/admin/logs?limit=180');
+  document.getElementById('log-table').innerHTML = body.logs.length ? body.logs.map((l) => `<tr><td><span class="badge badge-red">${escapeHtml(l.username)}</span></td><td>${escapeHtml(l.action)}</td><td>${escapeHtml(l.target_type || '-')} ${escapeHtml(l.target_id || '')}</td><td style="color:#666;">${escapeHtml(l.ip || '-')}</td><td style="color:#666;font-size:12px;">${time(l.created_at)}</td></tr>`).join('') : '<tr class="empty-row"><td colspan="5">暂无日志</td></tr>';
+}
+
+async function clearLogs() {
+  await api('/api/admin/logs', { method: 'DELETE' });
+  toast('日志已清空');
+  renderLogs();
+}
+
+function resetResourceUploadUi() {
+  ['cover', 'file'].forEach((type) => {
+    const status = document.getElementById(`res-${type}-status`);
+    const text = document.getElementById(`res-${type}-status-text`);
+    const preview = document.getElementById(`res-${type}-preview`);
+    if (status) status.className = 'upload-status';
+    if (text) text.textContent = '';
+    if (preview) {
+      preview.removeAttribute('src');
+      preview.style.display = 'none';
+    }
+  });
+  ['res-cover-file', 'res-file-upload'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  });
+}
+
+function setResourceUploadStatus(type, tone, message, imageUrl = '') {
+  const status = document.getElementById(`res-${type}-status`);
+  const text = document.getElementById(`res-${type}-status-text`);
+  const preview = document.getElementById(`res-${type}-preview`);
+  if (!status || !text) return;
+  status.className = ['upload-status', 'show', tone].filter(Boolean).join(' ');
+  text.textContent = message;
+  if (preview) {
+    if (imageUrl) {
+      preview.src = imageUrl;
+      preview.style.display = 'block';
+    } else {
+      preview.removeAttribute('src');
+      preview.style.display = 'none';
+    }
+  }
+}
+
+function humanFileSize(bytes = 0) {
+  const size = Number(bytes || 0);
+  if (!size) return '';
+  if (size < 1024) return `${size}B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)}MB`;
+  return `${(size / 1024 / 1024 / 1024).toFixed(1)}GB`;
+}
+
+async function uploadResourceFile(file, targetInputId, kind, type) {
+  if (!canWrite('upload')) {
+    setResourceUploadStatus(type, 'error', '当前账号无上传权限');
+    return;
+  }
+  if (!file) return;
+  if (kind === 'cover' && !String(file.type || '').startsWith('image/')) {
+    setResourceUploadStatus(type, 'error', '封面只支持图片文件');
+    return;
+  }
+  setResourceUploadStatus(type, '', `正在上传：${file.name}`);
+  const form = new FormData();
+  form.append('file', file);
+  form.append('kind', kind);
+  try {
+    const body = await api('/api/admin/upload', { method: 'POST', body: form });
+    document.getElementById(targetInputId).value = body.upload.url;
+    const suffix = body.upload.size ? ` · ${humanFileSize(body.upload.size)}` : '';
+    setResourceUploadStatus(type, 'ok', `已上传：${body.upload.originalName || file.name}${suffix}`, kind === 'cover' ? body.upload.url : '');
+    toast('上传成功');
+  } catch (err) {
+    setResourceUploadStatus(type, 'error', err.message);
+    toast(err.message);
+  }
+}
+
+function setupResourceDropZone(type, fileInputId, targetInputId, kind) {
+  const zone = document.getElementById(`res-${type}-drop`);
+  const fileInput = document.getElementById(fileInputId);
+  if (!zone || !fileInput) return;
+  zone.addEventListener('click', () => fileInput.click());
+  zone.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      fileInput.click();
+    }
+  });
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    zone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      zone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    zone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      zone.classList.remove('dragover');
+    });
+  });
+  zone.addEventListener('drop', (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (file) uploadResourceFile(file, targetInputId, kind, type);
+  });
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (file) await uploadResourceFile(file, targetInputId, kind, type);
+    fileInput.value = '';
+  });
+}
+
+async function uploadInto(fileInputId, targetInputId, kind, previewId = '') {
+  if (!canWrite('upload')) return toast('当前账号无上传权限');
+  const fileInput = document.getElementById(fileInputId);
+  if (!fileInput.files?.[0]) return toast('请先选择文件');
+  const form = new FormData();
+  form.append('file', fileInput.files[0]);
+  form.append('kind', kind);
+  try {
+    const body = await api('/api/admin/upload', { method: 'POST', body: form });
+    document.getElementById(targetInputId).value = body.upload.url;
+    if (previewId) previewImage(targetInputId, previewId);
+    fileInput.value = '';
+    toast('上传成功');
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+function previewImage(inputId, imageId) {
+  const src = document.getElementById(inputId).value.trim();
+  const img = document.getElementById(imageId);
+  if (!src) {
+    img.style.display = 'none';
+    return;
+  }
+  img.src = src;
+  img.style.display = 'block';
+  img.onerror = () => img.style.display = 'none';
+}
+
+function openPasswordModal() {
+  document.getElementById('pwd-old').value = '';
+  document.getElementById('pwd-new').value = '';
+  document.getElementById('pwd-err').textContent = '';
+  openModal('password-modal');
+}
+
+async function changePassword() {
+  const oldPassword = document.getElementById('pwd-old').value;
+  const newPassword = document.getElementById('pwd-new').value;
+  try {
+    await api('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
+    state.user.mustChangePassword = false;
+    document.getElementById('password-notice').style.display = 'none';
+    closeModal('password-modal');
+    toast('密码已修改');
+    showPage(canRead(state.page) ? state.page : 'dashboard');
+  } catch (err) {
+    document.getElementById('pwd-err').textContent = err.message;
+  }
+}
+
+document.getElementById('login-pass').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') login();
+});
+setupResourceDropZone('cover', 'res-cover-file', 'res-cover', 'cover');
+setupResourceDropZone('file', 'res-file-upload', 'res-file', 'resource');
+document.querySelectorAll('.modal-overlay').forEach((el) => {
+  el.addEventListener('click', (event) => {
+    if (event.target === el) closeModal(el.id);
+  });
+});
+
+checkSession();
+</script>
+</body>
+</html>
