@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <!-- Existing landing remains HTTP; only this exact domain is allowed. -->
+    <domain-config cleartextTrafficPermitted="true"><domain includeSubdomains="false">okqpkdj.cn</domain></domain-config>
+</network-security-config>

@@ -1,5 +1,11 @@
 node_modules/
 __pycache__/
+android/.gradle/
+android/local.properties
+android/**/build/
+*.jks
+*.keystore
+*.p12
 dist/
 admin/data/*.sqlite
 admin/data/*.sqlite-*

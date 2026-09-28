@@ -69,7 +69,7 @@ python3 deploy/patch-production-nav.py rollback \
 
 安装文件内容校验：
 
-`deploy/entry-source.zip` 仅保存这次从公开旧 H5 下载并校验过的两个安装文件、开屏图和 HTML。生产服务器访问旧 H5 下载接口得到 HTTP 403，因此通过仓库传输这份原样备份；脚本逐文件核对固定哈希，不依赖旧站持续可访问。压缩包不含客户数据或访问凭据。
+`deploy/entry-source.zip` 保存这次从公开旧 H5 下载并校验过的两个安装文件、开屏图和 HTML，以及公开前端 JS/CSS/入口 HTML 基线。生产服务器访问旧 H5 下载接口得到 HTTP 403，因此通过仓库传输这份原样备份；脚本逐文件核对固定哈希，不依赖旧站持续可访问。压缩包不含客户数据或访问凭据。`python deploy/verify-bundled-production.py` 可在隔离目录重现本次正式前端，供 CI 检查。
 
 | 文件 | SHA-256 |
 | --- | --- |
@@ -95,7 +95,11 @@ python3 migrate-production-entry.py rollback \
   --backup-root /opt/ads-king/backups/entry-<该次UTC时间>
 ```
 
-入口迁移的实际发布记录在上线核验后补记。
+入口迁移已于 2026-09-29 01:50:32（新加坡时间）上线。服务器备份：`/opt/ads-king/backups/entry-20260928T175032509473Z`。执行脚本来自提交 `ce0d930df1c5b8818d861a136160919257cb2fd1`，SHA-256 `2b973b9e3fe458880c6be51100ed30da6b8e02f65e45ce2cc761531eff4dcd09`。
+
+最终 JS：`index-server-46d1d07f01e5.js`（SHA-256 `46d1d07f01e5f8f1589a9deec4460e43f458f28f9f24b00f79bf5d892b831d08`）；CSS：`index-server-4e39b5ffbea0.css`。主站、落地页、H5、下载页、QR、两份安装文件、开屏图及 JS/CSS 共 10 个公开 HTTP 文件全部与本地发布清单哈希一致。浏览器已确认加载最终 JS、四项底栏等宽。
+
+用户随后明确本次剩余范围为“修改 GitHub 仓库的生产部署，然后打包 APK”。域名由其他人管理，DNS / 外部 Pages 停用不再作为本次后续执行事项。下表保留真实状态，不能改写成外部服务已全部取消。新增 Android 工程与签名说明见 [android/README.md](../android/README.md)；新 APK 独立交付，不自动替换落地页原安装文件。
 
 ## 旧环境停用清单
 
