@@ -10,6 +10,8 @@ const tabsPath = path.resolve(process.argv[4] || '../joker-ads-implementation-ev
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
 const tabs = JSON.parse(fs.readFileSync(tabsPath, 'utf8'))
 const report = { normal: [], legacy: [], failure: [] }
+const entryRelease = fs.existsSync(path.join(root, 'release/main/index.html'))
+const releaseRoot = path.join(root, entryRelease ? 'release/main' : 'release')
 const icons = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" rx="16" fill="#18303a"/></svg>'
 
 for (const [mode, port] of [['normal', 4317], ['legacy', 4318], ['failure', 4319]]) {
@@ -43,10 +45,10 @@ for (const [mode, port] of [['normal', 4317], ['legacy', 4318], ['failure', 4319
     if (url.pathname === '/data/popups.json') return json({ afterEnterApp: [{ name: 'QA empty media', coverUrl: '/qa-unavailable.img' }], gridPopAds: [] })
     if (url.pathname.startsWith('/data/')) return json({})
     if (url.pathname.startsWith('/api') || url.pathname.startsWith('/pay-bff')) return json({ data: [], items: [], list: [] })
-    if (url.pathname === '/') return send('text/html; charset=utf-8', fs.readFileSync(path.join(root, 'release/index.html')))
+    if (url.pathname === '/') return send('text/html; charset=utf-8', fs.readFileSync(path.join(releaseRoot, 'index.html')))
     if (url.pathname.startsWith('/assets/')) {
       const name = path.basename(url.pathname)
-      const releaseFile = path.join(root, 'release/assets', name)
+      const releaseFile = path.join(releaseRoot, 'assets', name)
       const baselineFile = path.join(root, 'baseline/assets', name)
       const file = fs.existsSync(releaseFile) ? releaseFile : baselineFile
       if (fs.existsSync(file)) return send(name.endsWith('.css') ? 'text/css' : 'text/javascript', fs.readFileSync(file))

@@ -55,15 +55,54 @@ python3 deploy/patch-production-nav.py rollback \
 
 备份保存入口 HTML、完整 assets 目录和发布校验记录。脚本不删除原资源、不改客户数据，也不覆盖后台草稿或在线广告配置。
 
-实际生产发布时间、备份位置和线上核验将在执行后补记；以上本地检查不代表已经上线。
+已于 2026-09-29 01:34:59（新加坡时间；UTC 2026-09-28 17:34:59）上线。服务器备份：`/opt/ads-king/backups/nav4-20260928T173459473329Z`。公开 HTTP 返回的新 JS 与上述哈希一致；生产浏览器显示四项，每项 115px（460px 内容区）。
+
+## 入口迁移到同一服务器
+
+`migrate-production-entry.py` 在上述四项底栏版本上继续修改，不使用历史 Vue 源码重建覆盖生产。
+
+- 正式 H5 地址改为 `https://b12sl5x.cn/h5/`，目录 `/www/wwwroot/b12sl5x.cn/h5`。保留原开屏画面及约两秒时长，以 `location.replace` 进入主站应用中心，并传递 `inviteCode`。
+- 落地页「官方入口」进入服务器 H5。传入的邀请码优先；无邀请码时保留原默认值 `1110333149523`。
+- 身份卡、邀请分享及二维码共用的新链接为 `http://okqpkdj.cn/?inviteCode=...`。
+- 旧 `/#/invite` 与 `/invite` 在初始化客户领取之前跳转到落地页；旧展示组件及独占 CSS、视频引用移除。备份中的原资源保留供回滚。
+- 下载页为 `https://b12sl5x.cn/h5/down/`；APK 和 mobileconfig 从旧 H5 原样复制到服务器，二维码同步指向新下载页。没有修改或重新签名安装文件，也没有新增安装后归因。
+
+安装文件内容校验：
+
+| 文件 | SHA-256 |
+| --- | --- |
+| `app.apk` | `56dc416de014fdb2f06bdbe7db6a56f1444603343e8edcb24ff1e0c1d317589b` |
+| `app.mobileconfig` | `802af6b2d1db4210f72cb01ea493aa15473c6516ead8cae2a80ecf8f7991fe24` |
+
+注意：原签名 mobileconfig 内仍含历史 `https://app.sb28.me/index.html` WebClip 地址。本次仅搬迁下载文件，未改动签名内容；不能把网页入口迁移描述为安装包内全部历史地址也已清理。
+
+检查记录：
+
+- 精确反向还原补丁，与原始 JS 字节比较，确认共享身份卡和 claim/localStorage 实现未被重写；仅替换共用分享 URL。
+- `node scripts/verify-production-entry.mjs`：旧链接不启动 claim、邀请码转义和完整传递、默认邀请码、直接 H5 无邀请码、两秒 replace、无旧展示/视频引用均通过。
+- `python deploy/test-production-entry.py crawled/_production-entry`：两站入口同时精确回滚；基线不符时不覆盖。
+- 最终生成 JS 的本地浏览器检查：正常/遗留/503 配置均四项；身份卡可打开、二维码和新链接可见，复制/保存操作显示成功提示。自动化未取得剪贴板内容和新 PNG 下载回执，不能据此宣称端到端复制/保存已完全验收。
+- 使用锁定依赖执行 `npm ci --ignore-scripts`、`npm run build` 成功。此构建只检查仓库历史源码，**不是本次发布产物**；发布的是通过哈希校验的服务器基线补丁。构建有大于 500kB 的 chunk 提示。
+
+发布前先备份主站入口、完整 assets、落地页入口和发布哈希记录；先放入 H5/下载/QR/新 JS/CSS，再切换落地页及主站入口。中途入口切换失败会恢复本次已切换的入口。回滚命令：
+
+```bash
+python3 migrate-production-entry.py rollback \
+  --site-root /www/wwwroot/b12sl5x.cn \
+  --landing-root /www/wwwroot/okqpkdj.cn \
+  --backup-root /opt/ads-king/backups/entry-<该次UTC时间>
+```
+
+入口迁移的实际发布记录在上线核验后补记。
 
 ## 旧环境停用清单
 
 | 项目 | 当前亲自核实结果 | 停用状态 |
 | --- | --- | --- |
-| GitHub Pages 自动发布 | 仓库仍有 `pages.yml` 和 `publish-pages.mjs` 历史发布通道 | 正在停用 |
-| 旧 `51-pc.com` 发布 | `deploy.yml` 和旧引导脚本仍引用已废弃目录；旧文档已说明该方案废弃 | 正在停用仓库入口；不得误操作其他项目 |
+| GitHub Pages 自动发布 | 本分支删除 `pages.yml`；`publish-pages.mjs` 明确拒绝发布；公网旧 Pages 地址当前 301 到主站 | 发布入口已在本分支停用；合并后才作用于默认分支。外部 Pages 服务未确认取消 |
+| 旧 `51-pc.com` 发布 | 本分支删除 `deploy.yml`；旧引导脚本退出并说明已废弃 | 仓库入口已停用；不操作其他项目目录 |
 | Cloudflare Pages H5 `app.b12sl5x.cn` | DNS 指向 `b12sl5x.pages.dev`；当前提供的令牌对目标 Pages 返回 403 | 尚未停用 |
 | 用户标记的 Cloudflare 账户 | 已进入 `Joker870908@gmail.com's Account`，并选择 Pages 筛选；页面显示 `No projects found` | 未找到可停用的目标项目，不能视为已停用 |
+| 域名解析 | `b12sl5x.cn` 的权威 NS 为 `ns1.julydns.com` / `ns2.julydns.com`；主域指向服务器，`app` 子域 CNAME 指向旧 Pages | 需要实际域名后台将 `app` 切到服务器，再移除旧 Pages 域名绑定/项目 |
 
 停用前须让服务器接管对应入口和下载资源，保留已有链接的访问能力。Cloudflare 目标项目及其域名管理权限尚未取得时，如实保留此项未完成状态。
