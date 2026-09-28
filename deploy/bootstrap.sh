@@ -1,4 +1,6 @@
 #!/bin/bash
+echo 'Retired 51-pc.com bootstrap. Use the sole VPS described in deploy/PRODUCTION.md.' >&2
+exit 1
 set -euo pipefail
 
 DOMAIN="51-pc.com"

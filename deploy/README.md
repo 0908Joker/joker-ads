@@ -1,5 +1,7 @@
 # 部署与基础设施
 
+> **2026-09-29 更新：唯一永久生产环境为自有 VPS。** 当前规则和实际发布记录以 [PRODUCTION.md](PRODUCTION.md) 为准；下文的 2026-08-26 内容保留作历史说明。
+
 > 最后核对：2026-08-26（对照线上实际状态逐项验证）
 
 ## 架构现状
@@ -8,9 +10,9 @@
 |------|------|----------|----------|
 | 前端站点 | `b12sl5x.cn` | **自有服务器** `107.149.129.35`（`/www/wwwroot/b12sl5x.cn`） | `npm run publish` |
 | 接口 / 支付 | `al-ads.com`（也可同源走站点代理） | **同一台 VPS** | ssh 上去改，手动 reload |
-| 代码仓库 | GitHub `0908Joker/joker-ads` | 仅仓库 / 可选备用 Pages | `npm run publish:pages` |
+| 代码仓库 | GitHub `0908Joker/joker-ads` | 仅代码与发布记录 | 不向 Pages 发布 |
 
-**生产以 VPS 为准。** GitHub Pages 只是备用，不再作为主发布路径。
+**生产以 VPS 为准，且只有该 VPS 是生产环境。** GitHub Pages 和 Cloudflare Pages 均取消作为生产或备用生产的发布目标。
 
 验证方法：
 
@@ -164,7 +166,7 @@ node scripts/sync-video-pool.mjs
 
 ```bash
 npm run publish          # 构建 + 传到 VPS /www/wwwroot/b12sl5x.cn
-npm run publish:pages    # 可选：同步一份到 GitHub Pages 备用
+# GitHub Pages 发布通道已取消，不再同步备用生产。
 ```
 
 确认服务器拿到新版本：

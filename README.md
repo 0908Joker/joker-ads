@@ -1,5 +1,9 @@
 # joker-ads
 
+> **唯一永久生产环境：自有 VPS `AllenWebAds-001`，主站 `https://b12sl5x.cn/`。**
+> 以服务器正在运行的版本为准。GitHub 负责代码和变更记录；GitHub Pages、Cloudflare Pages 均不再作为生产或备用生产环境。
+> 生产目录、现网身份卡基线、发布记录与旧环境停用进度见 [生产环境说明](deploy/PRODUCTION.md)。
+
 1:1 复刻 [fbi.xdx794.com/#/appcenter](https://fbi.xdx794.com/#/appcenter) 的应用中心 UI，含完整爬虫工具链。
 
 ## 快速开始
