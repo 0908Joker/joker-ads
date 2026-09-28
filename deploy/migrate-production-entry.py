@@ -11,6 +11,7 @@ import subprocess
 import tarfile
 import tempfile
 import urllib.request
+import zipfile
 
 spec = importlib.util.spec_from_file_location("nav", Path(__file__).with_name("patch-production-nav.py"))
 nav = importlib.util.module_from_spec(spec)
@@ -50,14 +51,20 @@ def verified(path, expected):
 
 def download_source(source):
     source.mkdir(parents=True, exist_ok=True)
+    archive = Path(__file__).with_name('entry-source.zip')
     for name, expected in {**DOWNLOADS, "h5-entry.html": H5_SHA}.items():
         target = source / name
         if target.exists():
             verified(target, expected)
             continue
-        url = "https://app.b12sl5x.cn/" + ("" if name == "h5-entry.html" else name)
-        with urllib.request.urlopen(url, timeout=30) as response:
-            data = response.read()
+        if archive.exists():
+            # Read named members only, never extract arbitrary archive paths.
+            with zipfile.ZipFile(archive) as bundle:
+                data = bundle.read(name)
+        else:
+            url = "https://app.b12sl5x.cn/" + ("" if name == "h5-entry.html" else name)
+            with urllib.request.urlopen(url, timeout=30) as response:
+                data = response.read()
         check(sha(data) == expected, "Upstream changed: " + name)
         target.write_bytes(data)
 

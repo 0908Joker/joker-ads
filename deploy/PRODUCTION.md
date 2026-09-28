@@ -69,6 +69,8 @@ python3 deploy/patch-production-nav.py rollback \
 
 安装文件内容校验：
 
+`deploy/entry-source.zip` 仅保存这次从公开旧 H5 下载并校验过的两个安装文件、开屏图和 HTML。生产服务器访问旧 H5 下载接口得到 HTTP 403，因此通过仓库传输这份原样备份；脚本逐文件核对固定哈希，不依赖旧站持续可访问。压缩包不含客户数据或访问凭据。
+
 | 文件 | SHA-256 |
 | --- | --- |
 | `app.apk` | `56dc416de014fdb2f06bdbe7db6a56f1444603343e8edcb24ff1e0c1d317589b` |
