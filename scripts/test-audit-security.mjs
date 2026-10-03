@@ -5,7 +5,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import net from 'node:net'
 import vm from 'node:vm'
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -17,6 +17,20 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'joker-security-'))
 const dbPath = path.join(tmp, 'db.sqlite')
 const dataDir = path.join(tmp, 'data')
 const password = crypto.randomBytes(24).toString('hex')
+// Exercise the real initializer, including a pre-existing database without env credentials.
+for (const [label, secret, succeeds] of [['missing', '', false], ['short', 'short', false], ['public-default', 'ChangeMeNow1!', false], ['explicit', password, true]]) {
+  const fixtureDb = path.join(tmp, 'bootstrap-' + label + '.sqlite')
+  const env = { ...process.env, ADMIN_DB_PATH: fixtureDb, SITE_DATA_DIR: dataDir, ADMIN_BOOTSTRAP_PASS: secret, ADMIN_BOOTSTRAP_USER: 'fixture' }
+  const command = `import {getDb} from ${JSON.stringify(pathToFileURL(path.join(dir, 'lib/db.mjs')).href)};getDb().close()`
+  const created = spawnSync(process.execPath, ['--input-type=module', '-e', command], { env, encoding: 'utf8' })
+  assert.equal(created.status === 0, succeeds, 'bootstrap ' + label)
+  if (!succeeds) assert.match(created.stderr, /explicit non-default/)
+  else {
+    const existing = spawnSync(process.execPath, ['--input-type=module', '-e', command], { env: { ...env, ADMIN_BOOTSTRAP_PASS: '' }, encoding: 'utf8' })
+    assert.equal(existing.status, 0, 'existing database needs no bootstrap credential')
+  }
+}
+console.log('PASS real bootstrap rejects missing/short/public-default passwords; existing database remains compatible')
 for (const stage of ['live', 'draft']) {
   fs.mkdirSync(path.join(dataDir, stage), { recursive: true })
   for (const [name, value] of Object.entries({ config: { apps: [], categories: [] }, popups: {}, tabs: {}, meta: { version: 1 }, 'api-session': {} })) {

@@ -10,7 +10,7 @@
     "crawl": "cd scripts && node crawl.mjs && node crawl-phase2.mjs && node finalize.mjs",
     "sync:api": "cd scripts && node sync-api-session.mjs && node sync-live-api.mjs",
     "audit:gate": "cd scripts && node audit-gate.mjs",
-    "publish": "npm run build && node scripts/publish-vps.mjs",
+    "publish": "node scripts/publish-vps.mjs",
     "publish:pages": "node scripts/publish-pages.mjs",
     "admin:install": "cd admin && npm install",
     "admin:dev": "cd admin && npm run dev",

@@ -121,11 +121,15 @@ export function verifyPassword(password, salt, hash) {
   return crypto.timingSafeEqual(Buffer.from(next, 'hex'), Buffer.from(hash, 'hex'))
 }
 
-function seedAdmin(database) {
+export function seedAdmin(database) {
   const count = database.prepare('SELECT COUNT(*) AS c FROM admins').get().c
   if (count > 0) return
   const username = process.env.ADMIN_BOOTSTRAP_USER || 'admin'
-  const password = process.env.ADMIN_BOOTSTRAP_PASS || 'ChangeMeNow1!'
+  const password = process.env.ADMIN_BOOTSTRAP_PASS || ''
+  // The former public bootstrap credential must never be accepted again.
+  if (password.length < 10 || password === 'ChangeMeNow1!') {
+    throw new Error('Empty admin database requires an explicit non-default ADMIN_BOOTSTRAP_PASS of at least 10 characters')
+  }
   const { salt, hash } = hashPassword(password)
   const adminId = id('adm')
   database.prepare(`
