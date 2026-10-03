@@ -93,7 +93,7 @@
         <button class="panel__more" @click="$router.push('/appcenter')">更多</button>
       </header>
       <div class="quick-grid" :style="{ gridTemplateColumns: `repeat(${recommend.length || 5}, minmax(0, 1fr))` }">
-        <button v-for="(app, i) in recommend" :key="'r-' + app.name + i" class="quick-app" @click="openApp(app)">
+        <button v-for="(app, i) in recommend" :key="'r-' + app.name + i" class="quick-app" @click="openApp(app, 'mineRecommendations')">
           <img v-if="app.icon" :src="app.icon" alt="" class="quick-app__img" />
           <div v-else class="quick-app__img quick-app__img--ph">{{ app.name.slice(0, 2) }}</div>
           <span>{{ app.name }}</span>
@@ -154,8 +154,8 @@ const avatarText = computed(() => {
   return n.slice(0, 1) || '污'
 })
 
-function openApp(app) {
-  openAd(app)
+function openApp(app, slot = 'mineQuickApps') {
+  openAd(app, slot)
 }
 function goRecharge(type) {
   router.push(type === 'gold' ? '/recharge?type=gold' : '/recharge?type=vip')

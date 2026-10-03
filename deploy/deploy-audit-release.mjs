@@ -62,6 +62,7 @@ async function deploy(revision, out) {
   assert.equal(sha(fs.readFileSync(web + '/assets/' + previous.frontend)), previous.frontendSha256)
   const bundle = fs.readFileSync(path.join(out, manifest.frontend))
   assert.equal(sha(bundle), manifest.frontendSha256)
+  if (manifest.stage >= 3) execFileSync(process.execPath, [path.join(root, 'scripts/test-audit-runtime.mjs')], { stdio: 'inherit', env: { ...process.env, AUDIT_BUNDLE_OUT: out } })
   const backup = '/opt/ads-king/backups/audit-' + manifest.stage + '-' + revision + '-' + Date.now()
   fs.mkdirSync(backup, { recursive: true, mode: 0o700 })
   for (const [i, op] of operations.entries()) if (op.before) fs.writeFileSync(path.join(backup, i + '.before'), op.before, { mode: 0o600 })

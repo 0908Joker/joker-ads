@@ -144,8 +144,16 @@ async function save() {
   const a = document.createElement('a')
   a.href = canvas.toDataURL('image/png')
   a.download = `${customer.cardNo || 'dewu-card'}.png`
+  if (window.DewuBridge?.saveImage) {
+    try {
+      const result = await window.DewuBridge.saveImage(a.href, a.download)
+      if (result?.status === 'cancelled') showToast('已取消保存')
+      else showToast('身份卡已保存')
+    } catch { showToast('保存失败，请重试') }
+    return
+  }
   a.click()
-  showToast('已保存，手机可长按相册')
+  showToast('已发起下载，请查看系统下载记录')
 }
 </script>
 

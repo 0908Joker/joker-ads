@@ -1,8 +1,9 @@
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 import { parse } from '@babel/parser'
-function sourceFunction(file, name, bindings = {}, bodyOnly = false) {
-  const source = fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8')
+export function sourceFunction(file, name, bindings = {}, bodyOnly = false) {
+  const raw = fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8')
+  const source = file.endsWith('.vue') ? raw.split('<script setup>')[1].split('</script>')[0] : raw
   const functions = parse(source, { sourceType: 'module' }).program.body.map(n => n.declaration || n)
   const node = functions.find(n => n.type === 'FunctionDeclaration' && n.id.name === name)
   assert.ok(node, file + ' ' + name)
@@ -20,7 +21,7 @@ export function patchStageTwo(code, { exact, functionBody }) {
   code = exact(code, 'ge(k4,ed(rp(n.value.promo||{})),null,16)', '(n.value.promo?.url||n.value.promo?.image||n.value.promo?.cover||n.value.promo?.text)?ge(k4,ed(rp(n.value.promo||{})),null,16):Be("",true)')
   code = exact(code, 'ge(X4,ed(rp(n.value.floatBanner||{})),null,16)', 'n.value.floatBanner?.url?ge(X4,ed(rp(n.value.floatBanner||{})),null,16):Be("",true)')
   code = exact(code, 'c0(()=>{!p.value&&Vo()&&(n.value=!0,Ho())})', 'y0(()=>He.ready,()=>{!p.value&&Vo()&&(n.value=!0,Ho())},{immediate:true})')
-  code = exact(code, 'J("div",s4,[ge(o),', 'J("div",s4,[se(t).error?D("section",{role:"status",style:{padding:"12px",background:"#493712",color:"white",fontSize:"14px"}},[se(t).error,D("button",{onClick:()=>yy(),style:{marginLeft:"12px",padding:"4px 12px"}},"重试")]):Be("",true),ge(o),')
+  code = exact(code, 'J("div",s4,[ge(o),', 'J("div",s4,[se(t).error?D("section",{role:"status",style:{padding:"12px",background:"#493712",color:"white",fontSize:"14px"}},[f0(se(t).error),D("button",{onClick:()=>yy(),style:{marginLeft:"12px",padding:"4px 12px"}},"重试")]):Be("",true),ge(o),')
   const start = ',l=["oio禁漫","免费看黄片","新葡京","海角社区","同城约炮","新葡京"]'
   const end = ',w=he(()=>String(i.value.name'
   assert.equal(code.split(start).length, 2)

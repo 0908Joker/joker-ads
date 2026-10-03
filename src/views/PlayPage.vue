@@ -13,7 +13,6 @@
         playsinline
         autoplay
         :poster="poster || undefined"
-        @error="onVideoError"
       />
       <p v-if="status" class="play__status">{{ status }}</p>
     </div>
@@ -58,6 +57,7 @@ import { fetchRecommend, fetchVideoDetail } from '../api/videos.js'
 import { proxyMediaUrl } from '../api/client.js'
 import { normalizeFeaturedPayload, normalizeVideoDetail } from '../api/normalize.js'
 import { decryptMedia } from '../api/media.js'
+import { createPlaybackSession } from '../lib/playbackSession.js'
 
 const RELATED_LIMIT = 12
 
@@ -68,8 +68,8 @@ const detail = ref(null)
 const related = ref([])
 const poster = ref('')
 const status = ref('加载中…')
-let hls = null
 let loadSeq = 0
+const playback = createPlaybackSession({ getVideo: () => videoEl.value, getSequence: () => loadSeq, loadHls: () => import('hls.js'), proxy: proxyMediaUrl })
 
 function goBack() {
   if (window.history.length > 1) router.back()
@@ -84,7 +84,8 @@ function excludeCurrent(list, currentId) {
   return (list || []).filter((v) => v?.id && String(v.id) !== String(currentId))
 }
 
-async function loadRelated(currentId, fromDetail = []) {
+async function loadRelated(currentId, fromDetail = [], seq = loadSeq) {
+  if (seq !== loadSeq) return
   const seed = excludeCurrent(fromDetail, currentId).slice(0, RELATED_LIMIT)
   if (seed.length >= RELATED_LIMIT) {
     related.value = seed
@@ -99,6 +100,7 @@ async function loadRelated(currentId, fromDetail = []) {
     extras = []
   }
 
+  if (seq !== loadSeq) return
   const merged = [...seed]
   for (const v of excludeCurrent(extras, currentId)) {
     if (merged.length >= RELATED_LIMIT) break
@@ -117,102 +119,14 @@ async function loadRelated(currentId, fromDetail = []) {
       }
     } catch {}
   }
-  related.value = merged
+  if (seq === loadSeq) related.value = merged
 }
 
 function onVideoError() {
   if (!status.value) status.value = '视频加载失败，请稍后重试'
 }
 
-function destroyPlayer() {
-  if (hls) {
-    try {
-      hls.destroy()
-    } catch {}
-    hls = null
-  }
-  const el = videoEl.value
-  if (el) {
-    try {
-      el.pause()
-    } catch {}
-    el.removeAttribute('src')
-    try {
-      el.load()
-    } catch {}
-  }
-}
-
-async function attachStream(url) {
-  const el = videoEl.value
-  if (!el || !url) throw new Error('no media')
-  destroyPlayer()
-
-  const isHls = /\.m3u8(\?|$)/i.test(url)
-  if (!isHls) {
-    await new Promise((resolve, reject) => {
-      const onOk = () => {
-        cleanup()
-        resolve()
-      }
-      const onErr = () => {
-        cleanup()
-        reject(new Error('mp4 error'))
-      }
-      const cleanup = () => {
-        el.removeEventListener('loadeddata', onOk)
-        el.removeEventListener('error', onErr)
-      }
-      el.addEventListener('loadeddata', onOk, { once: true })
-      el.addEventListener('error', onErr, { once: true })
-      el.src = url
-      el.load()
-    })
-    return
-  }
-  // Prefer hls.js wherever MSE exists: Chromium reports "maybe" for the HLS
-  // MIME type but cannot actually play it, so canPlayType must not decide first.
-  const { default: Hls } = await import('hls.js')
-  if (Hls.isSupported()) {
-    await new Promise((resolve, reject) => {
-      hls = new Hls({ enableWorker: true })
-      hls.loadSource(url)
-      hls.attachMedia(el)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => resolve())
-      hls.on(Hls.Events.ERROR, (_e, data) => {
-        if (data.fatal) reject(new Error('hls fatal'))
-      })
-    })
-    return
-  }
-  if (el.canPlayType('application/vnd.apple.mpegurl')) {
-    el.src = url
-    return
-  }
-  throw new Error('unsupported')
-}
-
-async function attachCandidates(urls) {
-  const list = (urls || []).filter(Boolean)
-  for (const raw of list) {
-    try {
-      await attachStream(proxyMediaUrl(raw))
-      try {
-        await videoEl.value?.play()
-      } catch {}
-      return true
-    } catch {
-      destroyPlayer()
-      if (videoEl.value) {
-        videoEl.value.removeAttribute('src')
-        try {
-          videoEl.value.load()
-        } catch {}
-      }
-    }
-  }
-  return false
-}
+function destroyPlayer() { playback.dispose() }
 
 async function load() {
   const id = route.params.id
@@ -233,7 +147,7 @@ async function load() {
     if (!d || !d.playUrl) {
       if (d) detail.value = d
       status.value = d?.needBuy ? '需购买后观看，暂无试看' : '未获取到播放地址'
-      await loadRelated(id, d?.others || [])
+      await loadRelated(id, d?.others || [], seq)
       return
     }
     detail.value = d
@@ -243,19 +157,17 @@ async function load() {
         if (seq === loadSeq) poster.value = src
       })
       .catch(() => {})
-    const ok = await Promise.all([
-      attachCandidates(d.playCandidates?.length ? d.playCandidates : [d.playUrl]),
-      loadRelated(id, d.others || []),
-    ])
+    void loadRelated(id, d.others || [], seq)
+    const ok = await playback.attachCandidates(d.playCandidates?.length ? d.playCandidates : [d.playUrl], seq)
     if (seq !== loadSeq) return
-    if (!ok[0]) status.value = '视频加载失败，请稍后重试'
+    if (!ok) status.value = '视频加载失败，请稍后重试'
   } catch (e) {
     if (seq !== loadSeq) return
     const msg = String(e?.message || e || '')
     // Gone from origin — don't advertise「下架」; jump to a live related card.
     if (/不存在|已下架|下架/.test(msg)) {
       status.value = '加载中…'
-      await loadRelated(id, [])
+      await loadRelated(id, [], seq)
       if (seq !== loadSeq) return
       const next = related.value.find((v) => v?.id && String(v.id) !== String(id))
       if (next?.id) {
@@ -266,13 +178,13 @@ async function load() {
       return
     }
     status.value = msg && msg.length < 40 ? msg : '加载失败，请稍后重试'
-    await loadRelated(id, [])
+    await loadRelated(id, [], seq)
   }
 }
 
 onMounted(load)
 watch(() => route.params.id, load)
-onBeforeUnmount(destroyPlayer)
+onBeforeUnmount(() => { ++loadSeq; destroyPlayer() })
 </script>
 
 <style scoped>

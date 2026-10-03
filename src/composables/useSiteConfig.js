@@ -13,9 +13,12 @@ export async function loadSiteConfig() {
   try {
     const bundle = await fetchJsonTimed('/data/site-bundle.json?v=' + Date.now(), { cache: 'no-store' })
     if (!Array.isArray(bundle?.config?.apps) || !bundle.popups || !bundle.tabs || !Number.isSafeInteger(bundle.meta?.version)) throw new Error('站点配置无效')
-    siteConfig.config = bundle.config
-    siteConfig.popups = bundle.popups
-    siteConfig.tabs = bundle.tabs
+    const empty = emptySiteConfig()
+    siteConfig.config = { ...empty.config, ...bundle.config }
+    siteConfig.popups = { ...empty.popups, ...bundle.popups }
+    siteConfig.tabs = { ...empty.tabs, ...bundle.tabs,
+      mine: { ...empty.tabs.mine, ...bundle.tabs.mine },
+      featured: { ...empty.tabs.featured, ...bundle.tabs.featured } }
     siteConfig.version = bundle.meta.version
     if (bundle.apiSession?.token) applyApiSession(bundle.apiSession, 'runtime')
   } catch {

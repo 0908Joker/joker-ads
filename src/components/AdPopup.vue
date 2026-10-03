@@ -13,7 +13,7 @@
             :href="resolveAdTarget(ad) || undefined"
             target="_blank"
             rel="noopener noreferrer"
-            @click="trackAdSign(ad.signUrl)"
+            @click="trackAdInteraction(ad, 'gridPopAds')"
           >
             <CebImg class="grid-ad__img" :path="ad.image || ad.coverUrl" />
           </a>
@@ -43,7 +43,7 @@
 import { computed, onMounted, ref } from 'vue'
 import CebImg from './CebImg.vue'
 import { decryptMedia } from '../api/media.js'
-import { resolveAdTarget, trackAdSign } from '../api/ad.js'
+import { resolveAdTarget, trackAdInteraction } from '../api/ad.js'
 import { useSiteConfig } from '../composables/useSiteConfig.js'
 import popupFallback from '../data/popups.json'
 
@@ -132,7 +132,7 @@ function onAdClick(e) {
     e.preventDefault()
     return
   }
-  trackAdSign(afterAds.value[index.value]?.signUrl)
+  trackAdInteraction(afterAds.value[index.value], 'afterEnterApp')
 }
 
 onMounted(() => {

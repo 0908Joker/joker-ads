@@ -42,6 +42,10 @@ jobs:
         env:
           AUDIT_BUNDLE_OUT: ${{ runner.temp }}/audit-release
         run: python3 deploy/verify-bundled-production.py
+      - name: Execute exact patched player race regression
+        env:
+          AUDIT_BUNDLE_OUT: ${{ runner.temp }}/audit-release
+        run: node scripts/test-audit-runtime.mjs
       - name: Deploy through restricted production key
         env:
           DEPLOY_KEY: ${{ secrets.AD_SYNC_DEPLOY_KEY }}

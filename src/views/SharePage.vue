@@ -2,9 +2,9 @@
   <SubPage title="分享邀请">
     <section class="invite">
       <p class="invite__label">我的邀请码</p>
-      <strong class="invite__code">{{ account.inviteCode || '—' }}</strong>
-      <button class="invite__copy" @click="copy(account.inviteCode, '邀请码')">复制邀请码</button>
-      <p class="invite__count">已成功邀请 {{ account.inviteCount }} 人</p>
+      <strong class="invite__code">{{ shareCode || '—' }}</strong>
+      <button class="invite__copy" @click="copy(shareCode, '邀请码')">复制邀请码</button>
+      <p class="invite__count">已成功邀请 {{ customer.inviteCount || account.inviteCount || 0 }} 人</p>
     </section>
 
     <section v-if="shareLink" class="link">
@@ -15,9 +15,9 @@
 
     <section class="rules">
       <h3>邀请规则</h3>
-      <p>1. 复制链接或邀请码分享给好友，好友下载并注册后即算邀请成功。</p>
-      <p>2. 邀请成功后，双方均可获得会员时长奖励。</p>
-      <p>3. 好友需完成账号绑定，奖励才会到账。</p>
+      <p>1. 分享本地邀请码或专属链接，邀请关系由身份卡服务记录。</p>
+      <p>2. 本地奖励尚未接入，不代表会员时长或积分已经到账。</p>
+      <p>3. 当前仅展示邀请码、邀请链接和已记录的邀请人数。</p>
     </section>
   </SubPage>
 </template>
@@ -28,15 +28,13 @@ import SubPage from '../components/SubPage.vue'
 import { fetchUserInfo } from '../api/users.js'
 import { normalizeAccount } from '../api/normalize.js'
 import { copyText, showToast } from '../composables/useToast.js'
+import { customerState, dewuInviteUrl } from '../composables/useCustomer.js'
 
 const account = ref(normalizeAccount(null))
+const customer = customerState
 
-const shareLink = computed(() => {
-  const base = account.value.downloadUrl
-  const code = account.value.inviteCode
-  if (!base) return ''
-  return code ? `${base}?inviteCode=${encodeURIComponent(code)}` : base
-})
+const shareCode = computed(() => customer.inviteCode || account.value.inviteCode)
+const shareLink = computed(() => dewuInviteUrl(shareCode.value))
 
 async function copy(value, label) {
   if (!value) {
@@ -51,7 +49,9 @@ onMounted(async () => {
     const info = await fetchUserInfo()
     account.value = normalizeAccount(info.data ?? info)
   } catch {
-    showToast('获取邀请信息失败')
+    if (!customer.inviteCode && !customer.customerId) {
+      showToast('获取邀请信息失败')
+    }
   }
 })
 </script>

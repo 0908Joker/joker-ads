@@ -22,6 +22,7 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 import androidx.webkit.WebViewCompat;
+import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebViewFeature;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
@@ -37,6 +38,8 @@ public final class MainActivity extends Activity {
     private WebChromeClient.CustomViewCallback fullscreenCallback;
     private ValueCallback<Uri[]> fileCallback;
     private byte[] pendingImage;
+    private String pendingImageId;
+    private JavaScriptReplyProxy pendingImageReply;
     private String bridgeScript = "";
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -118,33 +121,55 @@ public final class MainActivity extends Activity {
                     if (!mainFrame || !UrlPolicy.isMain(source.toString())) return;
                     String data = message.getData();
                     if (data == null || data.length() > 12 * 1024 * 1024) return;
+                    String requestId = "";
                     try {
                         JSONObject value = new JSONObject(data);
+                        requestId = value.optString("id");
+                        if (!NativeRequestPolicy.validId(requestId)) return;
                         if ("copy".equals(value.optString("type"))) {
                             String text = value.optString("text");
-                            if (text.length() > 8192) return;
+                            if (!NativeRequestPolicy.canCopy(text)) { replyResult(reply, requestId, "error", "TEXT_TOO_LONG"); return; }
                             ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("得污", text));
+                            replyResult(reply, requestId, "success", "");
                         } else if ("saveImage".equals(value.optString("type"))) {
-                            saveImage(value.optString("data"), value.optString("name"));
-                        }
-                    } catch (Exception ex) { Toast.makeText(this, "操作未完成，请重试", Toast.LENGTH_SHORT).show(); }
+                            saveImage(value.optString("data"), value.optString("name"), requestId, reply);
+                        } else replyResult(reply, requestId, "error", "UNSUPPORTED_REQUEST");
+                    } catch (Exception ex) { replyResult(reply, requestId, "error", "NATIVE_OPERATION_FAILED"); }
                 });
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT))
             WebViewCompat.addDocumentStartJavaScript(web, bridgeScript, Collections.singleton("https://b12sl5x.cn"));
     }
 
-    private void saveImage(String data, String name) {
-        if (pendingImage != null || !data.startsWith("data:image/png;base64,")) return;
+    private void replyResult(JavaScriptReplyProxy reply, String id, String status, String error) {
+        if (reply == null || !NativeRequestPolicy.validId(id)) return;
+        try {
+            JSONObject result = new JSONObject().put("id", id).put("status", status);
+            if (!error.isEmpty()) result.put("error", error);
+            reply.postMessage(result.toString());
+        } catch (Exception ignored) { /* The originating page may already be gone. */ }
+    }
+
+    private void saveImage(String data, String name, String id, JavaScriptReplyProxy reply) {
+        if (pendingImage != null) { replyResult(reply, id, "error", "SAVE_IN_PROGRESS"); return; }
+        if (!data.startsWith("data:image/png;base64,")) { replyResult(reply, id, "error", "INVALID_PNG"); return; }
         byte[] bytes;
         try { bytes = Base64.decode(data.substring(data.indexOf(',') + 1), Base64.DEFAULT); }
-        catch (IllegalArgumentException ex) { return; }
-        if (bytes.length < 8 || bytes.length > 8 * 1024 * 1024 || bytes[0] != (byte) 137 || bytes[1] != 80 || bytes[2] != 78 || bytes[3] != 71) return;
+        catch (IllegalArgumentException ex) { replyResult(reply, id, "error", "INVALID_PNG"); return; }
+        if (!NativeRequestPolicy.validPng(bytes)) { replyResult(reply, id, "error", "INVALID_PNG"); return; }
         pendingImage = bytes;
-        String safeName = name.matches("[A-Za-z0-9_-]{1,80}\\.png") ? name : "dewu-card.png";
+        pendingImageId = id;
+        pendingImageReply = reply;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
-                .setType("image/png").putExtra(Intent.EXTRA_TITLE, safeName);
+                .setType("image/png").putExtra(Intent.EXTRA_TITLE, NativeRequestPolicy.safeFilename(name));
         try { startActivityForResult(intent, SAVE_IMAGE); }
-        catch (RuntimeException ex) { pendingImage = null; Toast.makeText(this, "未找到文件保存工具", Toast.LENGTH_SHORT).show(); }
+        catch (RuntimeException ex) {
+            clearPendingImage();
+            replyResult(reply, id, "error", "FILE_PICKER_UNAVAILABLE");
+        }
+    }
+
+    private void clearPendingImage() {
+        pendingImage = null; pendingImageId = null; pendingImageReply = null;
     }
 
     private void openExternal(String url) {
@@ -165,21 +190,35 @@ public final class MainActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle out) { web.saveState(out); super.onSaveInstanceState(out); }
     @Override protected void onPause() { web.onPause(); CookieManager.getInstance().flush(); super.onPause(); }
     @Override protected void onResume() { super.onResume(); if (web != null) web.onResume(); }
-    @Override protected void onDestroy() { if (web != null) web.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() {
+        replyResult(pendingImageReply, pendingImageId, "cancelled", "");
+        clearPendingImage();
+        if (web != null) web.destroy();
+        super.onDestroy();
+    }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request == PICK_FILE && fileCallback != null) {
             fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result, data)); fileCallback = null;
         }
         if (request == SAVE_IMAGE) {
-            byte[] bytes = pendingImage; pendingImage = null;
-            if (result == RESULT_OK && data != null && data.getData() != null && bytes != null) {
+            byte[] bytes = pendingImage;
+            String id = pendingImageId;
+            JavaScriptReplyProxy reply = pendingImageReply;
+            clearPendingImage();
+            if (reply == null) return;
+            if (result != RESULT_OK) { replyResult(reply, id, "cancelled", ""); return; }
+            if (data == null || data.getData() == null || bytes == null) {
+                replyResult(reply, id, "error", "INVALID_SAVE_RESULT"); return;
+            }
+            try {
                 try (OutputStream stream = getContentResolver().openOutputStream(data.getData())) {
                     if (stream == null) throw new IllegalStateException("No output stream");
                     stream.write(bytes);
-                    Toast.makeText(this, "身份卡已保存", Toast.LENGTH_SHORT).show();
-                } catch (Exception ex) { Toast.makeText(this, "保存失败，请重试", Toast.LENGTH_SHORT).show(); }
-            }
+                    stream.flush();
+                } // Only acknowledge success after write AND close both succeed.
+                replyResult(reply, id, "success", "");
+            } catch (Exception ex) { replyResult(reply, id, "error", "WRITE_FAILED"); }
         }
     }
 }

@@ -28,11 +28,15 @@ function trackAdClick(item, slot = '') {
   }).catch(() => {})
 }
 
+export function trackAdInteraction(item, slot) {
+  trackAdSign(item?.signUrl)
+  trackAdClick(item, slot)
+}
+
 export function openAd(item, slot = '') {
   const target = resolveAdTarget(item)
   if (!/^https?:/i.test(target)) return false
-  trackAdSign(item?.signUrl)
-  trackAdClick(item, slot)
+  trackAdInteraction(item, slot)
   window.open(target, '_blank', 'noopener,noreferrer')
   return true
 }

@@ -25,7 +25,7 @@ const props = defineProps({
 const visible = ref(true)
 
 function open() {
-  openAd({ url: props.url, signUrl: props.signUrl })
+  openAd({ name: props.title, url: props.url, signUrl: props.signUrl }, 'floatBanner')
 }
 </script>
 

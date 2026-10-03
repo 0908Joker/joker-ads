@@ -17,7 +17,7 @@
 
 <script setup>
 import CebImg from './CebImg.vue'
-import { resolveAdTarget, trackAdSign } from '../api/ad.js'
+import { resolveAdTarget, trackAdInteraction } from '../api/ad.js'
 
 const props = defineProps({
   tag: { type: String, default: '限时' },
@@ -36,7 +36,7 @@ function onClick(e) {
     e.preventDefault()
     return
   }
-  trackAdSign(props.signUrl)
+  trackAdInteraction(props, 'promo')
 }
 </script>
 

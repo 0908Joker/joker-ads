@@ -88,7 +88,7 @@ function onModeChange(mode) {
 }
 
 function onAppClick(app) {
-  if (openAd(app)) return
+  if (openAd(app, 'appCenter')) return
   const target = resolveAdTarget(app)
   if (target.startsWith('/')) {
     router.push(target)
