@@ -1,8 +1,8 @@
 import { apiFetch } from './client.js'
 
-export async function fetchRecommend(params = {}) {
+export async function fetchRecommend(params = {}, options = {}) {
   const q = new URLSearchParams({ page: '1', pageSize: '20', ...params })
-  return apiFetch(`/videos/recommend?${q}`)
+  return apiFetch(`/videos/recommend?${q}`, options)
 }
 
 export async function fetchAlgoRecommendList(params = {}) {
@@ -42,18 +42,18 @@ export async function fetchShortCate() {
   return apiFetch('/videos/shortCate')
 }
 
-export async function fetchShortAndImg(params = {}) {
+export async function fetchShortAndImg(params = {}, options = {}) {
   const q = new URLSearchParams({ page: '1', pageSize: '10', ...params })
-  return apiFetch(`/videos/shortAndImg?${q}`)
+  return apiFetch(`/videos/shortAndImg?${q}`, options)
 }
 
-export async function fetchShortByCategorie(params = {}) {
+export async function fetchShortByCategorie(params = {}, options = {}) {
   const q = new URLSearchParams({ page: '1', pageSize: '10', ...params })
-  return apiFetch(`/videos/short?${q}`)
+  return apiFetch(`/videos/short?${q}`, options)
 }
 
-export async function fetchVideoDetail(id) {
-  return apiFetch(`/videos/${id}`)
+export async function fetchVideoDetail(id, options = {}) {
+  return apiFetch(`/videos/${id}`, options)
 }
 
 export async function fetchShortVideos(params = {}) {

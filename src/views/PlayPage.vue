@@ -69,7 +69,8 @@ const related = ref([])
 const poster = ref('')
 const status = ref('加载中…')
 let loadSeq = 0
-const playback = createPlaybackSession({ getVideo: () => videoEl.value, getSequence: () => loadSeq, loadHls: () => import('hls.js'), proxy: proxyMediaUrl })
+let loadController = null
+const playback = createPlaybackSession({ getVideo: () => videoEl.value, getSequence: () => loadSeq, loadHls: () => import('hls.js'), proxy: proxyMediaUrl, onError: () => { status.value = '视频加载失败，请稍后重试' } })
 
 function goBack() {
   if (window.history.length > 1) router.back()
@@ -94,7 +95,7 @@ async function loadRelated(currentId, fromDetail = [], seq = loadSeq) {
 
   let extras = []
   try {
-    const raw = await fetchRecommend({ page: '1', pageSize: String(RELATED_LIMIT + 4), sort: 'recommend' })
+    const raw = await fetchRecommend({ page: '1', pageSize: String(RELATED_LIMIT + 4), sort: 'recommend' }, { signal: loadController?.signal })
     extras = normalizeFeaturedPayload(raw.data ?? raw)
   } catch {
     extras = []
@@ -131,6 +132,9 @@ function destroyPlayer() { playback.dispose() }
 async function load() {
   const id = route.params.id
   const seq = ++loadSeq
+  loadController?.abort()
+  loadController = new AbortController()
+  const signal = loadController.signal
   if (!id) {
     status.value = '加载失败，请稍后重试'
     return
@@ -141,7 +145,7 @@ async function load() {
   poster.value = ''
   destroyPlayer()
   try {
-    const raw = await fetchVideoDetail(id)
+    const raw = await fetchVideoDetail(id, { signal })
     if (seq !== loadSeq) return
     const d = normalizeVideoDetail(raw.data ?? raw)
     if (!d || !d.playUrl) {
@@ -152,7 +156,7 @@ async function load() {
     }
     detail.value = d
     status.value = ''
-    decryptMedia(d.cover)
+    decryptMedia(d.cover, { signal })
       .then((src) => {
         if (seq === loadSeq) poster.value = src
       })
@@ -184,7 +188,7 @@ async function load() {
 
 onMounted(load)
 watch(() => route.params.id, load)
-onBeforeUnmount(() => { ++loadSeq; destroyPlayer() })
+onBeforeUnmount(() => { ++loadSeq; loadController?.abort(); destroyPlayer() })
 </script>
 
 <style scoped>

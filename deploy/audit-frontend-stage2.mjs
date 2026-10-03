@@ -12,7 +12,7 @@ export function sourceFunction(file, name, bindings = {}, bodyOnly = false) {
   return text
 }
 export function patchStageTwo(code, { exact, functionBody }) {
-  code += '\n' + sourceFunction('src/api/timedFetch.js', 'fetchJsonTimed', { fetchJsonTimed: 'auditJSON' })
+  code += '\n' + sourceFunction('src/api/timedFetch.js', 'fetchJsonTimed', { fetchJsonTimed: 'auditJSON', withRequestDeadline: 'auditDeadline' })
   code += '\n' + sourceFunction('src/composables/useSiteConfig.js', 'emptySiteConfig', { emptySiteConfig: 'auditEmpty' })
   code = exact(code, 'const rt=Ct({ready:!1,config:{...NC},popups:{...yo},tabs:{...Ge},version:1})', 'const rt=Ct({ready:!1,error:"",...auditEmpty(),version:0})')
   code = functionBody(code, 'yy', sourceFunction('src/composables/useSiteConfig.js', 'loadSiteConfig', { siteConfig: 'rt', emptySiteConfig: 'auditEmpty', fetchJsonTimed: 'auditJSON', applyApiSession: 'sy', readonly: 'Zt' }, true))

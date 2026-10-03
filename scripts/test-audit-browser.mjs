@@ -46,6 +46,11 @@ try {
       return route.fulfill({ json: { ok: true, isNew: false, customerId: 'DW-FIXTURE', cardNo: 'CARD-FIXTURE', inviteCode: '1234567890123', inviteCount: 0 } })
     }
     if (url.pathname === '/hold.webm') return
+    if (url.pathname === '/hung-cover.ceb') return
+    if (scenario === 'short-cover-hang' && /^\/api-proxy\/videos\/short/.test(url.pathname)) return route.fulfill({ json: { sid: 'fixture', data: { videoInfo: [
+      { url: '/fixture.webm', video: { id: 'SHORT-A', name: '短视频 QA 正常封面', coverURL: 'https://b12sl5x.cn/icon.png' } },
+      { url: '/fixture.webm', video: { id: 'SHORT-B', name: '短视频 QA 挂起封面', coverURL: 'https://b12sl5x.cn/hung-cover.ceb' } },
+    ] } } })
     if (url.pathname === '/fixture.webm' && process.env.AUDIT_VIDEO) return route.fulfill({ contentType: 'video/webm', body: fs.readFileSync(process.env.AUDIT_VIDEO) })
     if (/^\/api-proxy\/videos\/QA-/.test(url.pathname)) {
       const id = url.pathname.split('/').at(-1)
@@ -210,6 +215,24 @@ try {
       assert.equal(await page.locator('video.play__video').count(), 0)
       checks.push('actual browser decodes and plays isolated WebM after cancelling hung A; no A fallback; leaving destroys player')
     }
+  }
+  if (manifest.stage >= 4) {
+    scenario = 'short-cover-hang'
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('https://b12sl5x.cn/')
+    const started = Date.now()
+    await page.locator('.tabbar-item').filter({ hasText: '抖阴' }).click()
+    await page.getByText('短视频 QA 挂起封面', { exact: true }).waitFor({ timeout: 2500 }).catch(async error => {
+      console.log(JSON.stringify({ shortRequests: calls.slice(-20), pageErrors: errors, shortText: (await page.locator('body').innerText()).slice(0,900) }))
+      throw error
+    })
+    assert.equal(await page.locator('.short-slide').count(), 2)
+    assert.ok(Date.now() - started < 3000, 'hung cover does not block list rendering')
+    await page.waitForFunction(() => document.querySelector('.short-slide video')?.readyState >= 2)
+    if (screenshots) await page.screenshot({ path: path.join(screenshots, 'batch4-independent-covers-mobile.png') })
+    await page.locator('.tabbar-item').filter({ hasText: '我的' }).click()
+    assert.equal(await page.locator('.short-slide video').count(), 0)
+    checks.push('short feed renders both items while one cover hangs; first video decodes; leaving removes videos')
   }
   assert.deepEqual(errors, [])
   console.log(JSON.stringify({ stage: manifest.stage, frontendSha256: manifest.frontendSha256, checks, pageErrors: errors.length, productionWrites: 0, screenshots }, null, 2))

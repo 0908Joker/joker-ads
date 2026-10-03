@@ -6,6 +6,7 @@ import { parse } from '@babel/parser'
 import { patchBundle } from './deploy-ad-sync.mjs'
 import { patchStageTwo } from './audit-frontend-stage2.mjs'
 import { patchStageThree } from './audit-frontend-stage3.mjs'
+import { patchStageFour } from './audit-frontend-stage4.mjs'
 
 export const digest = data => crypto.createHash('sha256').update(data).digest('hex')
 export function exact(code, before, after) {
@@ -41,7 +42,8 @@ export function patchAuditFrontend(input, stage = 1) {
   assert.ok(!code.includes('fetch(Ko("/create")'))
   if (stage >= 2) code = patchStageTwo(code, { exact, functionBody })
   if (stage >= 3) code = patchStageThree(code, { exact, functionBody })
-  assert.ok(stage >= 1 && stage <= 3, 'Unimplemented release stage')
+  if (stage >= 4) code = patchStageFour(code, { exact, functionBody })
+  assert.ok(stage >= 1 && stage <= 4, 'Unimplemented release stage')
   parse(code, { sourceType: 'module' })
   return code
 }

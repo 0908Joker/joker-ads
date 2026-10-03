@@ -1,5 +1,6 @@
 import session from '../data/api-session.json'
 import { unwrapApiPayload } from './decrypt.js'
+import { withRequestDeadline, fetchJsonTimed } from './timedFetch.js'
 
 const PID = 'FBI'
 const DEFAULT_BASES = [
@@ -114,11 +115,12 @@ export async function pickApiBase(candidates = DEFAULT_BASES) {
   return activeBase
 }
 
-export async function refreshApiSid() {
+export async function refreshApiSid(options = {}) {
   const url = requestPath('/speedtest')
   const sep = url.includes('?') ? '&' : '?'
   const withPid = `${url}${sep}pid=${PID}`
-  const res = await fetch(withPid, {
+  const json = await fetchJsonTimed(withPid, {
+    signal: options.signal,
     headers: {
       Accept: 'application/json',
       t: '3',
@@ -126,22 +128,25 @@ export async function refreshApiSid() {
       ...authHeaders(),
       ...(apiSid ? { sid: apiSid } : {}),
     },
-  })
-  if (!res.ok) return apiSid
-  const json = await res.json()
+  }, 15000)
+  if (options.signal?.aborted) throw new Error('请求已取消')
   if (json.sid) apiSid = json.sid
   return apiSid
 }
 
 export async function apiFetch(path, options = {}, retry = true) {
+  return withRequestDeadline(async signal => {
   if (!activeBase) await pickApiBase()
-  if (!apiSid) await refreshApiSid()
+  if (signal.aborted) throw new Error('请求已取消')
+  if (!apiSid) await refreshApiSid({ signal })
   const url = requestPath(path)
   const sep = url.includes('?') ? '&' : '?'
   const withPid = url.includes('pid=') ? url : `${url}${sep}pid=${PID}`
   lastFetchAt = new Date().toISOString()
+  for (let attempt = 0; attempt < (retry ? 2 : 1); attempt++) {
   const res = await fetch(withPid, {
     ...options,
+    signal,
     headers: {
       Accept: 'application/json',
       t: '3',
@@ -153,12 +158,13 @@ export async function apiFetch(path, options = {}, retry = true) {
   })
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`)
   const json = await res.json()
+  if (signal.aborted) throw new Error('请求已取消')
   if (json.sid) apiSid = json.sid
   if (json.errorCode && json.errorCode !== 0) {
-    if (retry && isSidError(json.message)) {
+    if (retry && attempt === 0 && isSidError(json.message)) {
       apiSid = null
-      await refreshApiSid()
-      return apiFetch(path, options, false)
+      await refreshApiSid({ signal })
+      continue
     }
     throw new Error(json.message || `API error ${json.errorCode}`)
   }
@@ -167,6 +173,8 @@ export async function apiFetch(path, options = {}, retry = true) {
     throw new Error(json.message || 'API decrypt failed')
   }
   return { ...json, data: unwrapped ?? json.data, _live: true, _decrypted: unwrapped != null }
+  }
+  }, 15000, options.signal)
 }
 
 export function getActiveBase() {

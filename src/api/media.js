@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js'
 import session from '../data/api-session.json'
+import { withRequestDeadline } from './timedFetch.js'
 
 const RES_BASE = (session.resBase || 'https://d17e80montytxe.cloudfront.net').replace(/\/$/, '')
 const IMG_KEY = '82758dd12749c777ef579f1839ceea6a'
@@ -44,32 +45,32 @@ function decryptToDataUrl(u8) {
   return text.startsWith('data:image/') ? text : ''
 }
 
-export async function decryptMedia(path) {
+export async function decryptMedia(path, options = {}) {
   if (!path) return ''
   if (/^(data:|blob:)/i.test(path)) return path
   if (path.startsWith('/') && !isEncryptedMedia(path)) return path
   if (!isEncryptedMedia(path) && /\.(gif|png|jpe?g|webp)(\?|$)/i.test(path)) return mediaUrl(path)
 
   const url = mediaUrl(path)
-  if (cache.has(url)) return cache.get(url)
+  if (cache.has(url)) return withRequestDeadline(() => cache.get(url), 5000, options.signal)
 
-  const pending = (async () => {
-    const res = await fetch(url)
+  const pending = withRequestDeadline(async signal => {
+    const res = await fetch(url, { signal })
     if (!res.ok) throw new Error(`media ${res.status}`)
     const u8 = new Uint8Array(await res.arrayBuffer())
     if (!isEncryptedMedia(url)) return URL.createObjectURL(new Blob([u8]))
     const dataUrl = decryptToDataUrl(u8)
     if (!dataUrl) throw new Error('decrypt failed')
     return dataUrl
-  })()
+  }, 5000, options.signal)
 
-  cache.set(url, pending)
+  if (!options.signal) cache.set(url, pending)
   try {
     const out = await pending
     cache.set(url, out)
     return out
   } catch (e) {
-    cache.delete(url)
+    if (cache.get(url) === pending) cache.delete(url)
     throw e
   }
 }

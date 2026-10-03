@@ -1,13 +1,31 @@
-export async function fetchJsonTimed(url, options = {}, timeoutMs = 5000) {
+export async function withRequestDeadline(operation, timeoutMs = 15000, signal) {
   const controller = new AbortController()
-  let timer
+  let timer, rejectCancelled
+  const stopped = new Promise((_, reject) => { rejectCancelled = reject })
+  const cancel = () => {
+    controller.abort()
+    const error = new Error('请求已取消')
+    error.name = 'AbortError'
+    rejectCancelled(error)
+  }
+  signal?.addEventListener('abort', cancel, { once: true })
+  timer = setTimeout(() => { controller.abort(); rejectCancelled(new Error('请求超时，请重试')) }, timeoutMs)
   try {
-    return await Promise.race([
-      fetch(url, { ...options, signal: controller.signal }).then(async response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        return response.json()
-      }),
-      new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('请求超时，请重试')) }, timeoutMs) }),
-    ])
-  } finally { clearTimeout(timer) }
+    if (signal?.aborted) cancel()
+    return await Promise.race([stopped, Promise.resolve().then(() => {
+      if (controller.signal.aborted) throw new Error('请求已取消')
+      return operation(controller.signal)
+    })])
+  } finally {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', cancel)
+  }
+}
+
+export async function fetchJsonTimed(url, options = {}, timeoutMs = 5000) {
+  return withRequestDeadline(async signal => {
+    const response = await fetch(url, { ...options, signal })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return response.json()
+  }, timeoutMs, options.signal)
 }

@@ -40,7 +40,6 @@
           playsinline
           loop
           muted
-          @error="onVideoError(item)"
         />
 
         <aside class="short-slide__side">
@@ -81,6 +80,7 @@ import { fetchShortByCategorie, fetchShortAndImg } from '../api/videos.js'
 import { normalizeShortPayload } from '../api/normalize.js'
 import { proxyMediaUrl } from '../api/client.js'
 import { decryptMedia } from '../api/media.js'
+import { createPlaybackSession } from '../lib/playbackSession.js'
 
 const tabList = tabsFallback.douyin.tabs
 const activeTab = ref('抖阴')
@@ -99,6 +99,8 @@ const dramaCards = ref([
 const players = new Map()
 let observer = null
 let activeIdx = -1
+let playSeq = 0
+let loadController = null
 
 function candidatesFor(item) {
   const list = Array.isArray(item?.playCandidates) ? item.playCandidates.filter(Boolean) : []
@@ -106,25 +108,22 @@ function candidatesFor(item) {
   return item?.videoUrl ? [item.videoUrl] : []
 }
 
-async function hydrateShortList(list) {
-  return Promise.all(
-    list.map(async (v, i) => {
-      let coverSrc = ''
-      try {
-        coverSrc = await decryptMedia(v.coverLocal || v.cover)
-      } catch {}
-      const fb = tabsFallback.douyin.items[i % 2] || {}
-      return {
-        ...v,
-        coverSrc,
-        videoFailed: false,
-        user: v.user && !/@saixi$/.test(v.user) ? v.user : fb.user,
-        tags: v.hashtags?.length ? v.hashtags : fb.tags,
-        shares: v.shares || fb.shares,
-        collects: v.collects || fb.shares,
-      }
-    }),
-  )
+function hydrateShortList(list) {
+  return list.map((v, i) => {
+    const fb = tabsFallback.douyin.items[i % 2] || {}
+    return { ...v, coverSrc: '', videoFailed: false,
+      user: v.user && !/@saixi$/.test(v.user) ? v.user : fb.user,
+      tags: v.hashtags?.length ? v.hashtags : fb.tags,
+      shares: v.shares || fb.shares, collects: v.collects || fb.shares }
+  })
+}
+
+function hydratePosters(seq, signal) {
+  items.value.forEach((item, index) => {
+    void decryptMedia(item.coverLocal || item.cover, { signal }).then(src => {
+      if (seq === loadSeq && !signal.aborted && items.value[index] === item) item.coverSrc = src
+    }).catch(() => {})
+  })
 }
 
 function cachedShortForTab(tab) {
@@ -152,15 +151,14 @@ function tabFallbackItems(tab) {
 }
 
 function destroyPlayer(idx) {
-  const p = players.get(idx)
-  if (!p) return
-  try {
-    p.hls?.destroy()
-  } catch {}
+  const owned = players.get(idx)
+  if (!owned) return
   players.delete(idx)
+  owned.session.dispose()
 }
 
 function destroyAllPlayers() {
+  ++playSeq
   for (const idx of [...players.keys()]) destroyPlayer(idx)
   activeIdx = -1
 }
@@ -168,115 +166,33 @@ function destroyAllPlayers() {
 function videoElAt(idx) {
   const root = feedEl.value
   if (!root) return null
-  const slide = root.querySelector(`.short-slide[data-idx="${idx}"]`)
-  return slide?.querySelector('video') || null
-}
-
-async function tryNextCandidate(idx) {
-  const item = items.value[idx]
-  if (!item) return
-  const cands = candidatesFor(item)
-  const cur = players.get(idx)?.candidateIdx ?? -1
-  const next = cur + 1
-  destroyPlayer(idx)
-  if (next >= cands.length) {
-    item.videoFailed = true
-    return
-  }
-  item.videoUrl = cands[next]
-  await attachStream(idx, cands[next], next)
-  if (activeIdx === idx) {
-    const el = videoElAt(idx)
-    try {
-      if (el) {
-        el.muted = true
-        await el.play()
-      }
-    } catch {}
-  }
-}
-
-async function attachStream(idx, url, candidateIdx = 0) {
-  const el = videoElAt(idx)
-  if (!el || !url) return
-  destroyPlayer(idx)
-  const epoch = loadSeq
-
-  const playUrl = proxyMediaUrl(url)
-  const isHls = /\.m3u8(\?|$)/i.test(playUrl)
-  if (!isHls) {
-    if (epoch !== loadSeq || !el.isConnected) return
-    el.src = playUrl
-    players.set(idx, { hls: null, url: playUrl, candidateIdx })
-    return
-  }
-
-  const { default: Hls } = await import('hls.js')
-  if (epoch !== loadSeq) return
-  const liveEl = videoElAt(idx)
-  if (!liveEl?.isConnected) return
-
-  if (Hls.isSupported()) {
-    try {
-      await new Promise((resolve, reject) => {
-        const hls = new Hls({ enableWorker: true })
-        hls.loadSource(playUrl)
-        hls.attachMedia(liveEl)
-        hls.on(Hls.Events.MANIFEST_PARSED, () => resolve())
-        hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data.fatal) reject(new Error('hls fatal'))
-        })
-        players.set(idx, { hls, url: playUrl, candidateIdx })
-      })
-    } catch {
-      if (epoch === loadSeq) await tryNextCandidate(idx)
-      return
-    }
-    if (epoch !== loadSeq) {
-      destroyPlayer(idx)
-    }
-    return
-  }
-  if (liveEl.canPlayType('application/vnd.apple.mpegurl')) {
-    liveEl.src = playUrl
-    players.set(idx, { hls: null, url: playUrl, candidateIdx })
-    return
-  }
-  await tryNextCandidate(idx)
+  return root.querySelector(`.short-slide[data-idx="${idx}"]`)?.querySelector('video') || null
 }
 
 async function playIdx(idx) {
   if (idx < 0 || idx >= items.value.length) return
+  if (idx === activeIdx && players.has(idx)) return
   const item = items.value[idx]
-  const cands = candidatesFor(item)
-  if (!cands.length || item.videoFailed) return
-
-  if (activeIdx !== idx && activeIdx >= 0) {
-    const prev = videoElAt(activeIdx)
-    try {
-      prev?.pause()
-    } catch {}
-  }
+  const candidates = candidatesFor(item)
+  destroyAllPlayers()
   activeIdx = idx
-
-  if (!players.has(idx)) {
-    item.videoUrl = cands[0]
-    await attachStream(idx, cands[0], 0)
+  if (!candidates.length || item.videoFailed) return
+  const epoch = playSeq, listEpoch = loadSeq, el = videoElAt(idx)
+  if (!el?.isConnected) return
+  el.muted = true
+  const owned = { el, session: createPlaybackSession({
+    getVideo: () => el.isConnected ? el : null, getSequence: () => playSeq,
+    loadHls: () => import('hls.js'), proxy: proxyMediaUrl,
+    onError: () => {
+      if (listEpoch === loadSeq && epoch === playSeq && activeIdx === idx) item.videoFailed = true
+    },
+  }) }
+  players.set(idx, owned)
+  await owned.session.attachCandidates(candidates, epoch)
+  if (epoch !== playSeq || listEpoch !== loadSeq || activeIdx !== idx || !el.isConnected) {
+    owned.session.dispose()
+    if (players.get(idx) === owned) players.delete(idx)
   }
-  const el = videoElAt(idx)
-  if (!el) return
-  try {
-    el.muted = true
-    await el.play()
-  } catch {
-    // Autoplay can be blocked until a gesture; mute+playsinline usually ok.
-  }
-}
-
-function onVideoError(item) {
-  const idx = items.value.indexOf(item)
-  if (idx >= 0) void tryNextCandidate(idx).catch(() => {})
-  else item.videoFailed = true
 }
 
 function setupObserver() {
@@ -303,6 +219,9 @@ let loadSeq = 0
 
 async function loadShorts() {
   const seq = ++loadSeq
+  loadController?.abort()
+  loadController = new AbortController()
+  const signal = loadController.signal
   const tab = activeTab.value
   const cate = (shortCategories.categories || []).find((c) => c.name === tab)
   destroyAllPlayers()
@@ -310,20 +229,21 @@ async function loadShorts() {
 
   try {
     const raw = cate?.categorieId
-      ? await fetchShortByCategorie({ page: 1, pageSize: 10, categorieId: cate.categorieId })
-      : await fetchShortAndImg({ page: 1, pageSize: 10, tab })
+      ? await fetchShortByCategorie({ page: 1, pageSize: 10, categorieId: cate.categorieId }, { signal })
+      : await fetchShortAndImg({ page: 1, pageSize: 10, tab }, { signal })
     if (seq !== loadSeq) return
     const list = normalizeShortPayload(raw.data ?? raw)
-    const hydrated = await hydrateShortList(list.length ? list : tabFallbackItems(tab))
+    const hydrated = hydrateShortList(list.length ? list : tabFallbackItems(tab))
     if (seq !== loadSeq) return
     items.value = hydrated
   } catch {
     if (seq !== loadSeq) return
-    const hydrated = await hydrateShortList(tabFallbackItems(tab))
+    const hydrated = hydrateShortList(tabFallbackItems(tab))
     if (seq !== loadSeq) return
     items.value = hydrated
   }
 
+  hydratePosters(seq, signal)
   await nextTick()
   if (seq !== loadSeq) return
   setupObserver()
@@ -333,6 +253,8 @@ async function loadShorts() {
 watch(activeTab, () => loadShorts(), { immediate: true })
 
 onBeforeUnmount(() => {
+  ++loadSeq
+  loadController?.abort()
   observer?.disconnect()
   destroyAllPlayers()
 })

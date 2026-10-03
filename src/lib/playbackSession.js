@@ -1,86 +1,104 @@
-// Each attempt owns its player, listeners and timer; stale tasks cannot clean up a newer one.
-export function createPlaybackSession({ getVideo, getSequence, loadHls, proxy = value => value, timeoutMs = 10000 }) {
-  let active = null
-  const current = (attempt, seq) => active === attempt && getSequence() === seq && !attempt.cancelled
-  function dispose(attempt = active) {
+// The session owns every attempt; stale callbacks cannot affect the next session.
+export function createPlaybackSession({ getVideo, getSequence, loadHls, proxy = value => value, timeoutMs = 10000, onError = () => {} }) {
+  let session = null
+  function disposeAttempt(attempt) {
     if (!attempt || attempt.disposed) return
     attempt.disposed = true
-    attempt.cancelled = true
     attempt.cancel?.()
     attempt.cleanup?.()
     try { attempt.hls?.destroy() } catch {}
-    if (active !== attempt) return
-    active = null
     try { attempt.el.pause(); attempt.el.removeAttribute('src'); attempt.el.load() } catch {}
   }
-  async function attach(url, seq) {
-    if (seq !== getSequence()) return false
-    dispose()
+  function dispose() {
+    const previous = session
+    session = null
+    if (previous) { previous.cancelled = true; disposeAttempt(previous.attempt) }
+  }
+  const current = owner => session === owner && !owner.cancelled && getSequence() === owner.seq
+  async function attemptSource(owner, url) {
+    if (!current(owner)) return false
+    disposeAttempt(owner.attempt)
     const el = getVideo()
-    if (!el || !url) return false
-    const attempt = { el, hls: null, cancelled: false }
-    active = attempt
-    let timer
-    const listeners = []
-    let rejectWait, resolveWait
-    const ready = new Promise((resolve, reject) => { resolveWait = resolve; rejectWait = reject })
-    const clean = () => {
-      clearTimeout(timer)
-      for (const [name, listener] of listeners) el.removeEventListener(name, listener)
-      listeners.length = 0
-      if (attempt.hls) {
-        attempt.hls.off(attempt.events.MANIFEST_PARSED, attempt.ok)
-        attempt.hls.off(attempt.events.ERROR, attempt.error)
+    if (!el) return false
+    const attempt = { el, disposed: false, hls: null }
+    owner.attempt = attempt
+    let settled = false, readyReached = false, timer
+    let resolveReady
+    const ready = new Promise(resolve => { resolveReady = resolve })
+    const valid = () => current(owner) && owner.attempt === attempt && !attempt.disposed
+    const finish = value => { if (!settled) { settled = true; clearTimeout(timer); resolveReady(value) } }
+    const loaded = () => {
+      if (!valid() || el.readyState < 2) return
+      readyReached = true
+      finish(true)
+    }
+    const failed = () => {
+      if (!valid()) return
+      if (!readyReached) finish(false)
+      else {
+        // Detach the failed attempt before another fatal event can start a second fallback.
+        disposeAttempt(attempt)
+        if (!owner.advancing) void advance(owner)
       }
     }
-    attempt.cleanup = clean
-    attempt.cancel = () => rejectWait(new Error('cancelled'))
-    timer = setTimeout(() => rejectWait(new Error('media timeout')), timeoutMs)
-    const native = () => {
-      const ok = () => resolveWait(), error = () => rejectWait(new Error('media error'))
-      listeners.push(['loadeddata', ok], ['error', error])
-      el.addEventListener('loadeddata', ok, { once: true })
-      el.addEventListener('error', error, { once: true })
+    attempt.cancel = () => finish(false)
+    attempt.cleanup = () => {
+      clearTimeout(timer)
+      el.removeEventListener('loadeddata', loaded)
+      el.removeEventListener('canplay', loaded)
+      el.removeEventListener('error', failed)
+      if (attempt.hls) attempt.hls.off(attempt.events.ERROR, attempt.error)
+    }
+    el.addEventListener('loadeddata', loaded)
+    el.addEventListener('canplay', loaded)
+    el.addEventListener('error', failed)
+    timer = setTimeout(() => finish(false), timeoutMs)
+    const initialize = async () => {
+      if (/\.m3u8(\?|$)/i.test(url)) {
+        const { default: Hls } = await loadHls()
+        if (!valid()) return
+        if (Hls.isSupported()) {
+          const hls = new Hls({ enableWorker: true })
+          attempt.hls = hls; attempt.events = Hls.Events
+          attempt.error = (_event, data) => { if (data.fatal) failed() }
+          hls.on(Hls.Events.ERROR, attempt.error)
+          hls.loadSource(url)
+          hls.attachMedia(el)
+          return
+        }
+        if (!el.canPlayType('application/vnd.apple.mpegurl')) { failed(); return }
+      }
+      if (!valid()) return
       el.src = url
       el.load()
     }
-    const initialize = async () => {
-      if (!/\.m3u8(\?|$)/i.test(url)) { native(); return }
-      const { default: Hls } = await loadHls()
-      if (!current(attempt, seq)) return
-      if (Hls.isSupported()) {
-        const own = new Hls({ enableWorker: true })
-        attempt.hls = own; attempt.events = Hls.Events
-        attempt.ok = () => resolveWait()
-        attempt.error = (_event, data) => { if (data.fatal) rejectWait(new Error('hls fatal')) }
-        own.on(Hls.Events.MANIFEST_PARSED, attempt.ok)
-        own.on(Hls.Events.ERROR, attempt.error)
-        own.loadSource(url)
-        own.attachMedia(el)
-      } else if (el.canPlayType('application/vnd.apple.mpegurl')) native()
-      else throw new Error('unsupported')
-    }
-    // The timer also bounds a stalled dynamic import.
-    void initialize().catch(rejectWait)
+    void initialize().catch(failed)
+    const ok = await ready
+    if (!valid()) return false
+    if (!ok) { disposeAttempt(attempt); return false }
+    // Error listeners stay installed until disposal, including after the first frame.
+    try { Promise.resolve(el.play()).catch(() => {}) } catch {}
+    return true
+  }
+  async function advance(owner) {
+    owner.advancing = true
     try {
-      await ready
-      if (!current(attempt, seq)) return false
-      clean()
-      // Autoplay permission must not stall candidate completion.
-      try { Promise.resolve(el.play()).catch(() => {}) } catch {}
-      return true
-    } catch {
-      dispose(attempt)
-      return false
-    } finally { clean() }
+    while (current(owner) && owner.next < owner.urls.length) {
+      const url = owner.urls[owner.next++]
+      if (await attemptSource(owner, proxy(url))) {
+        if (!owner.attempt.disposed) return current(owner)
+      }
+    }
+    if (current(owner)) onError(new Error('视频加载失败，请稍后重试'))
+    return false
+    } finally { owner.advancing = false }
   }
   async function attachCandidates(urls, seq) {
-    for (const raw of (urls || []).filter(Boolean)) {
-      if (seq !== getSequence()) return false
-      if (await attach(proxy(raw), seq)) return seq === getSequence()
-      if (seq !== getSequence()) return false
-    }
-    return false
+    if (seq !== getSequence()) return false
+    dispose()
+    const owner = { seq, urls: [...new Set((urls || []).filter(Boolean))], next: 0, cancelled: false, attempt: null }
+    session = owner
+    return advance(owner)
   }
   return { attachCandidates, dispose }
 }

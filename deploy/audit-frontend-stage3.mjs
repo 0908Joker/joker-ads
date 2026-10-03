@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { parse } from '@babel/parser'
 import { sourceFunction } from './audit-frontend-stage2.mjs'
-function componentFunction(code, component, name, replacement) {
+export function componentFunction(code, component, name, replacement) {
   let setup
   function walk(node) {
     if (!node || typeof node !== 'object') return
