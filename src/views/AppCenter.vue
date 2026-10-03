@@ -6,7 +6,7 @@
       @category-change="onCategoryChange"
       @mode-change="onModeChange"
     />
-    <PromoBanner v-bind="config.promo || {}" />
+    <PromoBanner v-if="config.promo?.url || config.promo?.image || config.promo?.cover || config.promo?.text" v-bind="config.promo" />
 
     <main class="content content--with-tabbar">
       <p class="apps-meta">{{ activeCategory }} · {{ visibleApps.length }} 个应用</p>
@@ -14,7 +14,7 @@
       <p v-if="!visibleApps.length" class="apps-empty">该分类暂无应用</p>
     </main>
 
-    <FloatBanner v-bind="config.floatBanner || {}" />
+    <FloatBanner v-if="config.floatBanner?.url" v-bind="config.floatBanner" />
     <TabBar :items="config.tabbar || []" :active="activeTab" @change="onTabChange" />
   </div>
 </template>

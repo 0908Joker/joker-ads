@@ -33,6 +33,9 @@
       <span class="more">最新影片 更多</span>
     </div>
 
+    <button v-if="siteConfig.tabs.featured?.ad?.name && siteConfig.tabs.featured?.ad?.url" class="featured-ad" @click="openAd(siteConfig.tabs.featured.ad, 'featuredAd')">
+      {{ siteConfig.tabs.featured.ad.name }} <span>{{ siteConfig.tabs.featured.ad.viewers }}</span>
+    </button>
     <section class="video-list">
       <article
         v-for="(v, i) in videos"
@@ -75,6 +78,7 @@ import tabsFallback from '../data/tabs.json'
 import liveApi from '../data/live-api.json'
 import videoCategories from '../data/video-categories.json'
 import { fetchRecommend } from '../api/videos.js'
+import { openAd } from '../api/ad.js'
 import { normalizeFeaturedPayload } from '../api/normalize.js'
 
 const FALLBACK_TABS = [
@@ -113,7 +117,7 @@ function poolSlice(tab, sub) {
   return [...slice, ...source.slice(0, PAGE_SIZE - slice.length)]
 }
 
-const sqAd = computed(() => siteConfig.tabs?.featured?.ad || tabsFallback.featured.ad || {})
+const sqAd = computed(() => siteConfig.tabs?.featured?.ad || {})
 
 const router = useRouter()
 const activeTab = ref('推荐')
@@ -126,14 +130,12 @@ function openVideo(v) {
 }
 
 const adCard = computed(() => ({
-  name: sqAd.value.name || '真实直播偷拍迷奸',
-  viewers: sqAd.value.viewers || '6864人 正在看',
+  name: sqAd.value.name || '',
+  viewers: sqAd.value.viewers || '',
 }))
 
 function withAdSlot(list) {
-  const out = [...list]
-  if (out.length >= 4) out.splice(4, 0, { isAd: true, id: 'sq-ad' })
-  return out
+  return [...list]
 }
 
 function cachedFeaturedForTab(tab, sub) {
@@ -206,6 +208,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.featured-ad { display:block; width:calc(100% - .64rem); margin:.24rem .32rem; padding:.24rem; background:var(--dw-surface); color:var(--dw-cyan); border:1px solid var(--dw-line); border-radius:.12rem; text-align:left; }
 .feat-head {
   align-items: center;
   background: linear-gradient(180deg, #0c1016 0%, transparent);

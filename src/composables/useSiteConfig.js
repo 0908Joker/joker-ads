@@ -1,34 +1,27 @@
-import fallbackConfig from '../data/config.json'
-import fallbackPopups from '../data/popups.json'
-import fallbackTabs from '../data/tabs.json'
 import { reactive, readonly } from 'vue'
-
-export const siteConfig = reactive({
-  ready: false,
-  config: { ...fallbackConfig },
-  popups: { ...fallbackPopups },
-  tabs: { ...fallbackTabs },
-  version: 1,
-})
-
+import { applyApiSession } from '../api/session.js'
+import { fetchJsonTimed } from '../api/timedFetch.js'
+export function emptySiteConfig() {
+  return { config: { apps: [], categories: [], modes: [], categoryApps: {}, popups: [], promo: {}, floatBanner: {} },
+    popups: { afterEnterApp: [], gridPopAds: [], actPopAds: [] },
+    tabs: { mine: { quickApps: [] }, featured: { ad: {}, subTabs: [] } } }
+}
+export const siteConfig = reactive({ ready: false, error: '', ...emptySiteConfig(), version: 0 })
 export async function loadSiteConfig() {
-  const v = Date.now()
-  const opts = { cache: 'no-store' }
-  const results = await Promise.allSettled([
-    fetch(`/data/config.json?v=${v}`, opts).then((r) => (r.ok ? r.json() : null)),
-    fetch(`/data/popups.json?v=${v}`, opts).then((r) => (r.ok ? r.json() : null)),
-    fetch(`/data/tabs.json?v=${v}`, opts).then((r) => (r.ok ? r.json() : null)),
-    fetch(`/data/meta.json?v=${v}`, opts).then((r) => (r.ok ? r.json() : null)),
-  ])
-  const [cfg, pop, tabs, meta] = results.map((r) => (r.status === 'fulfilled' ? r.value : null))
-  if (cfg) siteConfig.config = cfg
-  if (pop) siteConfig.popups = pop
-  if (tabs) siteConfig.tabs = tabs
-  if (meta?.version) siteConfig.version = meta.version
-  siteConfig.ready = true
+  siteConfig.ready = false
+  siteConfig.error = ''
+  try {
+    const bundle = await fetchJsonTimed('/data/site-bundle.json?v=' + Date.now(), { cache: 'no-store' })
+    if (!Array.isArray(bundle?.config?.apps) || !bundle.popups || !bundle.tabs || !Number.isSafeInteger(bundle.meta?.version)) throw new Error('站点配置无效')
+    siteConfig.config = bundle.config
+    siteConfig.popups = bundle.popups
+    siteConfig.tabs = bundle.tabs
+    siteConfig.version = bundle.meta.version
+    if (bundle.apiSession?.token) applyApiSession(bundle.apiSession, 'runtime')
+  } catch {
+    Object.assign(siteConfig, emptySiteConfig())
+    siteConfig.error = '配置加载失败，请重试'
+  } finally { siteConfig.ready = true }
   return readonly(siteConfig)
 }
-
-export function useSiteConfig() {
-  return siteConfig
-}
+export function useSiteConfig() { return siteConfig }

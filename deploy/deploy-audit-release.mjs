@@ -67,6 +67,8 @@ async function deploy(revision, out) {
   for (const [i, op] of operations.entries()) if (op.before) fs.writeFileSync(path.join(backup, i + '.before'), op.before, { mode: 0o600 })
   fs.writeFileSync(backup + '/index.before', index, { mode: 0o600 })
   fs.writeFileSync(backup + '/receipt.before', read(receiptFile), { mode: 0o600 })
+  const publishedFile = '/opt/ads-king/site-data/published.json'
+  if (fs.existsSync(publishedFile)) fs.writeFileSync(backup + '/published.before.json', fs.readFileSync(publishedFile), { mode: 0o600 })
   fs.writeFileSync(backup + '/rollback.json', JSON.stringify({ revision, files: operations.map((o, i) => ({ target: o.target, before: o.before ? i + '.before' : null, sticky: o.sticky, beforeSha256: o.before ? sha(o.before) : null, afterSha256: o.sha256 })) }, null, 2), { mode: 0o600 })
   let ingressValidated = false
   try {
@@ -84,6 +86,7 @@ async function deploy(revision, out) {
     assert.ok(healthy, 'Both application services healthy')
     execFileSync(process.execPath, [path.join(root, 'scripts/test-audit-security.mjs')], { stdio: 'inherit', env: { ...process.env, AUDIT_ADMIN_DIR: '/opt/ads-king/admin' } })
     execFileSync(process.execPath, [path.join(root, 'scripts/test-ad-sync.mjs')], { stdio: 'inherit', env: { ...process.env, AD_SYNC_ADMIN_DIR: '/opt/ads-king/admin', AD_SYNC_BROWSER_BUNDLE: '' } })
+    execFileSync(process.execPath, [path.join(root, 'scripts/test-audit-config.mjs')], { stdio: 'inherit', env: { ...process.env, AUDIT_ADMIN_DIR: '/opt/ads-king/admin' } })
     const newOrder = await fetch('https://b12sl5x.cn/pay-bff/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
     assert.equal(newOrder.status, 503)
     assert.equal((await newOrder.json()).code, 'PAYMENT_DISABLED')
@@ -91,6 +94,13 @@ async function deploy(revision, out) {
     for (const host of ['b12sl5x.cn', 'admin.b12sl5x.cn']) {
       assert.equal((await fetch('https://' + host + '/data/config.json.bak')).status, 404)
       assert.equal((await fetch('https://' + host + '/data/config.json')).status, 200)
+      if (manifest.stage >= 2) {
+        const published = await fetch('https://' + host + '/data/site-bundle.json')
+        assert.equal(published.status, 200)
+        const snapshot = await published.json()
+        assert.ok(Array.isArray(snapshot.config.apps))
+        assert.ok(Number.isSafeInteger(snapshot.meta.version))
+      }
     }
     // Retain backups recoverably outside any HTTP data root.
     const live = '/opt/ads-king/site-data/live'
@@ -108,8 +118,8 @@ async function deploy(revision, out) {
     for (const op of operations) assert.equal(sha(fs.readFileSync(op.target)), op.sha256, 'Runtime hash ' + op.target)
     const receipt = { ...manifest, revision, deployedAt: new Date().toISOString(), status: 'verified',
       files: operations.map(({ source, target, sha256 }) => ({ source, target, sha256 })) }
-    atomic(receiptFile, JSON.stringify(receipt, null, 2) + '\n')
     fs.writeFileSync(backup + '/receipt.json', JSON.stringify(receipt, null, 2), { mode: 0o600 })
+    atomic(receiptFile, JSON.stringify(receipt, null, 2) + '\n')
     console.log('DEPLOYED ' + JSON.stringify({ revision, stage: manifest.stage, frontendSha256: manifest.frontendSha256, backup, files: receipt.files.length }))
   } catch (error) {
     for (const op of [...operations].reverse()) {

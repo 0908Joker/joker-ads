@@ -17,7 +17,7 @@ prefix=$(tar -tzf "$release/source.tar.gz" | head -1 | cut -d/ -f1) || true
 tar -xzf "$release/source.tar.gz" --strip-components=1 -C "$release" \
   "$prefix/deploy" "$prefix/src" "$prefix/package.json" "$prefix/package-lock.json" \
   "$prefix/admin/lib" "$prefix/admin/public" "$prefix/admin/server.mjs" "$prefix/admin/package.json" "$prefix/admin/package-lock.json" \
-  "$prefix/scripts/test-ad-sync.mjs" "$prefix/scripts/test-audit-security.mjs" "$prefix/scripts/verify-production-entry.mjs"
+  "$prefix/scripts/test-ad-sync.mjs" "$prefix/scripts/test-audit-security.mjs" "$prefix/scripts/test-audit-config.mjs" "$prefix/scripts/verify-production-entry.mjs"
 # Isolated compiler dependencies only; no operator configuration/database is extracted.
 npm ci --prefix "$release" --ignore-scripts --no-audit --no-fund
 AUDIT_BUNDLE_OUT="$release/artifact" python3 "$release/deploy/verify-bundled-production.py"

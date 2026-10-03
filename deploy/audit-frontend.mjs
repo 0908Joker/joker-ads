@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import { parse } from '@babel/parser'
 import { patchBundle } from './deploy-ad-sync.mjs'
+import { patchStageTwo } from './audit-frontend-stage2.mjs'
 
 export const digest = data => crypto.createHash('sha256').update(data).digest('hex')
 export function exact(code, before, after) {
@@ -37,7 +38,8 @@ export function patchAuditFrontend(input, stage = 1) {
   ]) code = exact(code, before, after)
   assert.ok(!code.includes('o0("/users/info")') && !code.includes('o0("/users/signin"'))
   assert.ok(!code.includes('fetch(Ko("/create")'))
-  assert.equal(stage, 1, 'Unimplemented release stage')
+  if (stage >= 2) code = patchStageTwo(code, { exact, functionBody })
+  assert.ok(stage >= 1 && stage <= 2, 'Unimplemented release stage')
   parse(code, { sourceType: 'module' })
   return code
 }

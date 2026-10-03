@@ -76,6 +76,47 @@ try {
   password = nextPassword
   const relogin = await request('/api/admin/login', 'POST', { username: 'ad-sync-test', password })
   cookie = relogin.r.headers.get('set-cookie').split(';')[0]
+  const beforeInvalid = fs.readFileSync(path.join(dataDir, 'draft/config.json'), 'utf8')
+  const invalid = await fetch(origin + '/api/admin/site-config/config', { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ apps: {} }) })
+  assert.equal(invalid.status, 400)
+  assert.equal((await invalid.json()).field, 'config.apps')
+  assert.equal(fs.readFileSync(path.join(dataDir, 'draft/config.json'), 'utf8'), beforeInvalid)
+  const duplicateFixture = structuredClone(sample)
+  duplicateFixture.apps.push({ name: 'Existing', url: 'https://example.com/last', icon: '/last.png', preserved: 1 })
+  await request('/api/admin/site-config/config', 'PUT', duplicateFixture)
+  const canonicalList = (await request('/api/admin/apps')).value.apps
+  assert.equal(canonicalList.length, 1)
+  assert.equal(canonicalList[0].url, 'https://example.com/last')
+  assert.equal(canonicalList[0].duplicateCount, 2)
+  await request('/api/admin/apps/Existing', 'PUT', { url: 'https://example.com/synced' })
+  let duplicates = (await request('/api/admin/site-config')).value.config.apps
+  assert.equal(duplicates.length, 2)
+  assert.ok(duplicates.every(app => app.url === 'https://example.com/synced' && app.icon === '/last.png'))
+  assert.equal(duplicates[1].preserved, 1)
+  await request('/api/admin/site-config/config', 'PUT', sample)
+  for (const name of ['100% QA', '中文应用', '目录/应用']) {
+    await request('/api/admin/apps', 'POST', { name, url: 'https://example.com/name' })
+    await request('/api/admin/apps/' + encodeURIComponent(name), 'PUT', { name: name + '改', url: 'https://example.com/edited' })
+    await request('/api/admin/apps/' + encodeURIComponent(name + '改'), 'DELETE')
+  }
+  for (const slot of ['mineQuickApps', 'featuredAd']) {
+    const value = slot === 'mineQuickApps' ? { items: [{ name: 'Quick', url: 'https://example.com/quick' }] } : { name: 'Featured', url: 'https://example.com/featured' }
+    await request('/api/admin/slots/' + slot, 'PUT', value)
+  }
+  await publish()
+  let atomicBundle = (await request('/data/site-bundle.json')).value
+  assert.equal(atomicBundle.tabs.mine.quickApps[0].name, 'Quick')
+  assert.equal(atomicBundle.tabs.featured.ad.name, 'Featured')
+  for (const [file, key] of [['config', 'config'], ['popups', 'popups'], ['tabs', 'tabs'], ['api-session', 'apiSession'], ['meta', 'meta']]) {
+    assert.deepEqual((await request('/data/' + file + '.json')).value, atomicBundle[key])
+  }
+  await request('/api/admin/slots/mineQuickApps', 'PUT', { items: [] })
+  await request('/api/admin/slots/featuredAd', 'PUT', { name: '', url: '', viewers: '' })
+  await publish()
+  atomicBundle = (await request('/data/site-bundle.json')).value
+  assert.deepEqual(atomicBundle.tabs.mine.quickApps, [])
+  assert.equal(atomicBundle.tabs.featured.ad.name, '')
+  console.log('PASS invalid save unchanged; canonical duplicate edit; percent/Chinese/slash CRUD; slots clear; snapshot compatibility')
   const uploadForm = new FormData()
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=', 'base64')
   uploadForm.append('file', new Blob([png], { type: 'image/png' }), 'sync-test.png')

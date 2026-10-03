@@ -12,6 +12,8 @@ import {
   syncDraftFromLive,
   readJson,
   readLive,
+  readPublished,
+  publishApiSession,
 } from './lib/jsonStore.mjs'
 import { publicApiSession, normalizeApiSession } from './lib/apiSession.mjs'
 import { addAppPlacement, updateAppPlacements } from './lib/appPlacements.mjs'
@@ -88,7 +90,7 @@ function getBundle() {
     config: readDraft('config.json') || {},
     popups: readDraft('popups.json') || {},
     tabs: readDraft('tabs.json') || {},
-    meta: readDraft('meta.json') || { version: 1 },
+    meta: readLive('meta.json') || { version: 1 },
   }
 }
 
@@ -103,12 +105,14 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'ads-king-admin' })
 })
 
-app.use('/data', (req, res, next) => {
-  if (!/^\/(config|popups|tabs|meta|api-session)\.json$/.test(req.path)) return res.sendStatus(404)
-  next()
-}, express.static(LIVE_DIR, { etag: true, maxAge: 0, setHeaders(res) {
+readPublished()
+app.get('/data/:file', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-}}))
+  if (req.params.file === 'site-bundle.json') return res.json(readPublished())
+  if (!/^(config|popups|tabs|meta|api-session)\.json$/.test(req.params.file)) return res.sendStatus(404)
+  res.json(readLive(req.params.file))
+})
+app.use('/data', (_req, res) => res.sendStatus(404))
 
 app.use('/uploads', express.static(UPLOAD_DIR, { etag: true, maxAge: '30d' }))
 
@@ -213,21 +217,16 @@ app.put('/api/admin/api-session', requireAuth, requireWrite('settings'), (req, r
   try {
     const previous = readDraft('api-session.json') || readLive('api-session.json') || {}
     const next = normalizeApiSession(req.body || {}, previous)
-    writeDraft('api-session.json', next)
-    writeLive('api-session.json', next)
-    const meta = readDraft('meta.json') || readLive('meta.json') || { version: 0 }
-    meta.version = Number(meta.version || 0) + 1
-    meta.publishedAt = now()
-    writeLive('meta.json', meta)
-    writeDraft('meta.json', meta)
-    writeLog({
+    const meta = publishApiSession(next)
+    let auditWarning = false
+    try { writeLog({
       admin: req.admin,
       action: '轮换原站 token',
       targetType: 'api-session',
       detail: `uid=${next.uid} len=${next.token.length}`,
       ip: clientIp(req),
-    })
-    res.json({ ok: true, session: publicApiSession(next), meta })
+    }) } catch { auditWarning = true; console.warn('[config] session committed; audit log unavailable') }
+    res.json({ ok: true, session: publicApiSession(next), meta, auditWarning })
   } catch (err) {
     res.status(400).json({ error: err.message || 'token 无效' })
   }
@@ -278,7 +277,14 @@ app.get('/api/admin/apps', requireAuth, requireRead('apps'), (req, res) => {
   const q = String(req.query.q || '').trim().toLowerCase()
   const page = Math.max(1, Number(req.query.page || 1))
   const pageSize = Math.min(100, Math.max(10, Number(req.query.pageSize || 30)))
-  let apps = getBundle().config.apps || []
+  const all = getBundle().config.apps || []
+  const counts = new Map()
+  const canonical = new Map()
+  for (const item of all) {
+    counts.set(item.name, (counts.get(item.name) || 0) + 1)
+    canonical.set(item.name, item)
+  }
+  let apps = [...canonical.values()].map(item => ({ ...item, duplicateCount: counts.get(item.name) }))
   if (q) apps = apps.filter((a) => String(a.name || '').toLowerCase().includes(q) || String(a.url || '').toLowerCase().includes(q))
   const total = apps.length
   const start = (page - 1) * pageSize
@@ -305,7 +311,7 @@ app.post('/api/admin/apps', requireAuth, requireWrite('apps'), (req, res) => {
 })
 
 app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
-  const oldName = decodeURIComponent(req.params.name)
+  const oldName = req.params.name
   const body = req.body || {}
   const bundle = getBundle()
   const idx = (bundle.config.apps || []).findIndex((a) => a.name === oldName)
@@ -315,11 +321,9 @@ app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) =
   if (nextName !== oldName && bundle.config.apps.some((a) => a.name === nextName)) {
     return res.status(409).json({ error: '应用名称已存在' })
   }
-  bundle.config.apps[idx] = {
-    ...bundle.config.apps[idx],
-    ...body,
-    name: nextName,
-  }
+  const canonical = bundle.config.apps.findLast(item => item.name === oldName)
+  const fields = Object.fromEntries(['url', 'signUrl', 'icon'].map(k => [k, body[k] !== undefined ? body[k] : canonical[k] || '']))
+  bundle.config.apps = bundle.config.apps.map(item => item.name === oldName ? { ...item, ...fields, name: nextName } : item)
   if (nextName !== oldName) updateAppPlacements(bundle.config, oldName, nextName)
   saveBundle('config', bundle.config)
   writeLog({ admin: req.admin, action: `编辑应用 ${nextName}`, targetType: 'apps', targetId: nextName, ip: clientIp(req) })
@@ -327,7 +331,7 @@ app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) =
 })
 
 app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
-  const name = decodeURIComponent(req.params.name)
+  const name = req.params.name
   const bundle = getBundle()
   bundle.config.apps = (bundle.config.apps || []).filter((a) => a.name !== name)
   updateAppPlacements(bundle.config, name)
@@ -351,8 +355,10 @@ app.put('/api/admin/category-apps', requireAuth, requireWrite('categories'), (re
 
 app.post('/api/admin/publish', requireAuth, requireWrite('publish'), (req, res) => {
   const meta = publishAll()
-  writeLog({ admin: req.admin, action: '发布站点配置', targetType: 'publish', detail: `v${meta.version}`, ip: clientIp(req) })
-  res.json({ ok: true, meta })
+  let auditWarning = false
+  try { writeLog({ admin: req.admin, action: '发布站点配置', targetType: 'publish', detail: `v${meta.version}`, ip: clientIp(req) }) }
+  catch { auditWarning = true; console.warn('[config] published; audit log unavailable') }
+  res.json({ ok: true, meta, auditWarning })
 })
 
 app.post('/api/admin/discard-draft', requireAuth, requireWrite('publish'), (_req, res) => {
@@ -442,7 +448,7 @@ app.post('/api/admin/totp/disable', requireAuth, requireWrite('settings'), async
 app.use(express.static(PUBLIC_DIR))
 
 app.use((err, _req, res, _next) => {
-  res.status(500).json({ error: err?.message || 'server error' })
+  res.status(err.status === 400 ? 400 : 500).json({ error: err?.message || 'server error', ...(err.field ? { field: err.field } : {}) })
 })
 
 app.listen(PORT, HOST, () => {

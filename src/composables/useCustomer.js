@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue'
+import { fetchJsonTimed } from '../api/timedFetch.js'
 
 const FP_KEY = 'dw_device_fp'
 const TOKEN_KEY = 'dw_card_token'
@@ -64,14 +65,12 @@ export async function claimCustomer() {
     try {
       body.cardToken = localStorage.getItem(TOKEN_KEY) || ''
     } catch {}
-    const res = await fetch('/api/public/customers/claim', {
+    const data = await fetchJsonTimed('/api/public/customers/claim', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(data.error || `claim ${res.status}`)
     customerState.customerId = data.customerId || ''
     customerState.cardNo = data.cardNo || ''
     customerState.inviteCode = data.inviteCode || ''

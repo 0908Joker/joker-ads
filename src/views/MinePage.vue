@@ -137,21 +137,17 @@ const services = tabsFallback.mine.services
 const customer = customerState
 const showCard = ref(false)
 
-const ROW1_NAMES = ['oio禁漫', '免费看黄片', '新葡京', '海角社区', '同城约炮', '新葡京']
-const ROW2_NAMES = ['免费看黄片', '免费看片', '同城约炮', '免费看片', '免费看片', '免费看黄片']
-const REC_NAMES = ['免费看片', '上门约炮', '同城约炮', '新葡京', '波多涩漫']
+const appsByName = computed(() => new Map((config.value.apps || []).map(app => [app.name, app])))
 
 function resolveApp(name) {
-  const hit = (config.value.apps || []).find((a) => a.name === name)
+  const hit = appsByName.value.get(name)
   if (hit) return { name: hit.name, icon: hit.icon, signUrl: hit.signUrl, url: hit.url }
-  const fromTabs = (tabsFallback.mine.quickApps || []).find((a) => a.name === name)
-  if (fromTabs) return { name: fromTabs.name, icon: fromTabs.icon, signUrl: fromTabs.signUrl, url: fromTabs.url }
-  return { name, icon: '', signUrl: '', url: '' }
+  return null
 }
 
-const row1 = computed(() => ROW1_NAMES.map(resolveApp))
-const row2 = computed(() => ROW2_NAMES.map(resolveApp))
-const recommend = computed(() => REC_NAMES.map(resolveApp))
+const row1 = computed(() => (siteConfig.tabs.mine?.quickApps || []).slice(0, 6))
+const row2 = computed(() => (siteConfig.tabs.mine?.quickApps || []).slice(6))
+const recommend = computed(() => [...new Set(config.value.categoryApps?.byCategory?.['官方推荐'] || [])].map(resolveApp).filter(Boolean).slice(0, 5))
 
 const avatarText = computed(() => {
   const n = String(user.value.name || '得污').trim()

@@ -291,7 +291,7 @@ async function renderApps(main) {
       <thead><tr><th>图标</th><th>名称</th><th>链接</th><th>操作</th></tr></thead>
       <tbody>${data.apps.map((a) => `<tr>
         <td>${a.icon ? `<img class="img-thumb" src="${esc(a.icon)}" />` : '-'}</td>
-        <td>${esc(a.name)}</td><td class="link-cell">${esc(a.url)}</td>
+        <td>${esc(a.name)}${a.duplicateCount > 1 ? ` <small>同名 ${a.duplicateCount} 条</small>` : ''}</td><td class="link-cell">${esc(a.url)}</td>
         <td class="action-btns">${canWrite('apps') ? `<button class="btn btn-blue btn-sm" data-edit="${esc(a.name)}">编辑</button><button class="btn btn-danger btn-sm" data-del="${esc(a.name)}">删</button>` : ''}</td>
       </tr>`).join('')}</tbody></table></div>
     <div class="page-actions" style="margin-top:12px;">
@@ -302,16 +302,19 @@ async function renderApps(main) {
   $('#apps-search').onclick = () => { appsQuery = $('#apps-q').value.trim(); appsPage = 1; renderApps(main) }
   $('#apps-prev').onclick = () => { appsPage--; renderApps(main) }
   $('#apps-next').onclick = () => { appsPage++; renderApps(main) }
-  $('#add-app').onclick = () => openAppModal(null)
+  $('#add-app')?.addEventListener('click', () => openAppModal(null))
   $$('[data-edit]').forEach((btn) => btn.onclick = () => {
     const app = data.apps.find((a) => a.name === btn.dataset.edit)
     openAppModal(app)
   })
   $$('[data-del]').forEach((btn) => btn.onclick = async () => {
-    if (!confirm('确认删除应用？')) return
-    await api(`/api/admin/apps/${encodeURIComponent(btn.dataset.del)}`, { method: 'DELETE' })
-    toast('已删除')
-    renderApps(main)
+    const item = data.apps.find(a => a.name === btn.dataset.del)
+    if (!confirm(`确认删除此应用及全部 ${item?.duplicateCount || 1} 条同名记录？分类引用也会移除。`)) return
+    try {
+      await api(`/api/admin/apps/${encodeURIComponent(btn.dataset.del)}`, { method: 'DELETE' })
+      toast('已删除')
+      await renderApps(main)
+    } catch (error) { toast(error.message) }
   })
 }
 

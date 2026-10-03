@@ -148,9 +148,7 @@ async function deploy(revision) {
 if (process.argv[2] === '--verify-bundle') {
   const patched = patchBundle(read(process.argv[3]))
   assert.equal(patchBundle(patched), patched)
-  assert.equal(patchServer(read(path.join(repo, 'admin/server.mjs'))), read(path.join(repo, 'admin/server.mjs')))
-  assert.equal(patchNginx(read(path.join(repo, 'deploy/b12sl5x.cn.conf'))), read(path.join(repo, 'deploy/b12sl5x.cn.conf')))
   console.log('PASS: reproducible ad-sync production bundle ' + digest(patched))
 } else if (process.argv[2] === '--deploy') {
-  await deploy(process.argv[3])
+  throw new Error('Legacy one-off deploy is retired. Use the manifest-based production workflow.')
 }

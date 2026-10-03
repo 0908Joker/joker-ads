@@ -1,87 +1,95 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { DRAFT_DIR, LIVE_DIR, ensureDirs } from './paths.mjs'
+import { DRAFT_DIR, LIVE_DIR, SITE_DATA_DIR, ensureDirs } from './paths.mjs'
+import { validatePart, validatePublished } from './configValidation.mjs'
+
+const SNAPSHOT = path.join(SITE_DATA_DIR, 'published.json')
+const BACKUPS = path.join(SITE_DATA_DIR, 'private-backups')
+const KEYS = { 'config.json': 'config', 'popups.json': 'popups', 'tabs.json': 'tabs', 'api-session.json': 'apiSession', 'meta.json': 'meta' }
 
 export function readJson(filePath, fallback = null) {
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
-  } catch {
-    return fallback
-  }
+  try { return JSON.parse(fs.readFileSync(filePath, 'utf8')) } catch { return fallback }
 }
-
+function strictJson(file) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')) }
+  catch { throw Object.assign(new Error('配置文件无法读取或解析: ' + path.basename(file)), { status: 400 }) }
+}
 export function writeJsonAtomic(target, value, backup = true) {
   ensureDirs()
-  const payload = JSON.stringify(value, null, 2) + '\n'
-  const tmp = `${target}.${process.pid}.${Date.now()}.tmp`
-  const fd = fs.openSync(tmp, 'w', 0o600)
+  const tmp = target + '.' + process.pid + '.' + Date.now() + '.tmp'
   try {
-    fs.writeFileSync(fd, payload, 'utf8')
-    fs.fsyncSync(fd)
-  } finally {
-    fs.closeSync(fd)
-  }
-  try {
-    if (backup && fs.existsSync(target)) fs.copyFileSync(target, `${target}.bak`)
-    fs.renameSync(tmp, target)
-    if (process.platform !== 'win32') {
-      const dirFd = fs.openSync(path.dirname(target), 'r')
-      try {
-        fs.fsyncSync(dirFd)
-      } finally {
-        fs.closeSync(dirFd)
-      }
+    const fd = fs.openSync(tmp, 'w', 0o600)
+    try { fs.writeFileSync(fd, JSON.stringify(value, null, 2) + '\n'); fs.fsyncSync(fd) } finally { fs.closeSync(fd) }
+    if (backup && fs.existsSync(target)) {
+      fs.mkdirSync(BACKUPS, { recursive: true, mode: 0o700 })
+      fs.copyFileSync(target, path.join(BACKUPS, path.basename(path.dirname(target)) + '-' + path.basename(target) + '.bak'))
     }
-  } catch (err) {
+    fs.renameSync(tmp, target) // sole commit point; readers see all-old or all-new.
+  } catch (error) {
+    try { fs.rmSync(tmp, { force: true }) } catch {}
+    throw error
+  }
+  // A failure after commit must not masquerade as an unpublished transaction.
+  if (process.platform !== 'win32') {
     try {
-      fs.rmSync(tmp, { force: true })
-    } catch {}
-    throw err
+      const fd = fs.openSync(path.dirname(target), 'r')
+      try { fs.fsyncSync(fd) } finally { fs.closeSync(fd) }
+    } catch { console.warn('[config] directory sync unavailable after atomic commit') }
   }
 }
-
-export function readDraft(name) {
-  return readJson(path.join(DRAFT_DIR, name))
+export function readPublished() {
+  if (!fs.existsSync(SNAPSHOT)) {
+    const first = {}
+    for (const [file, key] of Object.entries(KEYS)) {
+      const p = path.join(LIVE_DIR, file)
+      first[key] = fs.existsSync(p) ? strictJson(p) : key === 'meta' ? { version: 0 } : {}
+    }
+    validatePublished(first)
+    writeJsonAtomic(SNAPSHOT, first, false) // import only LIVE, never draft.
+  }
+  return validatePublished(strictJson(SNAPSHOT))
 }
-
-export function readLive(name) {
-  return readJson(path.join(LIVE_DIR, name))
-}
-
+export function readDraft(name) { return readJson(path.join(DRAFT_DIR, name)) }
+export function readLive(name) { return KEYS[name] ? readPublished()[KEYS[name]] : null }
 export function writeDraft(name, value) {
+  if (!KEYS[name]) throw new Error('Unknown configuration part')
+  if (['config', 'popups', 'tabs'].includes(KEYS[name])) validatePart(KEYS[name], value)
   writeJsonAtomic(path.join(DRAFT_DIR, name), value)
 }
-
+function commit(bundle) {
+  validatePublished(bundle)
+  writeJsonAtomic(SNAPSHOT, bundle)
+  return bundle.meta
+}
 export function writeLive(name, value) {
-  writeJsonAtomic(path.join(LIVE_DIR, name), value)
+  if (!KEYS[name]) throw new Error('Unknown configuration part')
+  const bundle = readPublished()
+  bundle[KEYS[name]] = value
+  return commit(bundle)
 }
-
+function nextMeta(previous) {
+  return { ...previous, version: previous.version + 1, publishedAt: new Date().toISOString() }
+}
+export function publishApiSession(value) {
+  const bundle = readPublished()
+  bundle.apiSession = value
+  bundle.meta = nextMeta(bundle.meta)
+  validatePublished(bundle)
+  writeDraft('api-session.json', value)
+  return commit(bundle)
+}
 export function publishAll() {
-  ensureDirs()
-  const names = ['config.json', 'popups.json', 'tabs.json', 'api-session.json']
-  for (const name of names) {
-    const draftPath = path.join(DRAFT_DIR, name)
-    const livePath = path.join(LIVE_DIR, name)
-    if (!fs.existsSync(draftPath)) continue
-    const data = readJson(draftPath)
-    if (data == null) throw new Error(`invalid draft: ${name}`)
-    writeJsonAtomic(livePath, data)
+  const bundle = readPublished()
+  // Parse and validate every draft BEFORE performing any live write.
+  for (const [file, key] of Object.entries(KEYS)) {
+    if (key === 'meta') continue
+    const filePath = path.join(DRAFT_DIR, file)
+    if (fs.existsSync(filePath)) bundle[key] = strictJson(filePath)
   }
-  const meta = readJson(path.join(DRAFT_DIR, 'meta.json'), { version: 0 })
-  meta.version = Number(meta.version || 0) + 1
-  meta.publishedAt = new Date().toISOString()
-  writeJsonAtomic(path.join(LIVE_DIR, 'meta.json'), meta)
-  writeJsonAtomic(path.join(DRAFT_DIR, 'meta.json'), meta)
-  return meta
+  bundle.meta = nextMeta(bundle.meta)
+  return commit(bundle)
 }
-
 export function syncDraftFromLive() {
-  ensureDirs()
-  for (const name of ['config.json', 'popups.json', 'tabs.json', 'meta.json', 'api-session.json']) {
-    const livePath = path.join(LIVE_DIR, name)
-    const draftPath = path.join(DRAFT_DIR, name)
-    if (fs.existsSync(livePath)) {
-      fs.copyFileSync(livePath, draftPath)
-    }
-  }
+  const bundle = readPublished()
+  for (const [file, key] of Object.entries(KEYS)) writeDraft(file, bundle[key])
 }
