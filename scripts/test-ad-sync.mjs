@@ -13,7 +13,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const adminDir = process.env.AD_SYNC_ADMIN_DIR || path.join(root, 'admin')
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ad-sync-test-'))
 const dataDir = path.join(tmp, 'site-data')
-const password = crypto.randomBytes(24).toString('hex')
+let password = crypto.randomBytes(24).toString('hex')
 const sample = {
   categories: ['官方推荐', '其他'],
   modes: [{ id: 'recommend', label: '站长推荐' }, { id: 'download', label: '热门下载' }],
@@ -71,6 +71,11 @@ try {
   assert.ok(ready, 'isolated admin started')
   const login = await request('/api/admin/login', 'POST', { username: 'ad-sync-test', password })
   cookie = login.r.headers.get('set-cookie').split(';')[0]
+  const nextPassword = crypto.randomBytes(24).toString('hex')
+  await request('/api/admin/change-password', 'POST', { oldPassword: password, newPassword: nextPassword })
+  password = nextPassword
+  const relogin = await request('/api/admin/login', 'POST', { username: 'ad-sync-test', password })
+  cookie = relogin.r.headers.get('set-cookie').split(';')[0]
   const uploadForm = new FormData()
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=', 'base64')
   uploadForm.append('file', new Blob([png], { type: 'image/png' }), 'sync-test.png')

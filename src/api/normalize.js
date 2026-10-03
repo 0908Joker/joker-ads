@@ -1,11 +1,9 @@
-import session from '../data/api-session.json'
-
-const RES_BASE = (session.resBase || 'https://d17e80montytxe.cloudfront.net').replace(/\/$/, '')
+import { getResBase } from './session.js'
 
 export function mediaUrl(path) {
   if (!path) return ''
   if (/^https?:\/\//.test(path)) return path
-  return `${RES_BASE}/${path.replace(/^\/+/, '')}`
+  return `${getResBase()}/${path.replace(/^\/+/, '')}`
 }
 
 export function formatCount(n) {
@@ -145,6 +143,7 @@ export function normalizeShortPayload(data) {
 }
 
 export function normalizeUser(data, fallback = {}) {
+  if (!data || data.unavailable) return { id: '', name: '访客', bio: '客户账户尚未接入，身份卡与邀请功能正常使用' }
   const u = data?.userInfo || data?.user || data || {}
   return {
     id: u.uid || u.id || fallback.id || '',
@@ -155,6 +154,7 @@ export function normalizeUser(data, fallback = {}) {
 
 /** Wallet / VIP / invite fields the mine sub-pages render. */
 export function normalizeAccount(data) {
+  if (!data || data.unavailable) return { uid: '', gold: '—', diamond: '—', points: '—', isVip: false, vipName: '本地账户未接入', vipUntil: '', watchTickets: '—', downloadTickets: '—', inviteCode: '', inviteCount: 0, downloadUrl: '', customerUrl: '' }
   const u = data?.userInfo || data?.user || data || {}
   const vipUntil = u.vipEffectiveTime || ''
   const isVip = vipUntil ? new Date(vipUntil).getTime() > Date.now() : !!u.vip
@@ -177,6 +177,7 @@ export function normalizeAccount(data) {
 
 /** Counts live on the user record; actionStats only carries comment/download tallies. */
 export function normalizeStats(data, fallback = {}) {
+  if (!data || data.unavailable) return { follow: '—', like: '—', fav: '—' }
   const s = data?.userInfo || data?.actionStats || data || {}
   return {
     follow: s.followCnt ?? s.follow ?? fallback.follow ?? 0,

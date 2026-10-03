@@ -1,5 +1,6 @@
 """Reproduce and verify the deployed frontend without contacting customer APIs."""
 import importlib.util
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -43,3 +44,5 @@ with tempfile.TemporaryDirectory(prefix='joker-reproduce-') as temp:
     assert record['files']['main/assets/' + record['javascript']] == '46d1d07f01e5f8f1589a9deec4460e43f458f28f9f24b00f79bf5d892b831d08'
     print('PASS: archived baseline reproduces the exact published server bundle')
     subprocess.run(['node', str(directory / 'deploy-ad-sync.mjs'), '--verify-bundle', str(root / 'entry/release/main/assets' / record['javascript'])], check=True)
+    if os.environ.get('AUDIT_BUNDLE_OUT'):
+        subprocess.run(['node', str(directory / 'build-audit-release.mjs'), str(root / 'entry/release/main/assets' / record['javascript']), os.environ['AUDIT_BUNDLE_OUT']], check=True)

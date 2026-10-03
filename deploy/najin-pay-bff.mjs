@@ -15,6 +15,9 @@ const QUERY_URL = process.env.NAJIN_QUERY_URL || 'http://pay.najin.cfd/api/pay/q
 const NOTIFY_URL = process.env.NAJIN_NOTIFY_URL || 'https://al-ads.com/pay-bff/notify'
 const RETURN_URL = process.env.NAJIN_RETURN_URL || 'https://b12sl5x.cn/#/recharge?paid=1'
 const ALLOW_ORIGIN = process.env.NAJIN_ALLOW_ORIGIN || '*'
+// New payments are deliberately unavailable until customer/order/entitlement
+// reconciliation is implemented and separately accepted. Environment cannot reopen it.
+const CREATE_ENABLED = false
 
 const PRODUCT = {
   wx: Number(process.env.NAJIN_PRODUCT_WX || 8002),
@@ -146,6 +149,7 @@ async function resolvePayPage(startUrl, maxHops = 5) {
 }
 
 async function handleCreate(body, origin) {
+  if (!CREATE_ENABLED) return { status: 503, data: { ok: false, code: 'PAYMENT_DISABLED', message: '新支付暂时关闭，已有订单仍可查询' } }
   if (!MCH_ID || !KEY) {
     return { status: 500, data: { ok: false, message: 'pay_bff_not_configured' } }
   }
@@ -252,7 +256,9 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && url.pathname === '/pay-bff/notify') {
       const body = await readBody(req)
-      console.log('[najin-notify]', JSON.stringify(body))
+      console.log('[najin-notify]', JSON.stringify({ receivedAt: new Date().toISOString(), verified: false,
+        mchOrderNo: String(body.mchOrderNo || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 80),
+        status: String(body.status ?? '').slice(0, 24) }))
       res.writeHead(200, { 'Content-Type': 'text/plain' })
       return res.end('success')
     }

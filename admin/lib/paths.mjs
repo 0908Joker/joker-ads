@@ -19,4 +19,4 @@ export function ensureDirs() {
   }
 }
 
-export const JSON_FILES = ['config.json', 'popups.json', 'tabs.json', 'meta.json']
+export const JSON_FILES = ['config.json', 'popups.json', 'tabs.json', 'meta.json', 'api-session.json']

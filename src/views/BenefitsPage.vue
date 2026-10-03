@@ -5,7 +5,7 @@
         <div>
           <strong>{{ account.vipName }}</strong>
           <p v-if="account.vipUntil">有效期至 {{ account.vipUntil }}</p>
-          <p v-else>开通会员解锁全站权益</p>
+          <p v-else>账户权益尚未接入，充值已暂停</p>
         </div>
         <button @click="router.push('/recharge?type=vip')">
           {{ account.isVip ? '续费' : '开通' }}

@@ -17,9 +17,11 @@ const NAV = [
   { id: 'categories', label: '分类映射', read: 'categories' },
   { id: 'featured', label: '精选广告', read: 'tabs' },
   { id: 'mine', label: '我的页应用', read: 'tabs' },
+  { id: 'customers', label: '客户身份卡', read: 'customers' },
   { id: 'stats', label: '点击统计', read: 'stats' },
   { id: 'logs', label: '操作日志', read: 'logs' },
   { id: 'security', label: '安全设置', read: 'settings' },
+  { id: 'api-session', label: '原站 Token', read: 'settings', superOnly: true },
 ]
 
 async function api(path, opts = {}) {
@@ -74,9 +76,10 @@ async function login() {
     if ($('#login-totp').style.display !== 'none') body.totp = $('#login-totp').value.trim()
     const data = await api('/api/admin/login', { method: 'POST', body: JSON.stringify(body) })
     user = data.user
-    if (user.mustChangePassword) toast('请尽快修改初始密码')
+    if (user.mustChangePassword) return openPasswordModal({ required: true })
     await loadBundle()
     showAdmin()
+    if (user.mustChangePassword) openPasswordModal({ required: true })
   } catch (e) {
     if (e.message.includes('动态验证码')) {
       $('#login-totp').style.display = 'block'
@@ -105,7 +108,8 @@ async function publish() {
 }
 
 function renderSidebar() {
-  $('#sidebar').innerHTML = NAV.map((n) =>
+  const items = NAV.filter((n) => !n.superOnly || user?.role === 'super')
+  $('#sidebar').innerHTML = items.map((n) =>
     `<div class="nav-item ${currentPage === n.id ? 'active' : ''}" data-page="${n.id}"><span class="nav-dot"></span>${esc(n.label)}</div>`,
   ).join('')
   $$('#sidebar .nav-item').forEach((el) => {
@@ -124,9 +128,11 @@ function renderPage(page) {
   if (page === 'categories') return renderCategories(main)
   if (page === 'featured') return renderObjectEditor(main, 'featuredAd', '精选内嵌广告', ['name', 'viewers', 'url', 'signUrl'])
   if (page === 'mine') return renderListEditor(main, 'mineQuickApps', '我的页快捷应用')
+  if (page === 'customers') return renderCustomers(main)
   if (page === 'stats') return renderStats(main)
   if (page === 'logs') return renderLogs(main)
   if (page === 'security') return renderSecurity(main)
+  if (page === 'api-session') return renderApiSession(main)
   main.innerHTML = '<div class="card">页面开发中</div>'
 }
 
@@ -139,6 +145,7 @@ async function renderDashboard(main) {
       ${metric('进站弹窗', dash.stats.popups, '#2a9d8f')}
       ${metric('网格弹窗', dash.stats.gridPopups, '#7ab3e0')}
       ${metric('今日点击', dash.stats.clicksToday, '#e9c46a')}
+      ${metric('客户卡', dash.stats.customersTotal || 0, '#00c8e8')}
       ${metric('累计点击', dash.stats.clicksTotal, '#888')}
       ${metric('线上版本', dash.stats.version, '#aaa')}
     </div>
@@ -404,26 +411,125 @@ async function renderLogs(main) {
       </tbody></table></div>`
 }
 
+async function renderCustomers(main) {
+  const data = await api('/api/admin/customers?limit=100')
+  main.innerHTML = `
+    <div class="page-header"><span class="page-title">客户身份卡（${data.total}）</span></div>
+    <div class="notice">一人一卡，库级 UNIQUE。后台只读，不提供补发卡。</div>
+    <div class="card" style="padding:0;overflow:auto;"><table>
+      <thead><tr><th>客户ID</th><th>身份卡号</th><th>邀请码</th><th>邀请人</th><th>签发</th></tr></thead>
+      <tbody>${(data.customers || []).map((c) => `<tr>
+        <td>${esc(c.id)}</td><td>${esc(c.card_no)}</td><td>${esc(c.invite_code)}</td>
+        <td>${esc(c.invited_by || '—')}</td><td>${esc((c.issued_at || c.created_at || '').slice(0, 19))}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="empty-row">暂无客户</td></tr>'}
+      </tbody></table></div>`
+}
+
+async function renderApiSession(main) {
+  if (user?.role !== 'super') {
+    main.innerHTML = '<div class="card">仅超管可轮换原站 token</div>'
+    return
+  }
+  const data = await api('/api/admin/api-session')
+  const live = data.live || {}
+  main.innerHTML = `
+    <div class="page-header"><span class="page-title">原站 Token</span></div>
+    <div class="notice">前台启动时读 <code>/data/api-session.json</code>。这里保存后立刻上线，不用再点「发布到前台」。不要把完整 token 发到群里。</div>
+    <div class="card" style="max-width:640px;">
+      <p class="form-help">线上 uid：<code>${esc(live.uid || '—')}</code></p>
+      <p class="form-help">摘要：<code>${esc(live.tokenPreview || '未配置')}</code> · ${live.tokenLen || 0} 位</p>
+      <p class="form-help">更新时间：${esc(live.at || '—')}</p>
+      <p class="form-help">资源域名：<code>${esc(live.resBase || '—')}</code></p>
+      <div class="form-group"><label class="form-label">新 JWT</label>
+        <textarea id="api-token" rows="4" placeholder="粘贴新的 eyJ... JWT" style="width:100%;box-sizing:border-box;"></textarea></div>
+      <div class="form-group"><label class="form-label">资源域名（可空，沿用当前）</label>
+        <input id="api-resbase" value="${esc(live.resBase || '')}" /></div>
+      <button class="btn btn-primary" id="api-save">保存并立即上线</button>
+    </div>`
+  $('#api-save').onclick = async () => {
+    const token = $('#api-token').value.trim()
+    if (!token) return toast('请粘贴新 token')
+    if (!confirm('确认立刻替换线上原站 token？精选/播放/用户信息会马上改用新钥匙。')) return
+    const body = { token, resBase: $('#api-resbase').value.trim() }
+    const out = await api('/api/admin/api-session', { method: 'PUT', body: JSON.stringify(body) })
+    toast(`已上线 uid ${out.session?.uid || ''}`)
+    await loadBundle()
+    renderApiSession(main)
+  }
+}
+
+function openPasswordModal(opts = {}) {
+  const required = Boolean(opts.required || user?.mustChangePassword)
+  const modal = $('#modal')
+  const box = $('#modal-box')
+  box.className = 'modal-box narrow'
+  box.innerHTML = `
+    <div class="modal-header"><div class="modal-title">修改密码</div>
+      ${required ? '' : '<button class="modal-close" id="modal-close" type="button">×</button>'}</div>
+    ${required ? '<div class="notice">当前账号还在用初始密码，必须先改密才能继续。</div>' : ''}
+    <div class="form-group"><label class="form-label">原密码</label><input type="password" id="pw-old" autocomplete="current-password" /></div>
+    <div class="form-group"><label class="form-label">新密码（至少 10 位）</label><input type="password" id="pw-new" autocomplete="new-password" /></div>
+    <div class="form-group"><label class="form-label">确认新密码</label><input type="password" id="pw-confirm" autocomplete="new-password" /></div>
+    <div class="err" id="pw-err"></div>
+    <div class="modal-footer">
+      ${required ? '' : '<button class="btn btn-gray" id="modal-cancel" type="button">取消</button>'}
+      <button class="btn btn-primary" id="pw-save" type="button">保存密码</button>
+    </div>`
+  modal.classList.add('show')
+  const close = () => {
+    if (required) return
+    modal.classList.remove('show')
+  }
+  $('#modal-close')?.addEventListener('click', close)
+  $('#modal-cancel')?.addEventListener('click', close)
+  $('#pw-save').onclick = async () => {
+    const err = $('#pw-err')
+    err.textContent = ''
+    const oldPassword = $('#pw-old').value
+    const newPassword = $('#pw-new').value
+    const confirm = $('#pw-confirm').value
+    if (!oldPassword) return (err.textContent = '请填写原密码')
+    if (newPassword.length < 10) return (err.textContent = '新密码至少 10 位')
+    if (newPassword !== confirm) return (err.textContent = '两次新密码不一致')
+    if (newPassword === oldPassword) return (err.textContent = '新密码不能和原密码相同')
+    try {
+      await api('/api/admin/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ oldPassword, newPassword }),
+      })
+      user = null
+      modal.classList.remove('show')
+      showLogin()
+      $('#login-pass').value = ''
+      toast('密码已更新，所有旧会话已退出，请重新登录')
+    } catch (e) {
+      err.textContent = e.message
+    }
+  }
+}
+
 function renderSecurity(main) {
   main.innerHTML = `
     <div class="page-header"><span class="page-title">安全设置</span></div>
     <div class="card" style="max-width:520px;">
       <h3 style="margin-bottom:12px;">修改密码</h3>
-      <div class="form-group"><label class="form-label">原密码</label><input type="password" id="pw-old" /></div>
-      <div class="form-group"><label class="form-label">新密码（至少10位）</label><input type="password" id="pw-new" /></div>
-      <button class="btn btn-primary" id="pw-save">保存密码</button>
+      <p class="form-help">任何登录账号都可以改自己的密码，不必找超管。</p>
+      <button class="btn btn-primary" id="pw-open">修改我的密码</button>
       <hr style="border-color:#222;margin:22px 0" />
       <h3 style="margin-bottom:12px;">两步验证 (TOTP)</h3>
-      <div id="totp-area"><button class="btn btn-blue" id="totp-setup">生成密钥</button></div>
+      <div id="totp-area">${user.totpEnabled ? '<input id="totp-disable-code" placeholder="当前 6 位验证码" /><button class="btn btn-gray" id="totp-disable">关闭 2FA 后重新设置</button>' : '<button class="btn btn-blue" id="totp-setup">生成密钥</button>'}</div>
     </div>`
-  $('#pw-save').onclick = async () => {
-    await api('/api/admin/change-password', {
-      method: 'POST',
-      body: JSON.stringify({ oldPassword: $('#pw-old').value, newPassword: $('#pw-new').value }),
-    })
-    toast('密码已更新')
+  $('#pw-open').onclick = () => openPasswordModal()
+  if ($('#totp-disable')) $('#totp-disable').onclick = async () => {
+    try {
+      await api('/api/admin/totp/disable', { method: 'POST', body: JSON.stringify({ code: $('#totp-disable-code').value.trim() }) })
+      user.totpEnabled = false
+      renderSecurity(main)
+      toast('2FA 已关闭，可重新设置')
+    } catch (error) { toast(error.message) }
   }
-  $('#totp-setup').onclick = async () => {
+  if ($('#totp-setup')) $('#totp-setup').onclick = async () => {
+    try {
     const data = await api('/api/admin/totp/setup', { method: 'POST', body: '{}' })
     $('#totp-area').innerHTML = `
       <p class="form-help">密钥：<code>${esc(data.secret)}</code></p>
@@ -431,10 +537,14 @@ function renderSecurity(main) {
       <div class="form-group"><input id="totp-code" placeholder="输入 6 位验证码启用" /></div>
       <button class="btn btn-primary" id="totp-enable">启用 2FA</button>`
     $('#totp-enable').onclick = async () => {
+      try {
       await api('/api/admin/totp/enable', { method: 'POST', body: JSON.stringify({ code: $('#totp-code').value.trim() }) })
       toast('2FA 已启用')
       user.totpEnabled = true
+      renderSecurity(main)
+      } catch (error) { toast(error.message) }
     }
+    } catch (error) { toast(error.message) }
   }
 }
 
@@ -442,13 +552,16 @@ $('#login-btn').onclick = login
 $('#logout-btn').onclick = logout
 $('#publish-btn').onclick = publish
 $('#preview-btn').onclick = () => window.open('https://b12sl5x.cn/#/appcenter', '_blank')
+$('#password-btn').onclick = () => openPasswordModal()
 
 ;(async function init() {
   try {
     const data = await api('/api/admin/me')
     user = data.user
+    if (user.mustChangePassword) return openPasswordModal({ required: true })
     await loadBundle()
     showAdmin()
+    if (user.mustChangePassword) openPasswordModal({ required: true })
   } catch {
     showLogin()
   }

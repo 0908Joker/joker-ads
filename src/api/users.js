@@ -1,13 +1,13 @@
 import { apiFetch } from './client.js'
 
 export async function fetchUserInfo() {
-  return apiFetch('/users/info')
+  return { unavailable: true }
 }
 
 export async function fetchUserSignin() {
-  return apiFetch('/users/signin', { method: 'POST' })
+  throw new Error('本地客户签到尚未接入，未领取任何奖励')
 }
 
 export async function fetchActionStats() {
-  return apiFetch('/users/actionStats')
+  return { commentCount: '—', downloadCount: '—', aiCreateCount: '—' }
 }

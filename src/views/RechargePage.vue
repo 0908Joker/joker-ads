@@ -47,10 +47,10 @@
       </button>
     </section>
 
-    <button class="recharge__submit" :disabled="submitting || !packages.length || !activeChannel" @click="submit">
-      {{ submitting ? '拉起支付中…' : '立即支付' }}
+    <button class="recharge__submit" disabled>
+      新支付已暂停
     </button>
-    <p class="recharge__note">支付由第三方通道处理，请扫码完成付款。</p>
+    <p class="recharge__note">新支付暂时关闭，已有订单仍可查询；查询结果不代表本地权益到账。</p>
 
     <div v-if="payModal" class="pay-modal" @click.self="closePayModal">
       <div class="pay-modal__box">
@@ -70,7 +70,7 @@
             该通道不支持页面内嵌，请点击下方「新窗口打开」扫码支付。
           </p>
         </div>
-        <p v-if="pollStatus === 'paid'" class="pay-modal__ok">支付成功，正在返回…</p>
+        <p v-if="pollStatus === 'paid'" class="pay-modal__ok">渠道返回已支付，本地权益未入账</p>
         <p v-else-if="pollHint" class="pay-modal__wait">{{ pollHint }}</p>
         <p v-else-if="pollStatus === 'pending'" class="pay-modal__wait">请使用手机扫码完成支付</p>
         <div class="pay-modal__actions">

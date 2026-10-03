@@ -6,8 +6,8 @@
       <div><strong>{{ account.watchTickets }}</strong><span>观影券</span></div>
     </section>
 
-    <button class="signin" :disabled="signing" @click="onSignin">
-      {{ signing ? '签到中…' : '每日签到' }}
+    <button class="signin" disabled>
+      本地签到奖励尚未接入
     </button>
 
     <h3 class="sec-title">任务列表</h3>

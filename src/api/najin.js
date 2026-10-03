@@ -18,16 +18,7 @@ function bffUrl(path) {
 }
 
 export async function createNajinOrder({ productId, amount, kind, packageName }) {
-  const res = await fetch(bffUrl('/create'), {
-    method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId, amount, kind, packageName }),
-  })
-  const json = await res.json()
-  if (!res.ok || !json.ok) {
-    throw new Error(json.message || `支付下单失败 (${res.status})`)
-  }
-  return json
+  throw new Error('新支付暂时关闭，已有订单仍可查询')
 }
 
 export async function queryNajinOrder(mchOrderNo) {

@@ -60,7 +60,47 @@ function initSchema(database) {
       user_agent TEXT,
       created_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS customers (
+      id TEXT PRIMARY KEY,
+      invite_code TEXT NOT NULL UNIQUE,
+      invited_by TEXT,
+      device_fp TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL,
+      FOREIGN KEY (invited_by) REFERENCES customers(id)
+    );
+    CREATE TABLE IF NOT EXISTS identity_cards (
+      card_no TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'active',
+      issued_at TEXT NOT NULL,
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+    );
+    CREATE TABLE IF NOT EXISTS customer_tokens (
+      token TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+    );
   `)
+  seedPromoter(database)
+  // This system row is an invitation attribution target, never a customer login.
+  database.prepare('DELETE FROM customer_tokens WHERE customer_id = ?').run('DW1000147271297')
+}
+
+function seedPromoter(database) {
+  const id = 'DW1000147271297'
+  const exists = database.prepare('SELECT 1 AS o FROM customers WHERE id = ?').get(id)
+  if (exists) return
+  const t = now()
+  database.prepare(`
+    INSERT INTO customers (id, invite_code, invited_by, device_fp, created_at, last_seen_at)
+    VALUES (?, ?, NULL, ?, ?, ?)
+  `).run(id, '1000147271297', 'seed:1000147271297', t, t)
+  database.prepare(`
+    INSERT INTO identity_cards (card_no, customer_id, status, issued_at)
+    VALUES (?, ?, 'active', ?)
+  `).run('DW-CARD-SEED00000001', id, t)
 }
 
 export function id(prefix) {

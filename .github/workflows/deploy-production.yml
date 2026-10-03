@@ -1,15 +1,15 @@
-name: Deploy production ad sync
+name: Deploy verified production release
 on:
   push:
     branches: [main]
     paths:
       - .github/workflows/deploy-production.yml
-      - admin/lib/appPlacements.mjs
-      - admin/server.mjs
-      - src/components/AdPopup.vue
-      - scripts/test-ad-sync.mjs
-      - deploy/deploy-ad-sync.mjs
-      - deploy/b12sl5x.cn.conf
+      - 'admin/**'
+      - 'src/**'
+      - 'scripts/test-*.mjs'
+      - 'deploy/**'
+      - package.json
+      - package-lock.json
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,9 +31,14 @@ jobs:
           cache: npm
           cache-dependency-path: admin/package-lock.json
       - run: npm ci --prefix admin --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Security and payment isolation regression
+        run: node scripts/test-audit-security.mjs
       - name: Exercise real admin add/edit/delete/publish APIs
         run: node scripts/test-ad-sync.mjs
       - name: Reproduce exact production build
+        env:
+          AUDIT_BUNDLE_OUT: ${{ runner.temp }}/audit-release
         run: python3 deploy/verify-bundled-production.py
       - name: Deploy through restricted production key
         env:
@@ -60,6 +65,10 @@ jobs:
           const receipt = await response.json()
           assert.equal(receipt.revision, process.env.EXPECTED_REVISION)
           assert.equal(receipt.status, 'verified')
+          const fs = await import('node:fs')
+          const local = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/audit-release/manifest.json'))
+          assert.equal(receipt.frontendSha256, local.frontendSha256)
+          for (const file of local.files) assert.equal(receipt.files.find(f => f.target === file.target)?.sha256, file.sha256, file.target)
           console.log(receipt)
           JS
       - name: Remove runner key files

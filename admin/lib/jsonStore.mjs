@@ -58,7 +58,7 @@ export function writeLive(name, value) {
 
 export function publishAll() {
   ensureDirs()
-  const names = ['config.json', 'popups.json', 'tabs.json']
+  const names = ['config.json', 'popups.json', 'tabs.json', 'api-session.json']
   for (const name of names) {
     const draftPath = path.join(DRAFT_DIR, name)
     const livePath = path.join(LIVE_DIR, name)
@@ -77,7 +77,7 @@ export function publishAll() {
 
 export function syncDraftFromLive() {
   ensureDirs()
-  for (const name of ['config.json', 'popups.json', 'tabs.json', 'meta.json']) {
+  for (const name of ['config.json', 'popups.json', 'tabs.json', 'meta.json', 'api-session.json']) {
     const livePath = path.join(LIVE_DIR, name)
     const draftPath = path.join(DRAFT_DIR, name)
     if (fs.existsSync(livePath)) {

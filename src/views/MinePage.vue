@@ -4,7 +4,7 @@
       <div class="profile__glow" aria-hidden="true" />
       <div class="profile__top">
         <p class="id">
-          ID {{ user.id }}
+          ID {{ customer.customerId || user.id }}
           <button class="id__copy" aria-label="复制ID" @click="copyId">复制</button>
         </p>
         <div class="profile__tools">
@@ -23,7 +23,7 @@
       </div>
       <button class="bind-btn" @click="onBind">
         <span>注册 / 绑定有礼</span>
-        <em>送 1 日 VIP</em>
+        <em>账户权益尚未接入</em>
       </button>
       <div class="stats">
         <div><strong>{{ stats.follow }}</strong><span>关注</span></div>
@@ -56,7 +56,7 @@
     </section>
 
     <div class="feature-row">
-      <button class="feature" @click="router.push('/myBenefits')">
+      <button class="feature" @click="openIdentityCard">
         <strong>身份卡</strong><span>权利象征</span>
       </button>
       <button class="feature" @click="showToast('AI创造中心暂未开放')">
@@ -110,6 +110,7 @@
       </div>
     </section>
     <p class="version">{{ version }}</p>
+    <IdentityCard v-model="showCard" />
   </TabShell>
 </template>
 
@@ -123,14 +124,18 @@ import { fetchUserInfo } from '../api/users.js'
 import { normalizeUser, normalizeStats } from '../api/normalize.js'
 import { openAd } from '../api/ad.js'
 import { copyText, showToast } from '../composables/useToast.js'
+import IdentityCard from '../components/IdentityCard.vue'
+import { customerState } from '../composables/useCustomer.js'
 
 const siteConfig = useSiteConfig()
 const config = computed(() => siteConfig.config)
 const router = useRouter()
-const user = ref({ ...tabsFallback.mine.user })
-const stats = ref({ ...tabsFallback.mine.stats })
+const user = ref(normalizeUser(null))
+const stats = ref(normalizeStats(null))
 const version = tabsFallback.mine.version || 'v1.1.169'
 const services = tabsFallback.mine.services
+const customer = customerState
+const showCard = ref(false)
 
 const ROW1_NAMES = ['oio禁漫', '免费看黄片', '新葡京', '海角社区', '同城约炮', '新葡京']
 const ROW2_NAMES = ['免费看黄片', '免费看片', '同城约炮', '免费看片', '免费看片', '免费看黄片']
@@ -172,8 +177,12 @@ function onService(name) {
   else showToast(`${name}暂未开放`)
 }
 
+function openIdentityCard() {
+  showCard.value = true
+}
+
 async function copyId() {
-  const id = String(user.value.id || '')
+  const id = String(customer.customerId || user.value.id || '')
   if (!id) {
     showToast('ID 暂不可用')
     return

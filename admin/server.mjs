@@ -3,17 +3,20 @@ import fs from 'node:fs'
 import path from 'node:path'
 import express from 'express'
 import multer from 'multer'
-import { addAppPlacement, updateAppPlacements } from './lib/appPlacements.mjs'
 import { ensureDirs, LIVE_DIR, DRAFT_DIR, UPLOAD_DIR, PUBLIC_DIR, REPO_ROOT } from './lib/paths.mjs'
 import {
   readDraft,
   writeDraft,
+  writeLive,
   publishAll,
   syncDraftFromLive,
   readJson,
   readLive,
 } from './lib/jsonStore.mjs'
+import { publicApiSession, normalizeApiSession } from './lib/apiSession.mjs'
+import { addAppPlacement, updateAppPlacements } from './lib/appPlacements.mjs'
 import { getDb, id, now, hashPassword, writeLog } from './lib/db.mjs'
+import { claimCustomer, readCustomerByToken, listCustomers, cardCookie, CARD_COOKIE } from './lib/customers.mjs'
 import {
   requireAuth,
   requireRead,
@@ -36,7 +39,7 @@ ensureDirs()
 getDb()
 
 const app = express()
-app.set('trust proxy', true)
+app.set('trust proxy', 'loopback')
 app.use(express.json({ limit: '4mb' }))
 
 const storage = multer.diskStorage({
@@ -66,7 +69,7 @@ function seedFromRepoIfEmpty() {
   const liveConfig = path.join(LIVE_DIR, 'config.json')
   if (fs.existsSync(liveConfig)) return
   const srcData = path.join(REPO_ROOT, 'src', 'data')
-  for (const name of ['config.json', 'popups.json', 'tabs.json']) {
+  for (const name of ['config.json', 'popups.json', 'tabs.json', 'api-session.json']) {
     const src = path.join(srcData, name)
     if (fs.existsSync(src)) {
       fs.copyFileSync(src, path.join(LIVE_DIR, name))
@@ -100,11 +103,51 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'ads-king-admin' })
 })
 
-app.use('/data', express.static(LIVE_DIR, { etag: true, maxAge: 0, setHeaders(res) {
+app.use('/data', (req, res, next) => {
+  if (!/^\/(config|popups|tabs|meta|api-session)\.json$/.test(req.path)) return res.sendStatus(404)
+  next()
+}, express.static(LIVE_DIR, { etag: true, maxAge: 0, setHeaders(res) {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
 }}))
 
 app.use('/uploads', express.static(UPLOAD_DIR, { etag: true, maxAge: '30d' }))
+
+app.post('/api/public/customers/claim', (req, res) => {
+  try {
+    const cookieToken = cookies(req)[CARD_COOKIE] || ''
+    const result = claimCustomer({
+      deviceFp: req.body?.deviceFp,
+      inviteCode: req.body?.inviteCode,
+      cardToken: String(req.body?.cardToken || cookieToken || ''),
+    })
+    res.setHeader('Set-Cookie', cardCookie(result.token, req))
+    res.json({
+      ok: true,
+      customerId: result.customerId,
+      cardNo: result.cardNo,
+      inviteCode: result.inviteCode,
+      invitedBy: result.invitedBy,
+      inviteCount: result.inviteCount || 0,
+      isNew: result.isNew,
+      token: result.token,
+    })
+  } catch (e) {
+    res.status(e.status || 400).json({ error: e.message || '签发失败' })
+  }
+})
+
+app.get('/api/public/customers/me', (req, res) => {
+  const token = String(req.query.token || cookies(req)[CARD_COOKIE] || '')
+  const row = readCustomerByToken(token)
+  if (!row) return res.status(404).json({ error: '未找到身份卡' })
+  res.json({ ok: true, ...row })
+})
+
+app.get('/api/admin/customers', requireAuth, requireRead('customers'), (req, res) => {
+  const limit = Math.min(200, Math.max(10, Number(req.query.limit || 50)))
+  const offset = Math.max(0, Number(req.query.offset || 0))
+  res.json(listCustomers({ limit, offset }))
+})
 
 app.post('/api/public/ad-click', (req, res) => {
   const db = getDb()
@@ -136,6 +179,7 @@ app.get('/api/admin/dashboard', requireAuth, requireRead('dashboard'), (req, res
   const db = getDb()
   const clicksToday = db.prepare(`SELECT COUNT(*) AS c FROM ad_events WHERE event_type = 'click' AND created_at >= date('now')`).get().c
   const clicksTotal = db.prepare(`SELECT COUNT(*) AS c FROM ad_events WHERE event_type = 'click'`).get().c
+  const customersTotal = db.prepare('SELECT COUNT(*) AS c FROM customers').get().c
   const logs = db.prepare('SELECT * FROM operation_logs ORDER BY created_at DESC LIMIT 10').all()
   const bundle = getBundle()
   res.json({
@@ -145,6 +189,7 @@ app.get('/api/admin/dashboard', requireAuth, requireRead('dashboard'), (req, res
       gridPopups: (bundle.popups.gridPopAds || []).length,
       clicksToday,
       clicksTotal,
+      customersTotal,
       version: bundle.meta?.version || 1,
     },
     logs,
@@ -153,6 +198,39 @@ app.get('/api/admin/dashboard', requireAuth, requireRead('dashboard'), (req, res
 
 app.get('/api/admin/site-config', requireAuth, requireRead('popups'), (_req, res) => {
   res.json(getBundle())
+})
+
+app.get('/api/admin/api-session', requireAuth, requireRead('settings'), (_req, res) => {
+  const draft = readDraft('api-session.json') || {}
+  const live = readLive('api-session.json') || {}
+  res.json({
+    draft: publicApiSession(draft),
+    live: publicApiSession(live),
+  })
+})
+
+app.put('/api/admin/api-session', requireAuth, requireWrite('settings'), (req, res) => {
+  try {
+    const previous = readDraft('api-session.json') || readLive('api-session.json') || {}
+    const next = normalizeApiSession(req.body || {}, previous)
+    writeDraft('api-session.json', next)
+    writeLive('api-session.json', next)
+    const meta = readDraft('meta.json') || readLive('meta.json') || { version: 0 }
+    meta.version = Number(meta.version || 0) + 1
+    meta.publishedAt = now()
+    writeLive('meta.json', meta)
+    writeDraft('meta.json', meta)
+    writeLog({
+      admin: req.admin,
+      action: '轮换原站 token',
+      targetType: 'api-session',
+      detail: `uid=${next.uid} len=${next.token.length}`,
+      ip: clientIp(req),
+    })
+    res.json({ ok: true, session: publicApiSession(next), meta })
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'token 无效' })
+  }
 })
 
 app.put('/api/admin/site-config/:part', requireAuth, requireWrite('popups'), (req, res) => {
@@ -326,6 +404,8 @@ app.get('/api/admin/stats', requireAuth, requireRead('stats'), (_req, res) => {
 })
 
 app.post('/api/admin/totp/setup', requireAuth, requireWrite('settings'), async (req, res) => {
+  const current = getDb().prepare('SELECT totp_enabled FROM admins WHERE id = ?').get(req.admin.id)
+  if (current?.totp_enabled) return res.status(409).json({ error: '请先使用当前验证码关闭二次验证，再重新设置' })
   const totp = await loadTotp()
   const secret = totp.generateSecret()
   getDb().prepare('UPDATE admins SET totp_secret = ?, totp_enabled = 0, updated_at = ? WHERE id = ?').run(secret, now(), req.admin.id)
