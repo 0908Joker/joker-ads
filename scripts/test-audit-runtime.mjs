@@ -256,3 +256,73 @@ for (const variant of ['source','shipped']) {
   assert.equal(owned.size,0);assert.equal(videos[1].listeners.size,0)
   console.log('PASS '+variant+': actual short-page A→B callback never restarts A; current B owns playback; teardown')
 }
+
+assert.ok(manifest.stage >= 5, 'current regression requires the stage-five runtime')
+const popupFunctions = componentFunctions('AdPopup')
+const featuredFunctions = componentFunctions('FeaturedPage')
+for (const variant of ['source','shipped']) {
+  const ctx=vm.createContext({ mediaUrl:v=>v, ia:v=>v, formatDuration:v=>v, Wo:v=>v })
+  const program=variant==='source'
+    ? ['formatCount','parseViewCount','normalizeVideo'].map(n=>sourceFunction('src/api/normalize.js',n)).concat(sourceFunction('src/views/FeaturedPage.vue','sortFeaturedList'))
+    : [topFunction('u0'),topFunction('auditViewCount'),topFunction('Xp'),featuredFunctions('x')]
+  vm.runInContext(program.join('\n'),ctx)
+  const normalize=ctx[variant==='source'?'normalizeVideo':'Xp'],sort=ctx[variant==='source'?'sortFeaturedList':'x']
+  const normalized=[{id:'nine',name:'9000 fixture',playCnt:9000},{id:'twenty',name:'20000 fixture',playCnt:20000},{id:'higher',name:'20444 fixture',playCnt:20444}].map(normalize)
+  assert.deepEqual(Array.from(sort(normalized,'最热'),v=>v.id),['higher','twenty','nine'])
+  const fallback=[{id:'a',views:'9000'},{id:'b',views:'2万'},{id:'c',views:'2w'},{id:'zero',viewsRaw:0,views:'9w'}]
+  assert.deepEqual(Array.from(sort(fallback,'最热'),v=>v.id),['b','c','a','zero'])
+  console.log('PASS '+variant+': hottest uses unrounded raw count; w/万 fallback; zero priority; stable ties')
+}
+for (const variant of ['source','shipped']) {
+  const refs={ ads:{value:[{name:'bad',image:'/bad.ceb',url:'https://example.invalid/A'},{name:'good',image:'/good.png',url:'https://example.invalid/B'}]}, grid:{value:[]}, index:{value:0}, mode:{value:'image'}, visible:{value:false}, src:{value:''}, href:{value:''}, current:{value:null}, length:{value:2} }
+  const events=[],storage=new Map(),timers=new Map();let timerId=0
+  const ctx=vm.createContext({afterAds:refs.ads,d:refs.ads,gridAds:refs.grid,o:refs.grid,index:refs.index,r:refs.index,mode:refs.mode,l:refs.mode,visible:refs.visible,f:refs.visible,currentSrc:refs.src,C:refs.src,currentHref:refs.href,s:refs.href,currentAd:refs.current,auditCurrentAd:refs.current,queueLen:refs.length,h:refs.length,
+    sessionIndex:0,a:0,showGen:0,n:0,sessionQueueDone:false,t:false,nextTimer:null,auditNextTimer:null,DONE_KEY:'done',oc:'done',
+    sessionStorage:{setItem:(k,v)=>storage.set(k,v)},setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id},clearTimeout:id=>timers.delete(id),
+    decryptMedia:async src=>{if(src==='/bad.ceb')throw new Error('404');return src},jn:async src=>{if(src==='/bad.ceb')throw new Error('404');return src},resolveAdTarget:ad=>ad.url,It:ad=>ad.url,
+    trackAdInteraction:(ad,slot)=>events.push({ad,slot}),auditTrack:(ad,slot)=>events.push({ad,slot}),URL,location:{href:'https://fixture.invalid/'}})
+  const names=variant==='source'?['showAt','markDone','close','onAdClick','onImageError']:['m','x','w','T','auditImageError']
+  const program=variant==='source'?names.map(n=>sourceFunction('src/components/AdPopup.vue',n)):names.map(popupFunctions)
+  vm.runInContext(program.join('\n'),ctx)
+  await ctx[names[0]](0);await tick()
+  assert.equal(refs.index.value,1);assert.equal(refs.visible.value,true);assert.equal(refs.href.value,'https://example.invalid/B')
+  ctx[names[3]]({preventDefault(){throw new Error('unexpected prevention')}})
+  assert.equal(events.length,1);assert.equal(events[0].ad.name,'good');assert.equal(events[0].slot,'afterEnterApp')
+  ctx[names[2]]();await tick()
+  assert.equal(refs.visible.value,false);assert.equal(storage.get('done'),'1');assert.equal(timers.size,0)
+  await ctx[names[0]](1);await tick()
+  ctx[names[4]]({target:{currentSrc:'https://fixture.invalid/good.png'}});await tick()
+  assert.equal(refs.visible.value,false,'ordinary broken image also advances to queue end')
+  console.log('PASS '+variant+': bad image skipped; correct index/link/click; no repeated B; ordinary image error; queue invalidation')
+}
+for (const variant of ['source','shipped']) {
+  const state={ready:false,customerId:'',cardNo:'',inviteCode:'',inviteCount:0,error:''},storage=new Map([['dw_device_fp','stable-fixture-fp']])
+  const calls=[];let responder=async()=>({customerId:'DW-QA',cardNo:'CARD-QA',inviteCode:'1234567890123',inviteCount:0,token:'fixture-token'})
+  const request=async(url,options)=>{calls.push({url,options});return responder(url,options)}
+  const ctx=vm.createContext({customerState:state,He:state,claimInFlight:null,refreshInFlight:null,fetchJsonTimed:request,auditJSON:request,readonly:v=>v,Zt:v=>v,deviceFp:()=>storage.get('dw_device_fp'),Zf:()=>storage.get('dw_device_fp'),inviteCodeFromLocation:()=>'',Uf:()=>'',TOKEN_KEY:'dw_card_token',Cc:'dw_card_token',
+    localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)}})
+  const names=variant==='source'?['applyCustomerResult','claimCustomer','refreshCustomer']:['auditApplyCustomer','Io','auditRefreshCustomer']
+  vm.runInContext((variant==='source'?names.map(n=>sourceFunction('src/composables/useCustomer.js',n)):names.map(topFunction)).join('\n'),ctx)
+  const pending=deferred();responder=()=>pending.promise
+  const first=ctx[names[1]](),second=ctx[names[1]]()
+  assert.equal(calls.length,1,'claim shares in-flight identity recovery')
+  pending.resolve({customerId:'DW-QA',cardNo:'CARD-QA',inviteCode:'1234567890123',inviteCount:0,token:'fixture-token'})
+  await Promise.all([first,second])
+  calls.length=0
+  responder=async()=>({customerId:'DW-QA',cardNo:'CARD-QA',inviteCode:'1234567890123',inviteCount:7})
+  await Promise.all([ctx[names[2]](),ctx[names[2]]()])
+  assert.equal(calls.length,1);assert.equal(calls[0].url,'/api/public/customers/me');assert.equal(calls[0].options.credentials,'include')
+  assert.equal(state.inviteCount,7);assert.equal(state.customerId,'DW-QA');assert.equal(state.cardNo,'CARD-QA')
+  calls.length=0
+  responder=async()=>{throw Object.assign(new Error('unavailable'),{status:503})}
+  await assert.rejects(ctx[names[2]](),/unavailable/);assert.equal(calls.length,1);assert.equal(state.inviteCount,7)
+  calls.length=0
+  responder=async url=>{if(url.endsWith('/me'))throw Object.assign(new Error('expired'),{status:404});return {customerId:'DW-QA',cardNo:'CARD-QA',inviteCode:'1234567890123',inviteCount:8}}
+  await Promise.all([ctx[names[2]](),ctx[names[2]]()])
+  assert.equal(calls.length,2);assert.equal(JSON.parse(calls[1].options.body).deviceFp,'stable-fixture-fp');assert.equal(state.inviteCount,8)
+  const before=JSON.stringify(state)
+  responder=async()=>({customerId:'OTHER',cardNo:'OTHER',inviteCode:'other',inviteCount:99})
+  await assert.rejects(ctx[names[2]](),/身份不一致/)
+  assert.equal(JSON.stringify(state),before)
+  console.log('PASS '+variant+': real customer GET refresh; identity preserved; concurrent recovery single-flight; 503 no claim; mismatch rejected')
+}

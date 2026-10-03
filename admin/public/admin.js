@@ -6,6 +6,7 @@ let bundle = null
 let currentPage = 'dashboard'
 let appsPage = 1
 let appsQuery = ''
+let toastTimer = null
 
 const NAV = [
   { id: 'dashboard', label: '控制台', read: 'dashboard' },
@@ -31,15 +32,39 @@ async function api(path, opts = {}) {
     ...opts,
   })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+  if (!res.ok) throw Object.assign(new Error(data.error || `HTTP ${res.status}`), { status: res.status })
   return data
 }
 
-function toast(msg) {
+function toast(msg, result = {}) {
+  clearTimeout(toastTimer)
   const el = $('#toast')
-  el.textContent = msg
+  el.textContent = msg + (result.auditWarning ? '；操作已保存，但审计日志记录失败' : '') + (result.refreshWarning ? '；列表刷新失败，请重新加载核对' : '')
   el.classList.add('show')
-  setTimeout(() => el.classList.remove('show'), 2200)
+  toastTimer = setTimeout(() => el.classList.remove('show'), result.keepLong || result.auditWarning || result.refreshWarning ? 8000 : 2200)
+}
+
+function reportActionError(error) {
+  if (error.status === 401) {
+    toast('登录已失效，当前输入已保留；请在新标签页登录后重试。', { keepLong: true })
+    const link = document.createElement('a')
+    link.href = '/'; link.target = '_blank'; link.rel = 'noopener'
+    link.textContent = ' 重新登录'
+    $('#toast').append(link)
+  } else toast(error.message || '操作未确认，请刷新核对后重试')
+}
+
+async function runAction(control, action) {
+  if (control?.disabled) return
+  if (control) control.disabled = true
+  try { return await action() }
+  catch (error) { reportActionError(error) }
+  finally { if (control) control.disabled = false }
+}
+
+async function refreshAfterCommit(result) {
+  try { await loadBundle(); return result }
+  catch { return { ...result, refreshWarning: true } }
 }
 
 function esc(s) {
@@ -101,10 +126,11 @@ async function loadBundle() {
 
 async function publish() {
   if (!canWrite('publish')) return toast('无发布权限')
+  return runAction($('#publish-btn'), async () => {
   if (!confirm('确认将当前草稿发布到前台？')) return
   const data = await api('/api/admin/publish', { method: 'POST', body: '{}' })
-  toast(`已发布 v${data.meta.version}`)
-  await loadBundle()
+  toast(`已发布 v${data.meta.version}`, await refreshAfterCommit(data))
+  })
 }
 
 function renderSidebar() {
@@ -117,7 +143,12 @@ function renderSidebar() {
   })
 }
 
-function renderPage(page) {
+async function renderPage(page) {
+  try { return await renderPageContent(page) }
+  catch (error) { reportActionError(error) }
+}
+
+function renderPageContent(page) {
   const main = $('#main')
   if (page === 'dashboard') return renderDashboard(main)
   if (page === 'popups') return renderListEditor(main, 'afterEnterApp', '进站弹窗队列')
@@ -161,9 +192,9 @@ function metric(label, val, color) {
 }
 
 function renderListEditor(main, slotKey, title) {
-  const items = slotKey === 'mineQuickApps'
+  const items = structuredClone(slotKey === 'mineQuickApps'
     ? (bundle.tabs?.mine?.quickApps || [])
-    : (bundle.popups?.[slotKey] || [])
+    : (bundle.popups?.[slotKey] || []))
   main.innerHTML = `
     <div class="page-header"><span class="page-title">${esc(title)}</span>
       ${canWrite('popups') ? `<button class="btn btn-primary" id="add-item">新增</button>` : ''}</div>
@@ -195,17 +226,22 @@ function bindListEvents(slotKey, items, rerender) {
   $$('.list-row .edit').forEach((btn) => btn.onclick = async (e) => {
     const i = Number(e.target.closest('.list-row').dataset.i)
     openItemModal(slotKey, items[i], async (next) => {
+      const updated = items.map((item, idx) => idx === i ? next : item)
+      const saved = await saveSlot(slotKey, updated)
       items[i] = next
-      await saveSlot(slotKey, items)
       rerender()
+      return saved
     })
   })
   $$('.list-row .del').forEach((btn) => btn.onclick = async (e) => {
     const i = Number(e.target.closest('.list-row').dataset.i)
     if (!confirm('确认删除？')) return
+    return runAction(btn, async () => {
+    const saved = await saveSlot(slotKey, items.filter((_, idx) => idx !== i))
     items.splice(i, 1)
-    await saveSlot(slotKey, items)
     rerender()
+    toast('已删除', saved)
+    })
   })
 }
 
@@ -226,9 +262,10 @@ function renderObjectEditor(main, slotKey, title, fields) {
     e.preventDefault()
     const fd = new FormData(e.target)
     const body = Object.fromEntries(fields.map((f) => [f, fd.get(f)]))
-    await api(`/api/admin/slots/${slotKey}`, { method: 'PUT', body: JSON.stringify(body) })
-    toast('已保存草稿')
-    await loadBundle()
+    await runAction(e.submitter || e.target.querySelector('button[type="submit"]'), async () => {
+      const saved = await api(`/api/admin/slots/${slotKey}`, { method: 'PUT', body: JSON.stringify(body) })
+      toast('已保存草稿', await refreshAfterCommit(saved))
+    })
   })
 }
 
@@ -252,30 +289,32 @@ function openItemModal(slotKey, item, onSave) {
   $('#upload-file').onchange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    return runAction(e.target, async () => {
     const kind = slotKey === 'mineQuickApps' ? 'icon' : 'popup'
     const fd = new FormData()
     fd.append('file', file)
     const res = await fetch(`/api/admin/upload?kind=${kind}`, { method: 'POST', body: fd, credentials: 'same-origin' })
     const data = await res.json()
-    if (!res.ok) return toast(data.error || '上传失败')
+    if (!res.ok) throw Object.assign(new Error(data.error || '上传失败'), { status: res.status })
     if (kind === 'icon') $('#f-icon').value = data.url
     else $('#f-image').value = data.url
-    toast('上传成功')
+    toast('上传成功', data)
+    })
   }
-  $('#modal-save').onclick = async () => {
+  $('#modal-save').onclick = () => runAction($('#modal-save'), async () => {
     const next = { ...item }
     for (const f of ['name', 'url', 'signUrl', 'coverUrl', 'image', 'icon']) {
       next[f] = $(`#f-${f}`)?.value.trim() || ''
     }
-    await onSave(next)
+    const saved = await onSave(next)
     close()
-    toast('已保存草稿')
-  }
+    toast('已保存草稿', saved)
+  })
 }
 
 async function saveSlot(slotKey, items) {
-  await api(`/api/admin/slots/${slotKey}`, { method: 'PUT', body: JSON.stringify({ items }) })
-  await loadBundle()
+  const saved = await api(`/api/admin/slots/${slotKey}`, { method: 'PUT', body: JSON.stringify({ items }) })
+  return refreshAfterCommit(saved)
 }
 
 async function renderApps(main) {
@@ -299,9 +338,9 @@ async function renderApps(main) {
       <span style="color:#777;font-size:13px;">第 ${data.page} 页</span>
       <button class="btn btn-gray btn-sm" id="apps-next" ${appsPage * data.pageSize >= data.total ? 'disabled' : ''}>下一页</button>
     </div>`
-  $('#apps-search').onclick = () => { appsQuery = $('#apps-q').value.trim(); appsPage = 1; renderApps(main) }
-  $('#apps-prev').onclick = () => { appsPage--; renderApps(main) }
-  $('#apps-next').onclick = () => { appsPage++; renderApps(main) }
+  $('#apps-search').onclick = () => { appsQuery = $('#apps-q').value.trim(); appsPage = 1; void renderApps(main).catch(reportActionError) }
+  $('#apps-prev').onclick = () => { appsPage--; void renderApps(main).catch(reportActionError) }
+  $('#apps-next').onclick = () => { appsPage++; void renderApps(main).catch(reportActionError) }
   $('#add-app')?.addEventListener('click', () => openAppModal(null))
   $$('[data-edit]').forEach((btn) => btn.onclick = () => {
     const app = data.apps.find((a) => a.name === btn.dataset.edit)
@@ -310,11 +349,11 @@ async function renderApps(main) {
   $$('[data-del]').forEach((btn) => btn.onclick = async () => {
     const item = data.apps.find(a => a.name === btn.dataset.del)
     if (!confirm(`确认删除此应用及全部 ${item?.duplicateCount || 1} 条同名记录？分类引用也会移除。`)) return
-    try {
-      await api(`/api/admin/apps/${encodeURIComponent(btn.dataset.del)}`, { method: 'DELETE' })
-      toast('已删除')
-      await renderApps(main)
-    } catch (error) { toast(error.message) }
+    return runAction(btn, async () => {
+      const saved = await api(`/api/admin/apps/${encodeURIComponent(btn.dataset.del)}`, { method: 'DELETE' })
+      try { await renderApps(main) } catch { saved.refreshWarning = true }
+      toast('已删除', saved)
+    })
   })
 }
 
@@ -337,30 +376,31 @@ function openAppModal(app) {
   $('#app-upload').onchange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    return runAction(e.target, async () => {
     const fd = new FormData()
     fd.append('file', file)
     const res = await fetch('/api/admin/upload?kind=icon', { method: 'POST', body: fd, credentials: 'same-origin' })
     const data = await res.json()
-    if (!res.ok) return toast(data.error || '上传失败')
+    if (!res.ok) throw Object.assign(new Error(data.error || '上传失败'), { status: res.status })
     $('#app-icon').value = data.url
+    toast('上传成功', data)
+    })
   }
-  $('#modal-save').onclick = async () => {
+  $('#modal-save').onclick = () => runAction($('#modal-save'), async () => {
     const body = {
       name: $('#app-name').value.trim(),
       url: $('#app-url').value.trim(),
       signUrl: $('#app-sign').value.trim(),
       icon: $('#app-icon').value.trim(),
     }
-    if (app) {
-      await api(`/api/admin/apps/${encodeURIComponent(app.name)}`, { method: 'PUT', body: JSON.stringify(body) })
-    } else {
-      await api('/api/admin/apps', { method: 'POST', body: JSON.stringify(body) })
-    }
+    const saved = app
+      ? await api(`/api/admin/apps/${encodeURIComponent(app.name)}`, { method: 'PUT', body: JSON.stringify(body) })
+      : await api('/api/admin/apps', { method: 'POST', body: JSON.stringify(body) })
     close()
-    toast('已保存草稿')
-    await loadBundle()
-    renderPage('apps')
-  }
+    const refreshed = await refreshAfterCommit(saved)
+    try { await renderApps($('#main')) } catch { refreshed.refreshWarning = true }
+    toast('已保存草稿', refreshed)
+  })
 }
 
 async function renderCategories(main) {
@@ -376,14 +416,13 @@ async function renderCategories(main) {
         <textarea id="cat-json" rows="18">${esc(json)}</textarea></div>
       ${canWrite('categories') ? '<button class="btn btn-primary" id="cat-save">保存草稿</button>' : ''}
     </div>`
-  $('#cat-save')?.addEventListener('click', async () => {
+  $('#cat-save')?.addEventListener('click', () => runAction($('#cat-save'), async () => {
     let categoryApps
     try { categoryApps = JSON.parse($('#cat-json').value) } catch { return toast('JSON 格式错误') }
     const categories = $('#cat-lines').value.split('\n').map((s) => s.trim()).filter(Boolean)
-    await api('/api/admin/category-apps', { method: 'PUT', body: JSON.stringify({ categoryApps, categories }) })
-    toast('已保存草稿')
-    await loadBundle()
-  })
+    const saved = await api('/api/admin/category-apps', { method: 'PUT', body: JSON.stringify({ categoryApps, categories }) })
+    toast('已保存草稿', await refreshAfterCommit(saved))
+  }))
 }
 
 async function renderStats(main) {
@@ -449,16 +488,16 @@ async function renderApiSession(main) {
         <input id="api-resbase" value="${esc(live.resBase || '')}" /></div>
       <button class="btn btn-primary" id="api-save">保存并立即上线</button>
     </div>`
-  $('#api-save').onclick = async () => {
+  $('#api-save').onclick = () => runAction($('#api-save'), async () => {
     const token = $('#api-token').value.trim()
     if (!token) return toast('请粘贴新 token')
     if (!confirm('确认立刻替换线上原站 token？精选/播放/用户信息会马上改用新钥匙。')) return
     const body = { token, resBase: $('#api-resbase').value.trim() }
     const out = await api('/api/admin/api-session', { method: 'PUT', body: JSON.stringify(body) })
-    toast(`已上线 uid ${out.session?.uid || ''}`)
-    await loadBundle()
-    renderApiSession(main)
-  }
+    const refreshed = await refreshAfterCommit(out)
+    try { await renderApiSession(main) } catch { refreshed.refreshWarning = true }
+    toast(`已上线 uid ${out.session?.uid || ''}`, refreshed)
+  })
 }
 
 function openPasswordModal(opts = {}) {

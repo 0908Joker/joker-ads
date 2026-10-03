@@ -22,7 +22,7 @@
         </div>
       </div>
       <button class="bind-btn" @click="onBind">
-        <span>注册 / 绑定有礼</span>
+        <span>注册 / 绑定尚未接入</span>
         <em>账户权益尚未接入</em>
       </button>
       <div class="stats">
@@ -36,21 +36,21 @@
       <article class="pay-card pay-card--vip">
         <span class="pay-card__eyebrow">MEMBER</span>
         <strong>VIP 会员中心</strong>
-        <p>限时特惠权限等你开启</p>
-        <button @click="goRecharge('vip')">立即开通</button>
+        <p>会员权益尚未接入</p>
+        <button @click="goRecharge('vip')">查看状态</button>
       </article>
       <article class="pay-card pay-card--gold">
         <span class="pay-card__eyebrow">WALLET</span>
         <strong>钻石充值</strong>
-        <p>充值越高赠送越多</p>
-        <button @click="goRecharge('gold')">立即充值</button>
+        <p>充值已暂停，当前不发放奖励</p>
+        <button @click="goRecharge('gold')">查看订单说明</button>
       </article>
     </div>
 
     <section class="task-card" @click="router.push('/activityPage/dailyCheckIn')">
       <div>
         <strong>每日任务</strong>
-        <p>完成签到可恢复断签并领取奖励</p>
+        <p>签到尚未接入，当前不发放奖励</p>
       </div>
       <span class="task-card__go">前往</span>
     </section>
@@ -63,7 +63,7 @@
         <strong>AI 创造</strong><span>女友相伴</span>
       </button>
       <button class="feature" @click="router.push('/my/shareApp')">
-        <strong>分享邀请</strong><span>好友得好礼</span>
+        <strong>分享邀请</strong><span>仅记录邀请关系</span>
       </button>
     </div>
 
@@ -125,7 +125,7 @@ import { normalizeUser, normalizeStats } from '../api/normalize.js'
 import { openAd } from '../api/ad.js'
 import { copyText, showToast } from '../composables/useToast.js'
 import IdentityCard from '../components/IdentityCard.vue'
-import { customerState } from '../composables/useCustomer.js'
+import { customerState, refreshCustomer } from '../composables/useCustomer.js'
 
 const siteConfig = useSiteConfig()
 const config = computed(() => siteConfig.config)
@@ -187,7 +187,7 @@ async function copyId() {
 }
 
 function onBind() {
-  showToast('绑定功能需在 App 内完成')
+  showToast('绑定与奖励尚未接入，当前不发放奖励')
 }
 
 async function loadUser() {
@@ -199,7 +199,7 @@ async function loadUser() {
 
 async function refresh() {
   try {
-    await loadUser()
+    await refreshCustomer()
     showToast('已刷新')
   } catch {
     showToast('刷新失败，请稍后再试')

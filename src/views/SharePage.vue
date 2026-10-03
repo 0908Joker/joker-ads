@@ -25,10 +25,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import SubPage from '../components/SubPage.vue'
-import { fetchUserInfo } from '../api/users.js'
 import { normalizeAccount } from '../api/normalize.js'
 import { copyText, showToast } from '../composables/useToast.js'
-import { customerState, dewuInviteUrl } from '../composables/useCustomer.js'
+import { customerState, dewuInviteUrl, refreshCustomer } from '../composables/useCustomer.js'
 
 const account = ref(normalizeAccount(null))
 const customer = customerState
@@ -44,16 +43,14 @@ async function copy(value, label) {
   showToast((await copyText(value)) ? `${label}已复制` : '复制失败，请手动选择')
 }
 
-onMounted(async () => {
+async function loadShare() {
   try {
-    const info = await fetchUserInfo()
-    account.value = normalizeAccount(info.data ?? info)
+    await refreshCustomer()
   } catch {
-    if (!customer.inviteCode && !customer.customerId) {
-      showToast('获取邀请信息失败')
-    }
+    showToast('邀请信息刷新失败，显示上次记录')
   }
-})
+}
+onMounted(loadShare)
 </script>
 
 <style scoped>

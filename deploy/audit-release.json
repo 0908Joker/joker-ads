@@ -1,5 +1,5 @@
 {
-  "stage": 4,
+  "stage": 5,
   "baselineFrontendSha256": "ce82a760c7a123aa8e911ce8ac128304b4aa821de594adea894553308260932c",
   "production": "https://b12sl5x.cn",
   "paymentCreationEnabled": false,

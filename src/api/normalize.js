@@ -13,6 +13,12 @@ export function formatCount(n) {
   return String(v)
 }
 
+export function parseViewCount(value) {
+  const match = /^([0-9]+(?:\.[0-9]+)?)\s*([wk万亿]?)$/i.exec(String(value ?? '').replaceAll(',', '').trim())
+  if (!match) return 0
+  return Number(match[1]) * ({ w: 10000, k: 1000, '万': 10000, '亿': 100000000 }[match[2].toLowerCase()] || 1)
+}
+
 export function formatDuration(sec) {
   const s = Number(sec)
   if (!Number.isFinite(s) || s <= 0) return ''
@@ -31,6 +37,7 @@ export function normalizeVideo(item) {
   return {
     id: item.id,
     title,
+    viewsRaw: item.playCnt ?? item.hot ?? item.views,
     views: formatCount(item.playCnt ?? item.hot ?? item.views),
     duration: formatDuration(item.time ?? item.duration),
     cover: mediaUrl(item.coverURL || item.verticalCoverURL || item.cover),

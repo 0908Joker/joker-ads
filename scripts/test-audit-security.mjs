@@ -73,6 +73,17 @@ try {
   cookie = (await req('/api/admin/login', 'POST', { username: 'fixture', password: next })).cookie
   assert.equal((await req('/api/admin/apps')).status, 200)
   console.log('PASS password change revokes every prior session')
+  const fixtureAdmin = db.prepare('SELECT id FROM admins WHERE username=?').get('fixture').id
+  db.transaction(() => {
+    db.prepare('UPDATE admins SET active=0 WHERE id=?').run(fixtureAdmin)
+    db.prepare('DELETE FROM sessions WHERE admin_id=?').run(fixtureAdmin)
+  })()
+  assert.equal((await req('/api/admin/me')).status, 401)
+  assert.equal((await req('/api/admin/login', 'POST', { username: 'fixture', password: next })).status, 401)
+  db.prepare('UPDATE admins SET active=1 WHERE id=?').run(fixtureAdmin)
+  cookie = (await req('/api/admin/login', 'POST', { username: 'fixture', password: next })).cookie
+  assert.equal((await req('/api/admin/apps')).status, 200)
+  console.log('PASS contained administrator cannot authenticate or reuse old sessions')
   db.prepare('UPDATE admins SET totp_enabled=1,totp_secret=?').run('JBSWY3DPEHPK3PXP')
   assert.equal((await req('/api/admin/totp/setup', 'POST', {})).status, 409)
   assert.equal(db.prepare('SELECT totp_enabled FROM admins').get().totp_enabled, 1)
@@ -99,6 +110,23 @@ try {
   assert.equal(again.data.customerId, ordinary.data.customerId)
   assert.equal(again.data.cardNo, ordinary.data.cardNo)
   console.log('PASS seed identity denied; ordinary customer identity preserved')
+  db.exec("CREATE TRIGGER audit_fixture_failure BEFORE INSERT ON operation_logs BEGIN SELECT RAISE(ABORT, 'fixture log unavailable'); END")
+  for (const [url, method, payload] of [
+    ['/api/admin/apps', 'POST', { name: 'audit-warning-fixture', url: 'https://example.invalid' }],
+    ['/api/admin/apps/audit-warning-fixture', 'PUT', { name: 'audit-warning-fixture', url: 'https://example.invalid/updated' }],
+    ['/api/admin/slots/afterEnterApp', 'PUT', { items: [] }],
+    ['/api/admin/publish', 'POST', {}],
+    ['/api/admin/apps/audit-warning-fixture', 'DELETE', undefined],
+  ]) {
+    const saved = await req(url, method, payload)
+    assert.equal(saved.status, 200, method + ' committed despite audit failure')
+    assert.equal(saved.data.ok, true)
+    assert.equal(saved.data.auditWarning, true)
+  }
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'draft/config.json'))).apps.some(a => a.name === 'audit-warning-fixture'), false)
+  assert.equal((await req('/data/config.json')).data.apps.find(a => a.name === 'audit-warning-fixture').url, 'https://example.invalid/updated')
+  db.exec('DROP TRIGGER audit_fixture_failure')
+  console.log('PASS actual CRUD/publish returns committed success with auditWarning when the operation log fails')
   let handler, gatewayCalls = 0
   const source = fs.readFileSync(path.join(root, 'deploy/najin-pay-bff.mjs'), 'utf8').replace(/^#![^\n]*\n/, '').replace(/^import .*$/mg, '')
   const ctx = { crypto, http: { createServer: f => { handler = f; return { listen() {} } } }, URL, URLSearchParams, AbortSignal, Buffer,

@@ -16,7 +16,7 @@ export function patchStageTwo(code, { exact, functionBody }) {
   code += '\n' + sourceFunction('src/composables/useSiteConfig.js', 'emptySiteConfig', { emptySiteConfig: 'auditEmpty' })
   code = exact(code, 'const rt=Ct({ready:!1,config:{...NC},popups:{...yo},tabs:{...Ge},version:1})', 'const rt=Ct({ready:!1,error:"",...auditEmpty(),version:0})')
   code = functionBody(code, 'yy', sourceFunction('src/composables/useSiteConfig.js', 'loadSiteConfig', { siteConfig: 'rt', emptySiteConfig: 'auditEmpty', fetchJsonTimed: 'auditJSON', applyApiSession: 'sy', readonly: 'Zt' }, true))
-  code = functionBody(code, 'Io', sourceFunction('src/composables/useCustomer.js', 'claimCustomer', { deviceFp: 'Zf', inviteCodeFromLocation: 'Uf', TOKEN_KEY: 'Cc', customerState: 'He', readonly: 'Zt', fetchJsonTimed: 'auditJSON' }, true).replace('Zf: Zf()', 'deviceFp: Zf()'))
+  code = functionBody(code, 'Io', sourceFunction('src/composables/useCustomer.js', 'claimCustomer', { deviceFp: 'Zf', inviteCodeFromLocation: 'Uf', TOKEN_KEY: 'Cc', applyCustomerResult: 'auditApplyCustomer', customerState: 'He', readonly: 'Zt', fetchJsonTimed: 'auditJSON' }, true).replace('Zf: Zf()', 'deviceFp: Zf()'))
   code = functionBody(code, 'Uu', 'Z1(y4).use(Bu).mount("#app");void yy();void Yo().catch(()=>{});void Io().catch(()=>{});')
   code = exact(code, 'ge(k4,ed(rp(n.value.promo||{})),null,16)', '(n.value.promo?.url||n.value.promo?.image||n.value.promo?.cover||n.value.promo?.text)?ge(k4,ed(rp(n.value.promo||{})),null,16):Be("",true)')
   code = exact(code, 'ge(X4,ed(rp(n.value.floatBanner||{})),null,16)', 'n.value.floatBanner?.url?ge(X4,ed(rp(n.value.floatBanner||{})),null,16):Be("",true)')

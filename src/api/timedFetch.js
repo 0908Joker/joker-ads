@@ -25,7 +25,7 @@ export async function withRequestDeadline(operation, timeoutMs = 15000, signal) 
 export async function fetchJsonTimed(url, options = {}, timeoutMs = 5000) {
   return withRequestDeadline(async signal => {
     const response = await fetch(url, { ...options, signal })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!response.ok) throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status })
     return response.json()
   }, timeoutMs, options.signal)
 }

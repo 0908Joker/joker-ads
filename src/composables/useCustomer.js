@@ -4,6 +4,8 @@ import { fetchJsonTimed } from '../api/timedFetch.js'
 const FP_KEY = 'dw_device_fp'
 const TOKEN_KEY = 'dw_card_token'
 const SHOWN_KEY = 'dw_card_shown'
+let claimInFlight = null
+let refreshInFlight = null
 
 export const customerState = reactive({
   ready: false,
@@ -57,6 +59,8 @@ function deviceFp() {
 }
 
 export async function claimCustomer() {
+  if (claimInFlight) return claimInFlight
+  claimInFlight = (async () => {
   try {
     const body = {
       deviceFp: deviceFp(),
@@ -71,11 +75,7 @@ export async function claimCustomer() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    customerState.customerId = data.customerId || ''
-    customerState.cardNo = data.cardNo || ''
-    customerState.inviteCode = data.inviteCode || ''
-    customerState.invitedBy = data.invitedBy || ''
-    customerState.inviteCount = Number(data.inviteCount || 0)
+    applyCustomerResult(data)
     customerState.isNew = !!data.isNew
     customerState.error = ''
     if (data.token) {
@@ -90,6 +90,42 @@ export async function claimCustomer() {
   } finally {
     customerState.ready = true
   }
+  })().finally(() => { claimInFlight = null })
+  return claimInFlight
+}
+
+export function applyCustomerResult(data) {
+  if (!data?.customerId || !data?.cardNo || !data?.inviteCode) throw new Error('客户信息响应不完整')
+  if (customerState.customerId && customerState.customerId !== data.customerId) throw new Error('身份不一致，已保留原身份卡')
+  if (customerState.cardNo && customerState.cardNo !== data.cardNo) throw new Error('身份不一致，已保留原身份卡')
+  customerState.customerId = data.customerId
+  customerState.cardNo = data.cardNo
+  customerState.inviteCode = data.inviteCode
+  customerState.invitedBy = data.invitedBy || ''
+  customerState.inviteCount = Number(data.inviteCount || 0)
+  customerState.error = ''
+  customerState.ready = true
+}
+
+export async function refreshCustomer() {
+  if (refreshInFlight) return refreshInFlight
+  refreshInFlight = (async () => {
+    if (claimInFlight) await claimInFlight
+    try {
+      const data = await fetchJsonTimed('/api/public/customers/me', { credentials: 'include' })
+      applyCustomerResult(data)
+      return readonly(customerState)
+    } catch (error) {
+      if (![401, 404].includes(error.status)) throw error
+      let fp = ''
+      try { fp = localStorage.getItem('dw_device_fp') || '' } catch {}
+      if (customerState.customerId && fp.length < 8) throw new Error('身份凭据不可用，已保留原身份卡')
+      await claimCustomer()
+      if (customerState.error) throw new Error(customerState.error)
+      return readonly(customerState)
+    }
+  })().finally(() => { refreshInFlight = null })
+  return refreshInFlight
 }
 
 export function shouldAutoShowCard() {

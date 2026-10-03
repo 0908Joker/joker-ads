@@ -15,6 +15,7 @@ const data = { config, popups: { afterEnterApp: [], gridPopAds: [], actPopAds: [
 data.tabs.mine.quickApps.push(...Array.from({ length: 7 }, (_, i) => ({ name: '快捷测试' + (i + 2), icon: '/icon.png', url: 'https://example.invalid/quick' + (i + 2) })))
 const calls = [], errors = [], checks = [], adEvents = []
 let scenario = 'normal'
+let inviteCount = 0
 const browser = await chromium.launch({ headless: true })
 try {
   const context = await browser.newContext({ viewport: { width: 375, height: 812 } })
@@ -31,6 +32,11 @@ try {
     if (url.pathname === '/style.css') return route.fulfill({ contentType: 'text/css', body: process.env.AUDIT_CSS ? fs.readFileSync(process.env.AUDIT_CSS, 'utf8') : 'html{font-size:48px}body{margin:0;color:white;background:#080d12;font-family:sans-serif}button{font:inherit}' })
     if (url.pathname === '/data/site-bundle.json') {
       if (scenario === 'hang') return
+      if (scenario === 'popup-bad') return route.fulfill({ json: { ...data, apiSession: {}, popups: { afterEnterApp: [
+        { name: '错误广告 A', image: '/bad-cover.ceb', url: 'https://example.invalid/adA' },
+        { name: '正确广告 B', image: '/icon.png', url: 'https://example.invalid/adB' },
+      ], gridPopAds: [], actPopAds: [] } } })
+      if (scenario === 'hottest') return route.fulfill({ json: { ...data, apiSession: {}, tabs: { ...data.tabs, featured: { ...data.tabs.featured, subTabs: ['推荐', '最热'] } } } })
       if (scenario === 'ads') return route.fulfill({ json: {
         ...data, apiSession: {},
         config: { ...config, promo: { text: '促销测试', url: 'https://example.invalid/promo' }, floatBanner: { title: '悬浮测试', url: 'https://example.invalid/float' } },
@@ -45,6 +51,15 @@ try {
       if (scenario === 'hang') return
       return route.fulfill({ json: { ok: true, isNew: false, customerId: 'DW-FIXTURE', cardNo: 'CARD-FIXTURE', inviteCode: '1234567890123', inviteCount: 0 } })
     }
+    if (url.pathname === '/api/public/customers/me') {
+      if (scenario === 'customer-error') return route.fulfill({ status: 503, json: { error: 'fixture unavailable' } })
+      return route.fulfill({ json: { ok: true, customerId: 'DW-FIXTURE', cardNo: 'CARD-FIXTURE', inviteCode: '1234567890123', inviteCount } })
+    }
+    if (url.pathname === '/bad-cover.ceb') return route.fulfill({ status: 404, body: '' })
+    if (scenario === 'hottest' && url.pathname === '/api-proxy/videos/recommend') return route.fulfill({ json: { errorCode: 0, data: { videos: [
+      { id: 'HOT-9', name: '热度测试 9000', playCnt: 9000, coverURL: 'https://b12sl5x.cn/icon.png' },
+      { id: 'HOT-20', name: '热度测试 20000', playCnt: 20000, coverURL: 'https://b12sl5x.cn/icon.png' },
+    ] } } })
     if (url.pathname === '/hold.webm') return
     if (url.pathname === '/hung-cover.ceb') return
     if (scenario === 'short-cover-hang' && /^\/api-proxy\/videos\/short/.test(url.pathname)) return route.fulfill({ json: { sid: 'fixture', data: { videoInfo: [
@@ -233,6 +248,130 @@ try {
     await page.locator('.tabbar-item').filter({ hasText: '我的' }).click()
     assert.equal(await page.locator('.short-slide video').count(), 0)
     checks.push('short feed renders both items while one cover hangs; first video decodes; leaving removes videos')
+  }
+
+  if (manifest.stage >= 5) {
+    scenario = 'popup-bad'
+    await page.goto('https://b12sl5x.cn/?qa=popup-bad')
+    await page.locator('.popup-card[href="https://example.invalid/adB"]').waitFor()
+    const before = adEvents.length
+    await page.locator('.popup-card').click()
+    await page.waitForTimeout(100)
+    assert.equal(adEvents.length, before + 1)
+    assert.equal(adEvents.at(-1).name || adEvents.at(-1).itemName, '正确广告 B')
+    for (const other of context.pages()) if (other !== page) await other.close()
+    await page.locator('.popup-close').click()
+    await page.waitForTimeout(400)
+    assert.equal(await page.locator('.popup-overlay').count(), 0, 'B is not displayed twice')
+    checks.push('actual popup skips broken A, tracks B, closes without repeating B')
+    scenario = 'hottest'
+    await page.goto('https://b12sl5x.cn/?qa=hottest#/videosPage')
+    await page.locator('.sub-tab').filter({ hasText: '最热' }).click()
+    await page.getByText('热度测试 20000', { exact: true }).waitFor()
+    assert.deepEqual(await page.locator('.video-row h3').allTextContents(), ['热度测试 20000', '热度测试 9000'])
+    checks.push('rendered hottest ordering: 20000 before 9000')
+    scenario = 'normal'
+    await page.goto('https://b12sl5x.cn/?qa=customer#/my')
+    await page.getByText('DW-FIXTURE', { exact: false }).waitFor()
+    const customerCalls = calls.filter(p=>p==='/api/public/customers/me').length
+    inviteCount = 7
+    await page.getByRole('button', { name: '刷新', exact: true }).click()
+    await page.getByText('已刷新', { exact: true }).waitFor()
+    assert.equal(calls.filter(p=>p==='/api/public/customers/me').length, customerCalls + 1)
+    await page.goto('https://b12sl5x.cn/?qa=customer#/my/shareApp')
+    await page.getByText('已成功邀请 7 人', { exact: true }).waitFor()
+    assert.equal(await page.locator('.invite__code').innerText(), '1234567890123')
+    if (screenshots) await page.screenshot({ path: path.join(screenshots, 'batch5-customer-refresh-mobile.png') })
+    scenario = 'customer-error'
+    await page.goto('https://b12sl5x.cn/?qa=customer#/my')
+    const claimBefore = calls.filter(p=>p==='/api/public/customers/claim').length
+    await page.getByRole('button', { name: '刷新', exact: true }).click()
+    await page.getByText('刷新失败，请稍后再试', { exact: true }).waitFor()
+    assert.equal(calls.filter(p=>p==='/api/public/customers/claim').length, claimBefore)
+    checks.push('refresh makes real customer GET; invite count becomes 7; identity unchanged; 503 reports failure without claim')
+    scenario = 'normal'
+    await page.locator('.bind-btn').click()
+    await page.getByText('绑定与奖励尚未接入，当前不发放奖励', { exact: true }).waitFor()
+    await page.goto('https://b12sl5x.cn/?qa=customer#/activityPage/dailyCheckIn')
+    const taskText=await page.locator('body').innerText()
+    assert.equal(/双方得奖励|可得积分|额外赠送/.test(taskText),false)
+    await page.getByRole('button',{name:'查看说明',exact:true}).first().click()
+    await page.getByText('奖励尚未接入，当前不发放奖励',{exact:true}).waitFor()
+    checks.push('binding and task rewards state unavailable; explanation click stays on task page')
+
+    const adminFixture={...structuredClone(data),popups:{afterEnterApp:[{name:'保留条目',image:'/icon.png',url:'https://example.invalid/kept'}],gridPopAds:[]}}
+    let adminMode='publishHold',releasePublish,writes=0
+    const qaAdmin=await browser.newContext({viewport:{width:1280,height:900}})
+    await qaAdmin.route('**/*',async route=>{
+      const req=route.request(),url=new URL(req.url())
+      if(url.pathname==='/admin.js')return route.fulfill({contentType:'text/javascript',body:fs.readFileSync('admin/public/admin.js','utf8')})
+      if(url.pathname==='/admin.css')return route.fulfill({contentType:'text/css',body:fs.readFileSync('admin/public/admin.css','utf8')})
+      if(url.pathname==='/api/admin/me')return route.fulfill({json:{user:{id:'qa',username:'fixture',role:'super',mustChangePassword:false}}})
+      if(url.pathname==='/api/admin/site-config')return route.fulfill({json:adminFixture})
+      if(url.pathname==='/api/admin/dashboard')return route.fulfill({json:{stats:{},logs:[]}})
+      if(url.pathname==='/api/admin/publish'){
+        writes++
+        await new Promise(resolve=>{releasePublish=resolve})
+        return route.fulfill({status:503,json:{error:'测试发布失败'}})
+      }
+      if(url.pathname.startsWith('/api/admin/slots/')){
+        writes++
+        if(adminMode==='expired')return route.fulfill({status:401,json:{error:'未登录'}})
+        if(adminMode==='savedWarning'){
+          adminFixture.popups.afterEnterApp=req.postDataJSON().items
+          return route.fulfill({json:{ok:true,auditWarning:true}})
+        }
+        return route.fulfill({status:503,json:{error:'测试保存失败'}})
+      }
+      if(url.pathname==='/api/admin/apps') {
+        if(req.method()==='POST'){writes++;return route.fulfill({status:503,json:{error:'测试新增失败'}})}
+        return route.fulfill({json:{apps:adminFixture.config.apps,total:1,page:1,pageSize:30}})
+      }
+      if(req.isNavigationRequest())return route.fulfill({contentType:'text/html',body:fs.readFileSync('admin/public/index.html','utf8')})
+      return route.fulfill({status:204,body:''})
+    })
+    const adminPage=await qaAdmin.newPage()
+    adminPage.on('pageerror',error=>errors.push(error.message))
+    adminPage.on('dialog',dialog=>dialog.accept())
+    await adminPage.goto('https://admin.b12sl5x.cn/')
+    await adminPage.locator('#publish-btn').click()
+    await adminPage.waitForFunction(()=>document.querySelector('#publish-btn').disabled)
+    await adminPage.evaluate(()=>document.querySelector('#publish-btn').click())
+    assert.equal(writes,1,'pending publish cannot submit twice')
+    releasePublish()
+    await adminPage.getByText('测试发布失败',{exact:true}).waitFor()
+    assert.equal(await adminPage.locator('#publish-btn').isDisabled(),false)
+    await adminPage.locator('[data-page="popups"]').click()
+    adminMode='save503'
+    await adminPage.locator('.list-row .del').click()
+    await adminPage.getByText('测试保存失败',{exact:true}).waitFor()
+    assert.equal(await adminPage.getByText('保留条目',{exact:true}).count(),1)
+    await adminPage.locator('.list-row .edit').click()
+    await adminPage.locator('#f-name').fill('保留未提交输入')
+    await adminPage.locator('#modal-save').click()
+    await adminPage.getByText('测试保存失败',{exact:true}).waitFor()
+    await adminPage.waitForFunction(()=>!document.querySelector('#modal-save').disabled)
+    assert.equal(await adminPage.locator('#f-name').inputValue(),'保留未提交输入')
+    assert.equal(await adminPage.locator('#modal-save').isDisabled(),false)
+    adminMode='expired'
+    await adminPage.locator('#modal-save').click()
+    await adminPage.getByText('重新登录',{exact:true}).waitFor()
+    assert.equal(await adminPage.locator('#f-name').inputValue(),'保留未提交输入')
+    assert.equal(await adminPage.locator('#toast a').getAttribute('target'),'_blank')
+    if(screenshots)await adminPage.screenshot({path:path.join(screenshots,'batch5-admin-expired-keeps-input.png')})
+    adminMode='savedWarning'
+    await adminPage.locator('#modal-save').click()
+    await adminPage.getByText('已保存草稿；操作已保存，但审计日志记录失败',{exact:true}).waitFor()
+    assert.equal(await adminPage.locator('#modal.show').count(),0)
+    assert.equal(await adminPage.getByText('保留未提交输入',{exact:true}).count(),1)
+    await adminPage.locator('[data-page="apps"]').click()
+    await adminPage.locator('#add-app').click()
+    await adminPage.locator('#app-name').fill('新增未提交输入')
+    await adminPage.locator('#modal-save').click()
+    await adminPage.getByText('测试新增失败',{exact:true}).waitFor()
+    assert.equal(await adminPage.locator('#app-name').inputValue(),'新增未提交输入')
+    await qaAdmin.close()
+    checks.push('admin 503 caught; pending publish blocked; failed delete keeps row; edit/add keep input; 401 offers re-login; audit warning displayed')
   }
   assert.deepEqual(errors, [])
   console.log(JSON.stringify({ stage: manifest.stage, frontendSha256: manifest.frontendSha256, checks, pageErrors: errors.length, productionWrites: 0, screenshots }, null, 2))

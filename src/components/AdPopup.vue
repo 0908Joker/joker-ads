@@ -28,7 +28,7 @@
         rel="noopener noreferrer"
         @click="onAdClick"
       >
-        <img :src="currentSrc" alt="" class="popup-img" />
+        <img :src="currentSrc" alt="" class="popup-img" @error="onImageError" />
       </a>
     </div>
     <button class="popup-close" aria-label="关闭" @click.stop="close">
@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import CebImg from './CebImg.vue'
 import { decryptMedia } from '../api/media.js'
 import { resolveAdTarget, trackAdInteraction } from '../api/ad.js'
@@ -51,6 +51,7 @@ import popupFallback from '../data/popups.json'
 let sessionQueueDone = false
 let sessionIndex = 0
 let showGen = 0
+let nextTimer = null
 
 const props = defineProps({
   popups: { type: Array, default: () => [] },
@@ -77,11 +78,20 @@ const mode = ref('image')
 const visible = ref(false)
 const currentSrc = ref('')
 const currentHref = ref('')
+const currentAd = ref(null)
 
 const queueLen = computed(() => afterAds.value.length + (gridAds.value.length ? 1 : 0))
 
 async function showAt(i) {
   const gen = ++showGen
+  clearTimeout(nextTimer)
+  visible.value = false
+  currentSrc.value = ''
+  currentHref.value = ''
+  currentAd.value = null
+  index.value = i
+  sessionIndex = i
+  if (i >= queueLen.value) { markDone(); return }
   if (i >= afterAds.value.length) {
     if (gridAds.value.length) {
       mode.value = 'grid'
@@ -93,10 +103,11 @@ async function showAt(i) {
   }
   mode.value = 'image'
   const ad = afterAds.value[i]
-  currentHref.value = resolveAdTarget(ad)
   try {
     const src = await decryptMedia(ad.image || ad.coverUrl)
     if (gen !== showGen) return
+    currentAd.value = ad
+    currentHref.value = resolveAdTarget(ad)
     currentSrc.value = src
     visible.value = Boolean(src)
     if (!src) showAt(i + 1)
@@ -109,6 +120,10 @@ async function showAt(i) {
 const DONE_KEY = 'adPopupDone'
 
 function markDone() {
+  ++showGen
+  clearTimeout(nextTimer)
+  visible.value = false
+  currentAd.value = null
   sessionQueueDone = true
   try {
     sessionStorage.setItem(DONE_KEY, '1')
@@ -116,24 +131,32 @@ function markDone() {
 }
 
 function close() {
-  showGen += 1
+  const gen = ++showGen
   visible.value = false
   index.value += 1
   sessionIndex = index.value
   if (index.value < queueLen.value) {
-    setTimeout(() => showAt(index.value), 280)
+    nextTimer = setTimeout(() => { if (gen === showGen) void showAt(index.value) }, 280)
     return
   }
   markDone()
 }
 
 function onAdClick(e) {
-  if (!currentHref.value) {
+  if (!currentHref.value || !currentAd.value) {
     e.preventDefault()
     return
   }
-  trackAdInteraction(afterAds.value[index.value], 'afterEnterApp')
+  trackAdInteraction(currentAd.value, 'afterEnterApp')
 }
+
+function onImageError(event) {
+  if (!visible.value || !currentSrc.value) return
+  if (event?.target?.currentSrc && event.target.currentSrc !== new URL(currentSrc.value, location.href).href) return
+  void showAt(index.value + 1)
+}
+
+onBeforeUnmount(() => { ++showGen; clearTimeout(nextTimer) })
 
 onMounted(() => {
   try {

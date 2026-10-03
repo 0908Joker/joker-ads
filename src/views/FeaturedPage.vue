@@ -79,7 +79,7 @@ import liveApi from '../data/live-api.json'
 import videoCategories from '../data/video-categories.json'
 import { fetchRecommend } from '../api/videos.js'
 import { openAd } from '../api/ad.js'
-import { normalizeFeaturedPayload } from '../api/normalize.js'
+import { normalizeFeaturedPayload, parseViewCount } from '../api/normalize.js'
 
 const FALLBACK_TABS = [
   '最新', '推荐', '夏日限定', '18岁', '制服', '探花', '原创', '乱伦', '国产', '传媒', '日本', '欧美', '同性',
@@ -161,8 +161,8 @@ function subTabPageBump(sub) {
 function sortFeaturedList(list, sub) {
   if (sub !== '最热' || list.length < 2) return list
   return [...list].sort((a, b) => {
-    const av = Number(String(a.views || '0').replace(/[^\d.]/g, '')) || 0
-    const bv = Number(String(b.views || '0').replace(/[^\d.]/g, '')) || 0
+    const av = parseViewCount(a.viewsRaw ?? a.views)
+    const bv = parseViewCount(b.viewsRaw ?? b.views)
     return bv - av
   })
 }
@@ -176,7 +176,7 @@ async function loadVideos() {
   const token = ++loadToken
 
   // Render immediately; a live response upgrades this in place if one arrives.
-  videos.value = withAdSlot(cachedFeaturedForTab(tab, sub))
+  videos.value = withAdSlot(sortFeaturedList(cachedFeaturedForTab(tab, sub), sub))
 
   try {
     const sort = sub === '最新' ? 'latest' : sub === '最热' ? 'hot' : 'recommend'

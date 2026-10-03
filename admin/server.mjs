@@ -232,12 +232,17 @@ app.put('/api/admin/api-session', requireAuth, requireWrite('settings'), (req, r
   }
 })
 
+function logCommittedChange(entry) {
+  try { writeLog(entry); return false }
+  catch { console.warn('[admin] state committed; audit log unavailable'); return true }
+}
+
 app.put('/api/admin/site-config/:part', requireAuth, requireWrite('popups'), (req, res) => {
   const part = req.params.part
   if (!['config', 'popups', 'tabs'].includes(part)) return res.status(400).json({ error: 'invalid part' })
   saveBundle(part, req.body || {})
-  writeLog({ admin: req.admin, action: `更新草稿 ${part}`, targetType: part, ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `更新草稿 ${part}`, targetType: part, ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.put('/api/admin/slots/:slotKey', requireAuth, requireWrite('popups'), (req, res) => {
@@ -269,8 +274,8 @@ app.put('/api/admin/slots/:slotKey', requireAuth, requireWrite('popups'), (req, 
     return res.status(400).json({ error: 'unknown slot' })
   }
 
-  writeLog({ admin: req.admin, action: `编辑广告位 ${slotKey}`, targetType: 'slot', targetId: slotKey, ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `编辑广告位 ${slotKey}`, targetType: 'slot', targetId: slotKey, ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.get('/api/admin/apps', requireAuth, requireRead('apps'), (req, res) => {
@@ -306,8 +311,8 @@ app.post('/api/admin/apps', requireAuth, requireWrite('apps'), (req, res) => {
   })
   addAppPlacement(bundle.config, name)
   saveBundle('config', bundle.config)
-  writeLog({ admin: req.admin, action: `新增应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `新增应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
@@ -326,8 +331,8 @@ app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) =
   bundle.config.apps = bundle.config.apps.map(item => item.name === oldName ? { ...item, ...fields, name: nextName } : item)
   if (nextName !== oldName) updateAppPlacements(bundle.config, oldName, nextName)
   saveBundle('config', bundle.config)
-  writeLog({ admin: req.admin, action: `编辑应用 ${nextName}`, targetType: 'apps', targetId: nextName, ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `编辑应用 ${nextName}`, targetType: 'apps', targetId: nextName, ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
@@ -336,8 +341,8 @@ app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res
   bundle.config.apps = (bundle.config.apps || []).filter((a) => a.name !== name)
   updateAppPlacements(bundle.config, name)
   saveBundle('config', bundle.config)
-  writeLog({ admin: req.admin, action: `删除应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `删除应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.get('/api/admin/category-apps', requireAuth, requireRead('categories'), (_req, res) => {
@@ -349,8 +354,8 @@ app.put('/api/admin/category-apps', requireAuth, requireWrite('categories'), (re
   bundle.config.categoryApps = req.body?.categoryApps || bundle.config.categoryApps || {}
   if (Array.isArray(req.body?.categories)) bundle.config.categories = req.body.categories
   saveBundle('config', bundle.config)
-  writeLog({ admin: req.admin, action: '更新分类应用映射', targetType: 'categoryApps', ip: clientIp(req) })
-  res.json({ ok: true })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: '更新分类应用映射', targetType: 'categoryApps', ip: clientIp(req) })
+  res.json({ ok: true, auditWarning })
 })
 
 app.post('/api/admin/publish', requireAuth, requireWrite('publish'), (req, res) => {
@@ -371,8 +376,8 @@ app.post('/api/admin/upload', requireAuth, requireWrite('upload'), upload.single
   const kind = String(req.query.kind || 'popup')
   const sub = kind === 'icon' ? 'icons' : kind === 'promo' ? 'promo' : 'popups'
   const url = `/uploads/${sub}/${req.file.filename}`
-  writeLog({ admin: req.admin, action: `上传素材 ${url}`, targetType: 'upload', targetId: url, ip: clientIp(req) })
-  res.json({ ok: true, url })
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `上传素材 ${url}`, targetType: 'upload', targetId: url, ip: clientIp(req) })
+  res.json({ ok: true, url, auditWarning })
 })
 
 app.get('/api/admin/logs', requireAuth, requireRead('logs'), (req, res) => {

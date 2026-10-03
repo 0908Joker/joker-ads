@@ -18,7 +18,7 @@
           <p>{{ t.desc }}</p>
         </div>
         <span v-if="t.progress" class="task__progress">{{ t.progress }}</span>
-        <button class="task__go" @click="router.push(t.to)">去完成</button>
+        <button class="task__go" @click="showToast('奖励尚未接入，当前不发放奖励')">查看说明</button>
       </li>
     </ul>
   </SubPage>
@@ -38,23 +38,23 @@ const actions = ref({ commentCount: 0, downloadCount: 0, aiCreateCount: 0 })
 const signing = ref(false)
 
 const tasks = computed(() => [
-  { id: 'watch', name: '观看影片', desc: '每日观看影片可得积分', to: '/videosPage', progress: '' },
+  { id: 'watch', name: '观看影片', desc: '观看奖励尚未接入，当前不发放奖励', to: '/videosPage', progress: '' },
   {
     id: 'comment',
     name: '发表评论',
-    desc: '参与评论互动可得积分',
+    desc: '评论奖励尚未接入，当前不发放奖励',
     to: '/videosPage',
     progress: `已评论 ${actions.value.commentCount}`,
   },
   {
     id: 'download',
     name: '下载应用',
-    desc: '在应用中心下载推荐应用',
+    desc: '下载奖励尚未接入，当前不发放奖励',
     to: '/appcenter',
     progress: `已下载 ${actions.value.downloadCount}`,
   },
-  { id: 'invite', name: '邀请好友', desc: '邀请好友注册双方得奖励', to: '/my/shareApp', progress: `已邀请 ${account.value.inviteCount}` },
-  { id: 'recharge', name: '每日充值', desc: '充值钻石享额外赠送', to: '/recharge?type=gold', progress: '' },
+  { id: 'invite', name: '邀请好友', desc: '仅记录邀请关系，当前不发放奖励', to: '/my/shareApp', progress: `已邀请 ${account.value.inviteCount}` },
+  { id: 'recharge', name: '每日充值', desc: '充值已暂停，当前不发放奖励', to: '/recharge?type=gold', progress: '' },
 ])
 
 async function loadAccount() {
