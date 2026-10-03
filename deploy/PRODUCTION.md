@@ -1,5 +1,17 @@
 # 唯一生产环境与发布记录
 
+## 2026-10-03 广告同步修复与自动发布
+
+- 运行时 JSON 改由现有后台服务读取，公开站点只放行 config/popups/tabs/meta/api-session 五类文件；解决原子发布产生 root:root 0600 文件后 Nginx 返回 403、前台退回旧广告的问题。上传图片路径使用优先前缀，避免被通用图片 location 截获。
+- 新增应用同步进入官方推荐及已有推荐/下载筛选；改名、删除维护分类引用。明确为空的弹窗数组不再回退旧广告；上传 image 优先于旧 coverUrl。
+- 当前前端补丁产物 `index-server-ce82a760c7a1.js`，SHA-256 `ce82a760c7a123aa8e911ce8ac128304b4aa821de594adea894553308260932c`。仅从下文记录的 `46d1d07f01e5` 精确基线生成，不用历史源码构建覆盖当前生产。
+- `.github/workflows/deploy-production.yml` 在相关文件推送 main 时运行：真实后台隔离回归 → 重现生产前端补丁 → SSH 发布 → 公开部署版本回读。`deployment.json` 的 revision 必须等于该次 GitHub 提交才算部署通过。
+- `deploy/deploy-ad-sync.mjs` 只修改对应后台逻辑、一个辅助模块、Nginx 数据路由和前端入口/资源；不复制种子数据、不改客户数据库、不发布草稿、不覆盖 APK、H5 或落地页。重复执行验证已修复状态；未知前端版本停止。失败恢复本次修改前的文件。
+- 部署专用 SSH 公钥使用 `restrict` 和固定命令 `/usr/local/sbin/joker-ads-ci-deploy`，只接受当前 main 的完整 SHA；无交互 shell、PTY、端口或代理转发。主机密钥固定校验。GitHub Secrets 为 `AD_SYNC_DEPLOY_KEY`、`AD_SYNC_KNOWN_HOSTS`，不复用工作站私钥。
+- 固定命令的已安装版本源于 `deploy/ci-deploy-command.sh`，它只提取指定部署脚本、辅助模块和回归测试。修改这个入口文件需要在服务器单独更新，不由发布包自行覆盖。
+- 每次部署备份与回执在 `/opt/ads-king/backups/ad-sync-<提交>-<时间>/`。首次热修复的后台/入口备份在 `/opt/ads-king/releases/ad-sync-20261003/backup/`，Nginx 原配置为 `/www/server/panel/vhost/nginx/b12sl5x.cn.conf.before-ad-sync-20261003T072156Z`。历史资源保留可恢复。
+- 用户操作流程维持“保存草稿 → 发布 → 前台刷新”；未增加已经打开页面的实时轮询。线上只做读取核对，新增/改名/删除/清空/上传测试使用独立临时数据库和站点文件。
+
 ## 永久规则
 
 用户于 2026-09-29 确认：**唯一永久生产环境只部署在自有服务器上，所有曾经的旧生产环境取消。以服务器运行版本为事实基准。**

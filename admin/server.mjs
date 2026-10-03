@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import express from 'express'
 import multer from 'multer'
+import { addAppPlacement, updateAppPlacements } from './lib/appPlacements.mjs'
 import { ensureDirs, LIVE_DIR, DRAFT_DIR, UPLOAD_DIR, PUBLIC_DIR, REPO_ROOT } from './lib/paths.mjs'
 import {
   readDraft,
@@ -219,6 +220,7 @@ app.post('/api/admin/apps', requireAuth, requireWrite('apps'), (req, res) => {
     signUrl: String(appItem.signUrl || ''),
     icon: String(appItem.icon || '/icons/placeholder.png'),
   })
+  addAppPlacement(bundle.config, name)
   saveBundle('config', bundle.config)
   writeLog({ admin: req.admin, action: `新增应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
   res.json({ ok: true })
@@ -231,11 +233,16 @@ app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) =
   const idx = (bundle.config.apps || []).findIndex((a) => a.name === oldName)
   if (idx === -1) return res.status(404).json({ error: '应用不存在' })
   const nextName = String(body.name || oldName).trim()
+  if (!nextName) return res.status(400).json({ error: '请填写应用名称' })
+  if (nextName !== oldName && bundle.config.apps.some((a) => a.name === nextName)) {
+    return res.status(409).json({ error: '应用名称已存在' })
+  }
   bundle.config.apps[idx] = {
     ...bundle.config.apps[idx],
     ...body,
     name: nextName,
   }
+  if (nextName !== oldName) updateAppPlacements(bundle.config, oldName, nextName)
   saveBundle('config', bundle.config)
   writeLog({ admin: req.admin, action: `编辑应用 ${nextName}`, targetType: 'apps', targetId: nextName, ip: clientIp(req) })
   res.json({ ok: true })
@@ -245,6 +252,7 @@ app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res
   const name = decodeURIComponent(req.params.name)
   const bundle = getBundle()
   bundle.config.apps = (bundle.config.apps || []).filter((a) => a.name !== name)
+  updateAppPlacements(bundle.config, name)
   saveBundle('config', bundle.config)
   writeLog({ admin: req.admin, action: `删除应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
   res.json({ ok: true })

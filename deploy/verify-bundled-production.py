@@ -42,3 +42,4 @@ with tempfile.TemporaryDirectory(prefix='joker-reproduce-') as temp:
     subprocess.run(['node', str(repo / 'scripts/verify-production-entry.mjs'), str(root / 'entry/release')], check=True)
     assert record['files']['main/assets/' + record['javascript']] == '46d1d07f01e5f8f1589a9deec4460e43f458f28f9f24b00f79bf5d892b831d08'
     print('PASS: archived baseline reproduces the exact published server bundle')
+    subprocess.run(['node', str(directory / 'deploy-ad-sync.mjs'), '--verify-bundle', str(root / 'entry/release/main/assets' / record['javascript'])], check=True)

@@ -15,7 +15,7 @@
             rel="noopener noreferrer"
             @click="trackAdSign(ad.signUrl)"
           >
-            <CebImg class="grid-ad__img" :path="ad.coverUrl" />
+            <CebImg class="grid-ad__img" :path="ad.image || ad.coverUrl" />
           </a>
         </div>
       </div>
@@ -60,8 +60,8 @@ const siteConfig = useSiteConfig()
 const popupData = computed(() => siteConfig.popups?.afterEnterApp ? siteConfig.popups : popupFallback)
 
 const afterAds = computed(() => {
-  const fromFile = popupData.value.afterEnterApp || []
-  if (fromFile.length) return fromFile
+  const fromFile = popupData.value.afterEnterApp
+  if (Array.isArray(fromFile)) return fromFile
   return (props.popups.length ? props.popups : siteConfig.config.popups || []).map((p) => ({
     name: p.name,
     url: p.url,
@@ -95,7 +95,7 @@ async function showAt(i) {
   const ad = afterAds.value[i]
   currentHref.value = resolveAdTarget(ad)
   try {
-    const src = await decryptMedia(ad.coverUrl || ad.image)
+    const src = await decryptMedia(ad.image || ad.coverUrl)
     if (gen !== showGen) return
     currentSrc.value = src
     visible.value = Boolean(src)
