@@ -8,7 +8,7 @@ import {
   readDraft,
   writeDraft,
   writeLive,
-  publishAll,
+  savePublishedPart,
   syncDraftFromLive,
   readJson,
   readLive,
@@ -86,19 +86,18 @@ seedFromRepoIfEmpty()
 if (!readDraft('meta.json')) writeDraft('meta.json', readLive('meta.json') || { version: 1 })
 
 function getBundle() {
+  const published = readPublished()
   return {
-    config: readDraft('config.json') || {},
-    popups: readDraft('popups.json') || {},
-    tabs: readDraft('tabs.json') || {},
-    meta: readLive('meta.json') || { version: 1 },
+    config: published.config,
+    popups: published.popups,
+    tabs: published.tabs,
+    meta: published.meta,
+    autoPublish: true,
   }
 }
 
 function saveBundle(part, value) {
-  if (part === 'config') writeDraft('config.json', value)
-  else if (part === 'popups') writeDraft('popups.json', value)
-  else if (part === 'tabs') writeDraft('tabs.json', value)
-  else throw new Error('unknown part')
+  return savePublishedPart(part, value)
 }
 
 app.get('/health', (_req, res) => {
@@ -240,42 +239,43 @@ function logCommittedChange(entry) {
 app.put('/api/admin/site-config/:part', requireAuth, requireWrite('popups'), (req, res) => {
   const part = req.params.part
   if (!['config', 'popups', 'tabs'].includes(part)) return res.status(400).json({ error: 'invalid part' })
-  saveBundle(part, req.body || {})
-  const auditWarning = logCommittedChange({ admin: req.admin, action: `更新草稿 ${part}`, targetType: part, ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  const saved = saveBundle(part, req.body || {})
+  const auditWarning = logCommittedChange({ admin: req.admin, action: `更新并发布 ${part}`, targetType: part, ip: clientIp(req) })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.put('/api/admin/slots/:slotKey', requireAuth, requireWrite('popups'), (req, res) => {
   const { slotKey } = req.params
   const items = req.body?.items
   const bundle = getBundle()
+  let saved
 
   if (slotKey === 'afterEnterApp' || slotKey === 'gridPopAds' || slotKey === 'actPopAds') {
     bundle.popups[slotKey] = items || []
-    saveBundle('popups', bundle.popups)
+    saved = saveBundle('popups', bundle.popups)
   } else if (slotKey === 'configPopups') {
     bundle.config.popups = items || []
-    saveBundle('config', bundle.config)
+    saved = saveBundle('config', bundle.config)
   } else if (slotKey === 'promo') {
     bundle.config.promo = { ...(bundle.config.promo || {}), ...(req.body || {}) }
-    saveBundle('config', bundle.config)
+    saved = saveBundle('config', bundle.config)
   } else if (slotKey === 'floatBanner') {
     bundle.config.floatBanner = { ...(bundle.config.floatBanner || {}), ...(req.body || {}) }
-    saveBundle('config', bundle.config)
+    saved = saveBundle('config', bundle.config)
   } else if (slotKey === 'featuredAd') {
     bundle.tabs.featured = bundle.tabs.featured || {}
     bundle.tabs.featured.ad = { ...(bundle.tabs.featured.ad || {}), ...(req.body || {}) }
-    saveBundle('tabs', bundle.tabs)
+    saved = saveBundle('tabs', bundle.tabs)
   } else if (slotKey === 'mineQuickApps') {
     bundle.tabs.mine = bundle.tabs.mine || {}
     bundle.tabs.mine.quickApps = items || []
-    saveBundle('tabs', bundle.tabs)
+    saved = saveBundle('tabs', bundle.tabs)
   } else {
     return res.status(400).json({ error: 'unknown slot' })
   }
 
   const auditWarning = logCommittedChange({ admin: req.admin, action: `编辑广告位 ${slotKey}`, targetType: 'slot', targetId: slotKey, ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.get('/api/admin/apps', requireAuth, requireRead('apps'), (req, res) => {
@@ -310,9 +310,9 @@ app.post('/api/admin/apps', requireAuth, requireWrite('apps'), (req, res) => {
     icon: String(appItem.icon || '/icons/placeholder.png'),
   })
   addAppPlacement(bundle.config, name)
-  saveBundle('config', bundle.config)
+  const saved = saveBundle('config', bundle.config)
   const auditWarning = logCommittedChange({ admin: req.admin, action: `新增应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
@@ -330,9 +330,9 @@ app.put('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) =
   const fields = Object.fromEntries(['url', 'signUrl', 'icon'].map(k => [k, body[k] !== undefined ? body[k] : canonical[k] || '']))
   bundle.config.apps = bundle.config.apps.map(item => item.name === oldName ? { ...item, ...fields, name: nextName } : item)
   if (nextName !== oldName) updateAppPlacements(bundle.config, oldName, nextName)
-  saveBundle('config', bundle.config)
+  const saved = saveBundle('config', bundle.config)
   const auditWarning = logCommittedChange({ admin: req.admin, action: `编辑应用 ${nextName}`, targetType: 'apps', targetId: nextName, ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res) => {
@@ -340,9 +340,9 @@ app.delete('/api/admin/apps/:name', requireAuth, requireWrite('apps'), (req, res
   const bundle = getBundle()
   bundle.config.apps = (bundle.config.apps || []).filter((a) => a.name !== name)
   updateAppPlacements(bundle.config, name)
-  saveBundle('config', bundle.config)
+  const saved = saveBundle('config', bundle.config)
   const auditWarning = logCommittedChange({ admin: req.admin, action: `删除应用 ${name}`, targetType: 'apps', targetId: name, ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.get('/api/admin/category-apps', requireAuth, requireRead('categories'), (_req, res) => {
@@ -353,17 +353,19 @@ app.put('/api/admin/category-apps', requireAuth, requireWrite('categories'), (re
   const bundle = getBundle()
   bundle.config.categoryApps = req.body?.categoryApps || bundle.config.categoryApps || {}
   if (Array.isArray(req.body?.categories)) bundle.config.categories = req.body.categories
-  saveBundle('config', bundle.config)
+  const saved = saveBundle('config', bundle.config)
   const auditWarning = logCommittedChange({ admin: req.admin, action: '更新分类应用映射', targetType: 'categoryApps', ip: clientIp(req) })
-  res.json({ ok: true, auditWarning })
+  res.json({ ok: true, ...saved, auditWarning })
 })
 
 app.post('/api/admin/publish', requireAuth, requireWrite('publish'), (req, res) => {
-  const meta = publishAll()
+  // Older admin tabs still call this endpoint. Saves are already live; never
+  // re-import an old draft and resurrect a deleted advertisement.
+  const meta = readPublished().meta
   let auditWarning = false
-  try { writeLog({ admin: req.admin, action: '发布站点配置', targetType: 'publish', detail: `v${meta.version}`, ip: clientIp(req) }) }
+  try { writeLog({ admin: req.admin, action: '核对已自动发布的配置', targetType: 'publish', detail: `v${meta.version}`, ip: clientIp(req) }) }
   catch { auditWarning = true; console.warn('[config] published; audit log unavailable') }
-  res.json({ ok: true, meta, auditWarning })
+  res.json({ ok: true, published: true, meta, auditWarning })
 })
 
 app.post('/api/admin/discard-draft', requireAuth, requireWrite('publish'), (_req, res) => {

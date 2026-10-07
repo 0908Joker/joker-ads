@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import CebImg from './CebImg.vue'
 import { decryptMedia } from '../api/media.js'
 import { resolveAdTarget, trackAdInteraction } from '../api/ad.js'
@@ -155,6 +155,14 @@ function onImageError(event) {
   if (event?.target?.currentSrc && event.target.currentSrc !== new URL(currentSrc.value, location.href).href) return
   void showAt(index.value + 1)
 }
+
+function refreshPopupConfig() {
+  // Update an open/queued ad, but do not reopen a queue the user already closed.
+  if (sessionQueueDone) return
+  void showAt(Math.min(index.value, queueLen.value))
+}
+
+watch(() => [afterAds.value, gridAds.value], refreshPopupConfig)
 
 onBeforeUnmount(() => { ++showGen; clearTimeout(nextTimer) })
 

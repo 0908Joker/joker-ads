@@ -39,9 +39,11 @@ async function api(path, opts = {}) {
 function toast(msg, result = {}) {
   clearTimeout(toastTimer)
   const el = $('#toast')
-  el.textContent = msg + (result.auditWarning ? '；操作已保存，但审计日志记录失败' : '') + (result.refreshWarning ? '；列表刷新失败，请重新加载核对' : '')
+  const published = result.published ? `；已同步前台 v${result.meta?.version || ''}` : ''
+  el.textContent = msg + published + (result.draftWarning ? '；线上已生效，但兼容草稿备份同步失败' : '') + (result.auditWarning ? '；操作已保存，但审计日志记录失败' : '') + (result.refreshWarning ? '；列表刷新失败，请重新加载核对' : '')
+  if (result.meta?.version) $('#version-badge').textContent = `自动同步 · v${result.meta.version}`
   el.classList.add('show')
-  toastTimer = setTimeout(() => el.classList.remove('show'), result.keepLong || result.auditWarning || result.refreshWarning ? 8000 : 2200)
+  toastTimer = setTimeout(() => el.classList.remove('show'), result.keepLong || result.auditWarning || result.refreshWarning || result.draftWarning ? 8000 : 3200)
 }
 
 function reportActionError(error) {
@@ -121,15 +123,14 @@ async function logout() {
 
 async function loadBundle() {
   bundle = await api('/api/admin/site-config')
-  $('#version-badge').textContent = `draft · v${bundle.meta?.version || 1}`
+  $('#version-badge').textContent = `自动同步 · v${bundle.meta?.version || 1}`
 }
 
 async function publish() {
   if (!canWrite('publish')) return toast('无发布权限')
   return runAction($('#publish-btn'), async () => {
-  if (!confirm('确认将当前草稿发布到前台？')) return
   const data = await api('/api/admin/publish', { method: 'POST', body: '{}' })
-  toast(`已发布 v${data.meta.version}`, await refreshAfterCommit(data))
+  toast('已核对线上版本', await refreshAfterCommit(data))
   })
 }
 
@@ -180,7 +181,7 @@ async function renderDashboard(main) {
       ${metric('累计点击', dash.stats.clicksTotal, '#888')}
       ${metric('线上版本', dash.stats.version, '#aaa')}
     </div>
-    <div class="notice">编辑各模块后点击右上角「发布到前台」，用户刷新站点即可看到更新。草稿不会立即影响线上。</div>
+    <div class="notice">保存、新增或删除成功后自动同步前台，无需另点发布。已打开的前台约 5 秒检查一次更新；切回页面时立即检查。未点击保存的输入不会上线。</div>
     <div class="card"><div style="font-weight:700;margin-bottom:12px;">最近操作</div>
       <table><thead><tr><th>操作人</th><th>动作</th><th>时间</th></tr></thead><tbody>
       ${(dash.logs || []).map((l) => `<tr><td>${esc(l.admin_name)}</td><td>${esc(l.action)}</td><td>${esc(l.created_at?.slice(0, 19))}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-row">暂无日志</td></tr>'}
@@ -206,8 +207,12 @@ function renderListEditor(main, slotKey, title) {
   }
   render()
   $('#add-item')?.addEventListener('click', () => {
-    items.unshift({ name: '新广告', url: '', signUrl: '', coverUrl: '', image: '', icon: '' })
-    render()
+    openItemModal(slotKey, { name: '新广告', url: '', signUrl: '', coverUrl: '', image: '', icon: '' }, async next => {
+      const saved = await saveSlot(slotKey, [next, ...items])
+      items.unshift(next)
+      render()
+      return saved
+    })
   })
 }
 
@@ -256,7 +261,7 @@ function renderObjectEditor(main, slotKey, title, fields) {
     <div class="card"><form id="obj-form">${fields.map((f) => `
       <div class="form-group"><label class="form-label">${esc(f)}</label>
         <input name="${esc(f)}" value="${esc(data[f] || '')}" ${canWrite('promo') ? '' : 'disabled'} /></div>`).join('')}
-      ${canWrite('promo') ? '<button class="btn btn-primary" type="submit">保存草稿</button>' : ''}
+      ${canWrite('promo') ? '<button class="btn btn-primary" type="submit">保存并同步前台</button>' : ''}
     </form></div>`
   $('#obj-form')?.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -264,7 +269,7 @@ function renderObjectEditor(main, slotKey, title, fields) {
     const body = Object.fromEntries(fields.map((f) => [f, fd.get(f)]))
     await runAction(e.submitter || e.target.querySelector('button[type="submit"]'), async () => {
       const saved = await api(`/api/admin/slots/${slotKey}`, { method: 'PUT', body: JSON.stringify(body) })
-      toast('已保存草稿', await refreshAfterCommit(saved))
+      toast('已保存', await refreshAfterCommit(saved))
     })
   })
 }
@@ -280,8 +285,8 @@ function openItemModal(slotKey, item, onSave) {
       <div class="form-group"><label class="form-label">${f}</label><input id="f-${f}" value="${esc(item[f] || '')}" /></div>`).join('')}
     <div class="form-group"><label class="form-label">上传图片</label>
       <input type="file" id="upload-file" accept="image/*" />
-      <div class="form-help">popup/icon/promo 自动写入 /uploads/</div></div>
-    <div class="modal-footer"><button class="btn btn-gray" id="modal-cancel">取消</button><button class="btn btn-primary" id="modal-save">保存</button></div>`
+      <div class="form-help">popup/icon/promo 自动写入 /uploads/；保存后同步前台</div></div>
+    <div class="modal-footer"><button class="btn btn-gray" id="modal-cancel">取消</button><button class="btn btn-primary" id="modal-save">保存并同步前台</button></div>`
   modal.classList.add('show')
   const close = () => modal.classList.remove('show')
   $('#modal-close').onclick = close
@@ -308,7 +313,7 @@ function openItemModal(slotKey, item, onSave) {
     }
     const saved = await onSave(next)
     close()
-    toast('已保存草稿', saved)
+    toast('已保存', saved)
   })
 }
 
@@ -399,7 +404,7 @@ function openAppModal(app) {
     close()
     const refreshed = await refreshAfterCommit(saved)
     try { await renderApps($('#main')) } catch { refreshed.refreshWarning = true }
-    toast('已保存草稿', refreshed)
+    toast('已保存', refreshed)
   })
 }
 
@@ -408,20 +413,20 @@ async function renderCategories(main) {
   const json = JSON.stringify(data.categoryApps || {}, null, 2)
   main.innerHTML = `
     <div class="page-header"><span class="page-title">分类与应用映射</span></div>
-    <div class="notice">JSON 编辑 categoryApps.byCategory / modes / modesByCategory。保存后需发布才生效。</div>
+    <div class="notice">JSON 编辑 categoryApps.byCategory / modes / modesByCategory。保存成功即同步前台，无需另点发布。</div>
     <div class="card">
       <div class="form-group"><label class="form-label">categories（每行一个分类名）</label>
         <textarea id="cat-lines" rows="8">${esc((data.categories || []).join('\n'))}</textarea></div>
       <div class="form-group"><label class="form-label">categoryApps JSON</label>
         <textarea id="cat-json" rows="18">${esc(json)}</textarea></div>
-      ${canWrite('categories') ? '<button class="btn btn-primary" id="cat-save">保存草稿</button>' : ''}
+      ${canWrite('categories') ? '<button class="btn btn-primary" id="cat-save">保存并同步前台</button>' : ''}
     </div>`
   $('#cat-save')?.addEventListener('click', () => runAction($('#cat-save'), async () => {
     let categoryApps
     try { categoryApps = JSON.parse($('#cat-json').value) } catch { return toast('JSON 格式错误') }
     const categories = $('#cat-lines').value.split('\n').map((s) => s.trim()).filter(Boolean)
     const saved = await api('/api/admin/category-apps', { method: 'PUT', body: JSON.stringify({ categoryApps, categories }) })
-    toast('已保存草稿', await refreshAfterCommit(saved))
+    toast('已保存', await refreshAfterCommit(saved))
   }))
 }
 

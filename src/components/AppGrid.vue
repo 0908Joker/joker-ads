@@ -8,12 +8,12 @@
     >
       <div class="app-card__cover">
         <img
-          v-if="app.icon && !failed[index]"
+          v-if="app.icon && !failed[app.icon]"
           :src="app.icon"
           :alt="app.name"
           class="cover-img cover-img--real"
           loading="lazy"
-          @error="failed[index] = true"
+          @error="failed[app.icon] = true"
         />
         <div v-else class="cover-img" :style="{ background: iconColor(app.name, index) }">
           <span class="cover-text">{{ iconText(app.name) }}</span>

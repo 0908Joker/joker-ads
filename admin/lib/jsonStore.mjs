@@ -70,6 +70,20 @@ export function writeLive(name, value) {
 function nextMeta(previous) {
   return { ...previous, version: previous.version + 1, publishedAt: new Date().toISOString() }
 }
+// Published is the single authority. Never publish unrelated pending draft parts.
+// The draft mirror is compatibility/backup only, and cannot make a committed save fail.
+export function savePublishedPart(part, value) {
+  if (!['config', 'popups', 'tabs'].includes(part)) throw new Error('Unknown configuration part')
+  validatePart(part, value)
+  const bundle = readPublished()
+  bundle[part] = value
+  bundle.meta = nextMeta(bundle.meta)
+  const meta = commit(bundle)
+  let draftWarning = false
+  try { writeDraft(part + '.json', value); writeDraft('meta.json', meta) }
+  catch { draftWarning = true; console.warn('[config] live saved; compatibility draft mirror unavailable') }
+  return { published: true, meta, draftWarning }
+}
 export function publishApiSession(value) {
   const bundle = readPublished()
   bundle.apiSession = value

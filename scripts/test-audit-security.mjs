@@ -124,7 +124,7 @@ try {
     assert.equal(saved.data.auditWarning, true)
   }
   assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'draft/config.json'))).apps.some(a => a.name === 'audit-warning-fixture'), false)
-  assert.equal((await req('/data/config.json')).data.apps.find(a => a.name === 'audit-warning-fixture').url, 'https://example.invalid/updated')
+  assert.equal((await req('/data/config.json')).data.apps.some(a => a.name === 'audit-warning-fixture'), false, 'delete is already live even when its audit log fails')
   db.exec('DROP TRIGGER audit_fixture_failure')
   console.log('PASS actual CRUD/publish returns committed success with auditWarning when the operation log fails')
   let handler, gatewayCalls = 0

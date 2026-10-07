@@ -146,7 +146,7 @@ try {
     await page.getByRole('button', { name: '重试', exact: true }).click()
     await page.getByText('审核示例应用', { exact: true }).first().waitFor()
     assert.equal(calls.slice(callStart).filter(p => p === '/api/public/customers/claim').length, 1, 'config retry cannot loop identity claims')
-    assert.equal(calls.slice(callStart).filter(p => /^\/data\/(config|tabs|popups|meta)\.json$/.test(p)).length, 0, 'one complete bundle instead of mixed versions')
+    assert.equal(calls.slice(callStart).filter(p => /^\/data\/(config|tabs|popups)\.json$/.test(p)).length, 0, 'complete bundles plus version-only polling, never mixed configuration parts')
     checks.push('clear hides configured slots; five-second failure with operable retry; no old ads; no identity retry loop')
     const adminContext = await browser.newContext()
     await adminContext.route('**/*', route => {
@@ -225,6 +225,15 @@ try {
       assert.ok((await page.locator('h1').innerText()).includes('QA-B'))
       assert.equal(await page.locator('.play__status').count(), 0, 'successful playback clears loading state')
       assert.equal(calls.includes('/must-not-play.webm'), false)
+      if (manifest.stage >= 6) {
+        await page.evaluate(() => { window.__configSyncVideo = document.querySelector('video'); window.__configSyncTime = window.__configSyncVideo.currentTime })
+        data.meta.version++
+        const updated = page.waitForResponse(response => new URL(response.url()).pathname === '/data/site-bundle.json')
+        await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+        await updated
+        await page.waitForFunction(() => document.querySelector('video') === window.__configSyncVideo && !window.__configSyncVideo.paused && window.__configSyncVideo.currentTime >= window.__configSyncTime)
+        checks.push('live config update retains the actual playing video element and playback position')
+      }
       if (screenshots) await page.screenshot({ path: path.join(screenshots, 'batch3-video-playing.png') })
       await page.goto('https://b12sl5x.cn/#/appcenter')
       assert.equal(await page.locator('video.play__video').count(), 0)
@@ -342,6 +351,12 @@ try {
     await adminPage.getByText('测试发布失败',{exact:true}).waitFor()
     assert.equal(await adminPage.locator('#publish-btn').isDisabled(),false)
     await adminPage.locator('[data-page="popups"]').click()
+    const writesBeforeCancel=writes
+    await adminPage.locator('#add-item').click()
+    await adminPage.locator('#f-name').fill('取消的新条目不得上线')
+    await adminPage.locator('#modal-cancel').click()
+    assert.equal(writes,writesBeforeCancel,'cancelled add does not send a save')
+    assert.equal(await adminPage.locator('.list-row').count(),1,'cancelled add cannot leak into another item save/delete')
     adminMode='save503'
     await adminPage.locator('.list-row .del').click()
     await adminPage.getByText('测试保存失败',{exact:true}).waitFor()
@@ -361,7 +376,7 @@ try {
     if(screenshots)await adminPage.screenshot({path:path.join(screenshots,'batch5-admin-expired-keeps-input.png')})
     adminMode='savedWarning'
     await adminPage.locator('#modal-save').click()
-    await adminPage.getByText('已保存草稿；操作已保存，但审计日志记录失败',{exact:true}).waitFor()
+    await adminPage.getByText('已保存；操作已保存，但审计日志记录失败',{exact:true}).waitFor()
     assert.equal(await adminPage.locator('#modal.show').count(),0)
     assert.equal(await adminPage.getByText('保留未提交输入',{exact:true}).count(),1)
     await adminPage.locator('[data-page="apps"]').click()

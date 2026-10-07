@@ -40,9 +40,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-defineProps({
+const props = defineProps({
   categories: { type: Array, required: true },
   modes: { type: Array, required: true },
 })
@@ -61,6 +61,13 @@ function selectMode(id) {
   activeMode.value = id
   emit('mode-change', id)
 }
+
+function syncHeaderSelection() {
+  if (!props.categories.includes(activeCategory.value)) selectCategory(props.categories[0] || '')
+  if (!props.modes.some(mode => mode.id === activeMode.value)) selectMode(props.modes[0]?.id || 'recommend')
+}
+
+watch(() => [props.categories, props.modes], syncHeaderSelection, { immediate: true })
 </script>
 
 <style scoped>

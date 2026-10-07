@@ -16,6 +16,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import CebImg from './CebImg.vue'
 import { resolveAdTarget, trackAdInteraction } from '../api/ad.js'
 
@@ -28,11 +29,11 @@ const props = defineProps({
   image: { type: String, default: '' },
 })
 
-const href = resolveAdTarget(props)
-const localSrc = props.image || ''
+const href = computed(() => resolveAdTarget(props))
+const localSrc = computed(() => props.image || '')
 
 function onClick(e) {
-  if (!href) {
+  if (!href.value) {
     e.preventDefault()
     return
   }

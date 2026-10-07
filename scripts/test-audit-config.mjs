@@ -53,7 +53,8 @@ try {
       }
       return rename(from, to)
     }
-    store.publishAll()
+    if (process.env.AUDIT_OPERATION === 'save') store.savePublishedPart('config', { apps: [{ name: 'NEW' }], extension: { kept: true } })
+    else store.publishAll()
   `
   for (const fault of ['write', 'sync', 'backup', 'rename', 'kill-before', 'kill-after']) {
     fs.writeFileSync(snapshot, before)
@@ -79,4 +80,39 @@ try {
   assert.equal(store.readDraft('config.json').apps[0].name, 'NEW')
   assert.equal(fs.existsSync(path.join(tmp, 'live/config.json.bak')), false)
   console.log('PASS live-only migration; corrupt/invalid draft rejected; unknown fields retained; session commit; discard from snapshot')
+  for (const invalid of [{ apps: {} }, {}, { apps: [], categoryApps: { byCategory: { bad: {} } } }]) {
+    const liveBefore = fs.readFileSync(snapshot, 'utf8'), draftBefore = fs.readFileSync(draft('config'), 'utf8')
+    assert.throws(() => store.savePublishedPart('config', invalid), error => error.status === 400)
+    assert.equal(fs.readFileSync(snapshot, 'utf8'), liveBefore)
+    assert.equal(fs.readFileSync(draft('config'), 'utf8'), draftBefore)
+  }
+  for (const fault of ['write', 'sync', 'backup', 'rename', 'kill-before', 'kill-after']) {
+    fs.writeFileSync(snapshot, before)
+    fs.writeFileSync(draft('config'), JSON.stringify(base.config))
+    const draftBefore = fs.readFileSync(draft('config'), 'utf8')
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', childScript], { env: { ...process.env, AUDIT_OPERATION: 'save', AUDIT_FAULT: fault, AUDIT_STORE_URL: pathToFileURL(path.join(adminDir, 'lib/jsonStore.mjs')).href }, encoding: 'utf8' })
+    assert.notEqual(child.status, 0, fault)
+    const actual = JSON.parse(fs.readFileSync(snapshot))
+    if (fault === 'kill-after') {
+      assert.equal(actual.config.apps[0].name, 'NEW')
+      assert.equal(actual.meta.version, 10)
+    } else assert.deepEqual(actual, base, fault + ' leaves live untouched')
+    assert.equal(fs.readFileSync(draft('config'), 'utf8'), draftBefore, 'no draft-only success before live commit')
+    console.log('PASS auto-save atomic fault ' + fault)
+  }
+  fs.writeFileSync(snapshot, before)
+  const rename = fs.renameSync
+  fs.renameSync = (from, to) => {
+    if (to === draft('config')) throw new Error('injected mirror unavailable')
+    return rename(from, to)
+  }
+  let saved
+  try { saved = store.savePublishedPart('config', { apps: [{ name: 'LIVE DESPITE MIRROR FAILURE' }] }) }
+  finally { fs.renameSync = rename }
+  assert.equal(saved.published, true)
+  assert.equal(saved.draftWarning, true)
+  assert.equal(store.readPublished().config.apps[0].name, 'LIVE DESPITE MIRROR FAILURE')
+  assert.equal(store.readPublished().meta.version, 10)
+  assert.deepEqual(store.readPublished().tabs, base.tabs)
+  console.log('PASS auto-save validates before mutation; post-commit mirror fault reports truthful live success without changing other parts')
 } finally { fs.rmSync(tmp, { recursive: true, force: true }) }

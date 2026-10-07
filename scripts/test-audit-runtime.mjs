@@ -281,7 +281,7 @@ for (const variant of ['source','shipped']) {
     sessionStorage:{setItem:(k,v)=>storage.set(k,v)},setTimeout:fn=>{const id=++timerId;timers.set(id,fn);return id},clearTimeout:id=>timers.delete(id),
     decryptMedia:async src=>{if(src==='/bad.ceb')throw new Error('404');return src},jn:async src=>{if(src==='/bad.ceb')throw new Error('404');return src},resolveAdTarget:ad=>ad.url,It:ad=>ad.url,
     trackAdInteraction:(ad,slot)=>events.push({ad,slot}),auditTrack:(ad,slot)=>events.push({ad,slot}),URL,location:{href:'https://fixture.invalid/'}})
-  const names=variant==='source'?['showAt','markDone','close','onAdClick','onImageError']:['m','x','w','T','auditImageError']
+  const names=variant==='source'?['showAt','markDone','close','onAdClick','onImageError','refreshPopupConfig']:['m','x','w','T','auditImageError','auditRefreshPopupConfig']
   const program=variant==='source'?names.map(n=>sourceFunction('src/components/AdPopup.vue',n)):names.map(popupFunctions)
   vm.runInContext(program.join('\n'),ctx)
   await ctx[names[0]](0);await tick()
@@ -293,6 +293,17 @@ for (const variant of ['source','shipped']) {
   await ctx[names[0]](1);await tick()
   ctx[names[4]]({target:{currentSrc:'https://fixture.invalid/good.png'}});await tick()
   assert.equal(refs.visible.value,false,'ordinary broken image also advances to queue end')
+  ctx.sessionQueueDone=false;ctx.t=false
+  refs.ads.value=[{name:'live popup',image:'/live.png',url:'https://example.invalid/live'}]
+  refs.length.value=1
+  await ctx[names[0]](0);await tick()
+  assert.equal(refs.visible.value,true)
+  refs.ads.value=[];refs.length.value=0
+  ctx[names[5]]();await tick()
+  assert.equal(refs.visible.value,false,'deleting the displayed popup hides it without reloading')
+  refs.ads.value=[{name:'later popup',image:'/later.png',url:'https://example.invalid/later'}];refs.length.value=1
+  ctx[names[5]]();await tick()
+  assert.equal(refs.visible.value,false,'a completed queue does not reopen on configuration polling')
   console.log('PASS '+variant+': bad image skipped; correct index/link/click; no repeated B; ordinary image error; queue invalidation')
 }
 for (const variant of ['source','shipped']) {
@@ -325,4 +336,73 @@ for (const variant of ['source','shipped']) {
   await assert.rejects(ctx[names[2]](),/身份不一致/)
   assert.equal(JSON.stringify(state),before)
   console.log('PASS '+variant+': real customer GET refresh; identity preserved; concurrent recovery single-flight; 503 no claim; mismatch rejected')
+}
+
+assert.ok(manifest.stage >= 6, 'automatic configuration sync requires the stage-six artifact')
+for (const variant of ['source', 'shipped']) {
+  const state={ready:false,error:'',version:0,config:{apps:[]},popups:{},tabs:{}}
+  const timers=new Map(),calls=[];let timerId=0
+  const emitter=()=>({listeners:new Map(),addEventListener(name,fn){if(!this.listeners.has(name))this.listeners.set(name,new Set());this.listeners.get(name).add(fn)},removeEventListener(name,fn){this.listeners.get(name)?.delete(fn)},emit(name){for(const fn of this.listeners.get(name)||[])fn()}})
+  const win=emitter(),doc={...emitter(),hidden:false}
+  const makeBundle=version=>({config:{apps:[{name:'live-'+version}]},popups:{afterEnterApp:[]},tabs:{mine:{quickApps:[]},featured:{ad:{}}},apiSession:{},meta:{version}})
+  let published=makeBundle(1),responder
+  const request=async(url,options)=>{calls.push(url.split('?')[0]);assert.equal(options.cache,'no-store');return responder(url)}
+  const serve=url=>Promise.resolve(url.includes('/meta.json')?{version:published.meta.version}:structuredClone(published))
+  responder=serve
+  const ctx=vm.createContext({siteConfig:state,rt:state,siteConfigFlight:null,auditSiteFlight:null,siteConfigLoaded:false,auditSiteLoaded:false,siteSyncCleanup:null,auditSiteCleanup:null,
+    fetchJsonTimed:request,auditJSON:request,applyApiSession(){},sy(){},readonly:v=>v,Zt:v=>v,window:win,document:doc,
+    setInterval:(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id},clearInterval:id=>timers.delete(id)})
+  const names=variant==='source'?['emptySiteConfig','applySiteConfig','loadSiteConfig','startSiteConfigSync']:['auditEmpty','auditApplySite','yy','auditSiteStart']
+  vm.runInContext((variant==='source'?names.map(n=>sourceFunction('src/composables/useSiteConfig.js',n)):names.map(topFunction)).join('\n'),ctx)
+  const initial=deferred();responder=()=>initial.promise
+  const first=ctx[names[2]](),second=ctx[names[2]]()
+  assert.equal(first,second,'bootstrap requests share one in-flight promise')
+  assert.equal(calls.length,1);assert.equal(state.ready,false)
+  initial.resolve(published);await first
+  assert.equal(state.ready,true);assert.equal(state.version,1)
+  const current=state.config,waiting=deferred();responder=()=>waiting.promise
+  const refresh=ctx[names[2]]({checkVersion:true})
+  assert.equal(state.ready,true,'background sync never unmounts the current page')
+  assert.equal(state.config,current)
+  assert.equal(ctx[names[2]]({checkVersion:true}),refresh)
+  published=makeBundle(2);responder=serve;waiting.resolve({version:2});await refresh
+  assert.equal(state.version,2);assert.equal(state.config.apps[0].name,'live-2')
+  const stable=state.config;calls.length=0
+  await ctx[names[2]]({checkVersion:true})
+  assert.equal(state.config,stable,'same version does not reset reactive components')
+  assert.deepEqual(calls,['/data/meta.json'],'unchanged polling transfers only small metadata')
+  responder=async()=>{throw new Error('503')}
+  await ctx[names[2]]({checkVersion:true})
+  assert.equal(state.ready,true);assert.equal(state.config,stable);assert.match(state.error,/自动重试/)
+  published=makeBundle(3);responder=url=>Promise.resolve(url.includes('/meta.json')?{version:3}:{...published,config:{apps:{}}})
+  await ctx[names[2]]({checkVersion:true});assert.equal(state.version,2);assert.equal(state.config,stable)
+  responder=serve;await ctx[names[2]]({checkVersion:true})
+  assert.equal(state.version,3);assert.equal(state.error,'')
+  assert.equal(ctx[names[1]](makeBundle(2)),false,'a stale snapshot cannot roll back a newer version')
+  assert.equal(state.version,3)
+  const cleanup=ctx[names[3]]();await tick()
+  assert.equal(ctx[names[3]](),cleanup);assert.equal(timers.size,1)
+  assert.equal([...timers.values()][0].ms,5000)
+  published=makeBundle(4);[...timers.values()][0].fn();await tick()
+  assert.equal(state.version,4,'a live page receives a new config on the actual poll callback')
+  doc.hidden=true;doc.emit('visibilitychange');assert.equal(timers.size,0)
+  const hiddenCalls=calls.length;win.emit('focus');await tick();assert.equal(calls.length,hiddenCalls)
+  doc.hidden=false;published=makeBundle(5);doc.emit('visibilitychange');await tick()
+  assert.equal(state.version,5);assert.equal(timers.size,1)
+  win.emit('pagehide');assert.equal(timers.size,0)
+  win.emit('pageshow');await tick();assert.equal(timers.size,1)
+  published=makeBundle(6);const focusCalls=calls.length;win.emit('focus');win.emit('online');await tick()
+  assert.equal(state.version,6);assert.equal(calls.length-focusCalls,2,'focus and online share metadata+snapshot requests')
+  cleanup();assert.equal(timers.size,0)
+  assert.equal([...win.listeners.values(),...doc.listeners.values()].reduce((n,set)=>n+set.size,0),0)
+  ctx.siteConfigLoaded=false;ctx.auditSiteLoaded=false;state.ready=false;state.version=0
+  responder=async()=>{throw new Error('initial load unavailable')}
+  await ctx[names[2]]()
+  assert.equal(state.ready,true);assert.match(state.error,/配置加载失败/)
+  const initialRetry=deferred();responder=()=>initialRetry.promise
+  const retrying=ctx[names[2]]()
+  assert.equal(state.ready,true,'automatic first-load retry keeps the error and retry button mounted')
+  initialRetry.resolve(makeBundle(1));await retrying
+  assert.equal(state.version,1);assert.equal(state.error,'')
+  console.log('PASS '+variant+': single-flight live config; same-version metadata only; background page retained; failure recovery; stale rejection; 5s poll; focus/online/visibility/BFCache; cleanup')
 }
