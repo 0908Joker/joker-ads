@@ -1,0 +1,10 @@
+# Human ownership for this public production site.
+* @0908Joker
+
+/.github/workflows/ @0908Joker
+/AGENTS.md @0908Joker
+/.cursor/BUGBOT.md @0908Joker
+/deploy/ @0908Joker
+/scripts/ @0908Joker
+/src/api/ @0908Joker
+/src/data/api-session.json @0908Joker

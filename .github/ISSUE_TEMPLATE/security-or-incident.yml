@@ -1,0 +1,45 @@
+name: Security or production incident report
+description: Report a site, crawler, API, domain, or deployment issue using redacted evidence.
+title: "[SECURITY/INCIDENT] "
+body:
+  - type: markdown
+    attributes:
+      value: Do not paste cookies, authorization headers, API sessions, deploy passwords, Cloudflare credentials, private keys, or user data.
+  - type: dropdown
+    id: type
+    attributes:
+      label: Report type
+      options:
+        - Security finding
+        - Site availability or route incident
+        - Crawler or snapshot corruption
+        - API proxy incident
+        - Domain or deployment incident
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: User impact and affected route
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Include safe timestamps, commit/deployment SHA, route, status, and error class.
+    validations:
+      required: true
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Current mitigation or rollback status
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed credentials, sessions, and sensitive user or production data.
+          required: true
