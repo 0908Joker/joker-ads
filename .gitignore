@@ -70,3 +70,4 @@ crawled/audit-*.png
 crawled/audit*.png
 crawled/audit*.json
 crawled/p1-*.json
+.aider*
