@@ -62,7 +62,12 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter(_req, file, cb) {
     const ext = path.extname(file.originalname || '').toLowerCase()
-    if (!IMAGE_EXTS.has(ext)) return cb(new Error('仅支持图片上传'))
+    if (!IMAGE_EXTS.has(ext)) {
+      // 类型不符属于客户端错误，标记 400 避免落入兜底 500
+      const err = new Error('仅支持图片上传')
+      err.status = 400
+      return cb(err)
+    }
     cb(null, true)
   },
 })
@@ -455,7 +460,15 @@ app.post('/api/admin/totp/disable', requireAuth, requireWrite('settings'), async
 app.use(express.static(PUBLIC_DIR))
 
 app.use((err, _req, res, _next) => {
-  res.status(err.status === 400 ? 400 : 500).json({ error: err?.message || 'server error', ...(err.field ? { field: err.field } : {}) })
+  // MulterError 不带 HTTP status：LIMIT_*/INVALID_FIELD_NAME 由客户端请求触发按 400 返回，
+  // STREAM_DESTROYED 属存储侧故障仍按 500。
+  const clientUploadError = err instanceof multer.MulterError && err.code !== 'STREAM_DESTROYED'
+  const status = clientUploadError || err.status === 400 ? 400 : 500
+  res.status(status).json({
+    error: err?.message || 'server error',
+    ...(err.field ? { field: err.field } : {}),
+    ...(clientUploadError ? { code: err.code } : {}),
+  })
 })
 
 app.listen(PORT, HOST, () => {
