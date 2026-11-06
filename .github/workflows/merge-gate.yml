@@ -40,4 +40,5 @@ jobs:
           MERGE_TOKEN: ${{ vars.PM_AUTO_MERGE_ENABLED == 'true' && github.token || '' }}
           MERGE_TOKEN_SOURCE: ${{ vars.PM_AUTO_MERGE_ENABLED == 'true' && 'actions' || 'missing' }}
           PM_AUTO_MERGE_ENABLED: ${{ vars.PM_AUTO_MERGE_ENABLED }}
+          PM_MERGE_ALLOW_NO_CHECKS: ${{ vars.PM_MERGE_ALLOW_NO_CHECKS }}
         run: python .github/scripts/merge_gate.py
