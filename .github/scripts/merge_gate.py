@@ -138,6 +138,10 @@ class GitHub:
                 type(payload["pullRequest"].get("number")) is not int):
             raise RuntimeError("开启自动合并未确认成功")
 
+    def update_branch(self, number, head):
+        self.request("/repos/" + self.repository + "/pulls/" + str(number) + "/update-branch",
+                     {"expected_head_sha": head}, method="PUT")
+
     def merge(self, number, head):
         """条件已全部满足的 PR，GitHub 拒绝登记自动合并（clean/unstable 状态报错），
         改由仅限本仓的合并身份绑定 head sha 直接压缩合并；非该身份或未确认合并即失败。"""
@@ -441,7 +445,14 @@ def evaluate(api, number, switch, attempts=0):
                 rows["head 绑定"] = ("失败", "开启前判定证据已变化")
             else:
                 current = current_head(api, number, head)
-                if current.get("auto_merge") is None and current.get("mergeable_state") in DIRECT_MERGE_STATES:
+                if (current.get("auto_merge") is None
+                        and current.get("mergeable_state") == "behind"):
+                    try:
+                        api.update_branch(number, head)
+                        rows["head 绑定"] = ("等待", "落后基线，已触发更新分支，下轮判定")
+                    except Exception:
+                        rows["head 绑定"] = ("等待", "落后基线且自动更新被拒，需修复方处理")
+                elif current.get("auto_merge") is None and current.get("mergeable_state") in DIRECT_MERGE_STATES:
                     # 必需检查已全部通过时 GitHub 不接受自动合并登记，复核证据后绑定 sha 直接合并。
                     api.merge(number, head)
                     if current_head(api, number, head).get("merged") is not True:
