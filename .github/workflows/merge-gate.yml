@@ -1,0 +1,44 @@
+name: merge-gate
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] 仅检出默认分支代码
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review, converted_to_draft]
+  issue_comment: # zizmor: ignore[dangerous-triggers] 仅检出默认分支代码
+    types: [created, edited]
+  schedule:
+    - cron: "*/15 * * * *"  # 批量巡检：候选 PR 重新判定 + 覆盖证据
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR 编号（留空则巡检全部候选）
+        required: false
+        type: string
+permissions: {}
+concurrency:
+  group: merge-gate-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  merge-gate:
+    name: merge-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # 直接合并（绑定 head sha）
+      pull-requests: write # 自动合并登记/撤销
+      issues: write # 打 gate-error 标记与说明
+      statuses: write # 写当前 head 的门禁状态
+      checks: read # 读取当前 head 的检查结果
+      actions: read # 读取工作流运行信息
+    if: ${{ github.event_name != 'pull_request_target' || !github.event.pull_request.draft }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: 判定合并门
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_TOKEN: ${{ vars.PM_AUTO_MERGE_ENABLED == 'true' && github.token || '' }}
+          MERGE_TOKEN_SOURCE: ${{ vars.PM_AUTO_MERGE_ENABLED == 'true' && 'actions' || 'missing' }}
+          PM_AUTO_MERGE_ENABLED: ${{ vars.PM_AUTO_MERGE_ENABLED }}
+          PM_MERGE_ALLOW_NO_CHECKS: ${{ vars.PM_MERGE_ALLOW_NO_CHECKS }}
+        run: python .github/scripts/merge_gate.py
