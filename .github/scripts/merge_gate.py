@@ -367,6 +367,9 @@ def evaluate(api, number, switch, attempts=0):
                    any(c["status"] != "completed" for c in runs) or
                    any(s["state"] == "pending" for s in statuses))
         check_reasons = []
+        if pending and not runs and not statuses and                 os.getenv("PM_MERGE_ALLOW_NO_CHECKS") == "true":
+            pending = False
+            check_reasons.append("no_checks_waived")
         for item in required_checks:
             matches = [c for c in runs if c["name"] == item["context"] and
                        (c.get("app") or {}).get("id") == item["integration_id"]]
