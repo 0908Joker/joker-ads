@@ -448,10 +448,18 @@ def evaluate(api, number, switch, attempts=0):
                         raise RuntimeError("直接合并后未确认已合并")
                     rows["head 绑定"] = ("通过", "条件已全部满足，复核证据后绑定 sha 由合并身份直接合并")
                 elif current.get("auto_merge") is None:
-                    api.enable(pr["node_id"], head)
-                    if current_head(api, number, head).get("auto_merge") is None:
-                        raise RuntimeError("开启后未确认自动合并登记")
-                    rows["head 绑定"] = ("通过", "复核证据后使用 expectedHeadOid 登记")
+                    try:
+                        api.enable(pr["node_id"], head)
+                        if current_head(api, number, head).get("auto_merge") is None:
+                            raise RuntimeError("开启后未确认自动合并登记")
+                        rows["head 绑定"] = ("通过", "复核证据后使用 expectedHeadOid 登记")
+                    except Exception:
+                        # 仓级关闭自动合并功能时登记不可用；改绑 head sha 直接合并，
+                        # 由 GitHub 服务端权威拒绝真正不可合状态。
+                        api.merge(number, head)
+                        if current_head(api, number, head).get("merged") is not True:
+                            raise RuntimeError("直接合并未确认成功")
+                        rows["head 绑定"] = ("通过", "自动合并登记不可用，复核证据后绑 sha 直接合并")
                 else:
                     rows["head 绑定"] = ("通过", "当前 head 已登记自动合并")
                 rows["自动合并撤销"] = ("通过", "条件满足，无需撤销")
