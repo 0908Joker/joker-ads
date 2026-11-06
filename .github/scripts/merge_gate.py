@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -169,6 +170,26 @@ class GitHub:
 # clean = 必需检查全过且无阻挡；unstable = 必需检查全过但有非必需状态失败（如门禁上一轮写的 failure）。
 # 两者 GitHub 都拒绝 enablePullRequestAutoMerge，只能直接合并；blocked/behind/dirty/unknown 仍走登记。
 DIRECT_MERGE_STATES = frozenset({"clean", "unstable"})
+
+# dirty = 与默认分支存在合并冲突：登记自动合并与绑定 sha 直并都会被服务端拒绝，直接记候选阻挡。
+UNMERGEABLE_STATES = frozenset({"dirty"})
+# 服务端对绑 sha 直并的权威拒绝码：405 不可合、422 校验失败；409 按 head 变化走恢复路径。
+MERGE_REJECT_CODES = frozenset({405, 422})
+
+
+def direct_merge(api, number, head, success_reason):
+    """绑定 head sha 直接压缩合并；服务端拒绝码按候选阻挡记等待，不当作自动化故障。"""
+    try:
+        api.merge(number, head)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 409:
+            raise HeadChanged("服务端报告 head 已变化")
+        if exc.code in MERGE_REJECT_CODES:
+            return False, "服务端拒绝直接合并（HTTP " + str(exc.code) + "），按候选阻挡下轮重审"
+        raise
+    if current_head(api, number, head).get("merged") is not True:
+        raise RuntimeError("直接合并未确认成功")
+    return True, success_reason
 
 
 class HeadChanged(Exception):
@@ -445,32 +466,46 @@ def evaluate(api, number, switch, attempts=0):
                 rows["head 绑定"] = ("失败", "开启前判定证据已变化")
             else:
                 current = current_head(api, number, head)
-                if (current.get("auto_merge") is None
-                        and current.get("mergeable_state") == "behind"):
+                for _ in range(3):
+                    # mergeable_state 由 GitHub 异步计算；unknown/空值是短暂中间态，轮询等其落定后再分支。
+                    if (current.get("auto_merge") is not None
+                            or current.get("mergeable_state") not in (None, "unknown")):
+                        break
+                    time.sleep(5)
+                    current = current_head(api, number, head)
+                state = current.get("mergeable_state")
+                if current.get("auto_merge") is None and state == "behind":
                     try:
                         api.update_branch(number, head)
                         rows["head 绑定"] = ("等待", "落后基线，已触发更新分支，下轮判定")
                     except Exception:
                         rows["head 绑定"] = ("等待", "落后基线且自动更新被拒，需修复方处理")
-                elif current.get("auto_merge") is None and current.get("mergeable_state") in DIRECT_MERGE_STATES:
+                elif current.get("auto_merge") is None and state in DIRECT_MERGE_STATES:
                     # 必需检查已全部通过时 GitHub 不接受自动合并登记，复核证据后绑定 sha 直接合并。
-                    api.merge(number, head)
-                    if current_head(api, number, head).get("merged") is not True:
-                        raise RuntimeError("直接合并后未确认已合并")
-                    rows["head 绑定"] = ("通过", "条件已全部满足，复核证据后绑定 sha 由合并身份直接合并")
+                    merged, reason = direct_merge(
+                        api, number, head, "条件已全部满足，复核证据后绑定 sha 由合并身份直接合并")
+                    if not merged:
+                        outcome = "pending"
+                    rows["head 绑定"] = ("通过" if merged else "等待", reason)
+                elif current.get("auto_merge") is None and state in UNMERGEABLE_STATES:
+                    outcome = "pending"
+                    rows["head 绑定"] = ("等待", "与默认分支存在合并冲突，需修复方处理")
                 elif current.get("auto_merge") is None:
                     try:
                         api.enable(pr["node_id"], head)
                         if current_head(api, number, head).get("auto_merge") is None:
                             raise RuntimeError("开启后未确认自动合并登记")
                         rows["head 绑定"] = ("通过", "复核证据后使用 expectedHeadOid 登记")
+                    except (HeadChanged, BaseChanged):
+                        raise
                     except Exception:
                         # 仓级关闭自动合并功能时登记不可用；改绑 head sha 直接合并，
                         # 由 GitHub 服务端权威拒绝真正不可合状态。
-                        api.merge(number, head)
-                        if current_head(api, number, head).get("merged") is not True:
-                            raise RuntimeError("直接合并未确认成功")
-                        rows["head 绑定"] = ("通过", "自动合并登记不可用，复核证据后绑 sha 直接合并")
+                        merged, reason = direct_merge(
+                            api, number, head, "自动合并登记不可用，复核证据后绑 sha 直接合并")
+                        if not merged:
+                            outcome = "pending"
+                        rows["head 绑定"] = ("通过" if merged else "等待", reason)
                 else:
                     rows["head 绑定"] = ("通过", "当前 head 已登记自动合并")
                 rows["自动合并撤销"] = ("通过", "条件满足，无需撤销")
