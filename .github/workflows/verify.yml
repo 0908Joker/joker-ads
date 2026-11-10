@@ -9,7 +9,7 @@ permissions:
 jobs:
   verify:
     name: SBQB Required Gate
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, linux, x64]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
